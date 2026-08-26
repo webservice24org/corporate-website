@@ -1,6 +1,6 @@
 // resources/js/pages/Admin/Dashboard.tsx
 
-import AdminLayout from "@/layouts/admin-layout";
+import AdminLayout from "@/Layouts/admin-layout";
 
 export default function Dashboard() {
     return (

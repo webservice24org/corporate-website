@@ -1,34 +1,83 @@
-// resources/js/layouts/frontend-layout.tsx
+// resources/js/Layouts/frontend-layout.tsx
+import type {
+    PageProps,
+} from "@/types";
+import type {
+    PropsWithChildren,
+} from "react";
 
-import { PropsWithChildren } from "react";
+import {
+    usePage,
+} from "@inertiajs/react";
+
+import FlashMessages from "@/Components/FlashMessages";
+
+import GlobalSectionRenderer from "@/PageBuilder/components/GlobalSectionRenderer";
+
+type GlobalSection = {
+    id: number;
+
+    type: string;
+    variant: string;
+
+    settings: Record<
+        string,
+        unknown
+    > | null;
+
+    is_active: boolean;
+};
+
+type FrontendPageProps = PageProps<{
+    globalHeader?:
+        | GlobalSection
+        | null;
+    
+    globalFooter:
+        | GlobalSection
+        | null;
+
+    globalFloatingContact:
+        | GlobalSection
+        | null;
+}>;
 
 export default function FrontendLayout({
     children,
 }: PropsWithChildren) {
+
+    const {
+        globalHeader,
+        globalFooter,
+        globalFloatingContact,
+        } = usePage<FrontendPageProps>()
+        .props;
+
     return (
-        <div className="min-h-screen bg-white text-slate-900">
-            <header className="border-b">
-                <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
-                    <div className="text-xl font-bold">
-                        Corporate Website
-                    </div>
+        <div className="flex min-h-screen flex-col bg-white text-slate-900">
+            <FlashMessages />
 
-                    <nav className="flex gap-6 text-sm">
-                        <a href="/">Home</a>
-                        <a href="/about">About</a>
-                        <a href="/services">Services</a>
-                        <a href="/contact">Contact</a>
-                    </nav>
-                </div>
-            </header>
+            <GlobalSectionRenderer
+                section={
+                    globalHeader
+                }
+            />
 
-            <main>{children}</main>
+            <main className="flex-1">
+                {children}
+            </main>
 
-            <footer className="mt-16 border-t">
-                <div className="mx-auto max-w-7xl px-6 py-8 text-sm text-slate-500">
-                    © Corporate Website
-                </div>
-            </footer>
+            <GlobalSectionRenderer
+                section={
+                    globalFooter
+                }
+            />
+
+            <GlobalSectionRenderer
+                section={
+                    globalFloatingContact
+                }
+            />
         </div>
     );
 }

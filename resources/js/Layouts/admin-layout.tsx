@@ -2,6 +2,7 @@
 
 import { Link } from "@inertiajs/react";
 import { PropsWithChildren } from "react";
+import FlashMessages from "@/Components/FlashMessages";
 
 export default function AdminLayout({
     children,
@@ -9,6 +10,7 @@ export default function AdminLayout({
     return (
         <div className="min-h-screen bg-slate-100">
             <div className="flex min-h-screen">
+                <FlashMessages />
                 <aside className="w-64 bg-slate-900 text-white">
                     <div className="border-b border-slate-800 px-6 py-5">
                         <h2 className="text-lg font-bold">
@@ -30,6 +32,25 @@ export default function AdminLayout({
                         >
                             Pages
                         </Link>
+                        <Link
+                            href="/admin/mail-settings"
+                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
+                        >
+                            Mail Configuration
+                        </Link>
+                        <Link
+                            href="/admin/global/header"
+                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
+                        >
+                            Header
+                        </Link>
+                        <Link
+                            href="/admin/global/footer"
+                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
+                        >
+                            Footer
+                        </Link>
+
                     </nav>
                 </aside>
 

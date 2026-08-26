@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Illuminate\Http\Request;
 use Inertia\Middleware;
+use App\Models\GlobalSection;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -34,6 +35,46 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
+
+            'globalFooter' => fn () =>
+                GlobalSection::query()
+                    ->where('type', 'footer')
+                    ->where('is_active', true)
+                    ->first([
+                        'id',
+                        'type',
+                        'variant',
+                        'settings',
+                        'is_active',
+                    ]),
+
+            'globalHeader' => fn () => GlobalSection::query()
+            ->where('type', 'header')
+            ->where('is_active', true)
+            ->first(),
+
+            'globalFloatingContact' => fn () =>
+                GlobalSection::query()
+                    ->where(
+                        'type',
+                        'floating-contact'
+                    )
+                    ->where(
+                        'is_active',
+                        true
+                    )
+                    ->first([
+                        'id',
+                        'type',
+                        'variant',
+                        'settings',
+                        'is_active',
+                    ]),
         ];
     }
 }

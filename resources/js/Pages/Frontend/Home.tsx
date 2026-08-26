@@ -1,6 +1,6 @@
 // resources/js/pages/Frontend/Home.tsx
 
-import FrontendLayout from "@/layouts/frontend-layout";
+import FrontendLayout from "@/Layouts/frontend-layout";
 
 export default function Home() {
     return (
