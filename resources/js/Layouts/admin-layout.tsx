@@ -1,67 +1,116 @@
-// resources/js/layouts/admin-layout.tsx
+import type {
+    PropsWithChildren,
+} from "react";
 
-import { Link } from "@inertiajs/react";
-import { PropsWithChildren } from "react";
+import {
+    useState,
+} from "react";
+
+import {
+    Link,
+    usePage,
+} from "@inertiajs/react";
+
+import {
+    Menu,
+    User,
+} from "lucide-react";
+
 import FlashMessages from "@/Components/FlashMessages";
+
+import AdminSidebar from "@/Components/Admin/AdminSidebar";
+
+import type {
+    PageProps,
+} from "@/types";
 
 export default function AdminLayout({
     children,
 }: PropsWithChildren) {
+    const [
+        mobileSidebarOpen,
+        setMobileSidebarOpen,
+    ] = useState(false);
+
+    const page =
+        usePage<PageProps>();
+
+    const user =
+        page.props.auth?.user;
+
     return (
         <div className="min-h-screen bg-slate-100">
+            <FlashMessages />
+
             <div className="flex min-h-screen">
-                <FlashMessages />
-                <aside className="w-64 bg-slate-900 text-white">
-                    <div className="border-b border-slate-800 px-6 py-5">
-                        <h2 className="text-lg font-bold">
-                            Admin Panel
-                        </h2>
-                    </div>
+                <AdminSidebar
+                    mobileOpen={
+                        mobileSidebarOpen
+                    }
+                    onMobileClose={() =>
+                        setMobileSidebarOpen(
+                            false,
+                        )
+                    }
+                />
 
-                    <nav className="space-y-1 p-4">
-                        <Link
-                            href="/admin/dashboard"
-                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
-                        >
-                            Dashboard
-                        </Link>
+                <div className="min-w-0 flex-1">
+                    {/* Top bar */}
+                    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b bg-white/95 px-4 shadow-sm backdrop-blur sm:px-6 lg:px-8">
+                        <div className="flex items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setMobileSidebarOpen(
+                                        true,
+                                    )
+                                }
+                                className="rounded-lg border p-2 text-slate-600 hover:bg-slate-50 lg:hidden"
+                            >
+                                <Menu className="size-5" />
+                            </button>
 
-                        <Link
-                            href="/admin/pages"
-                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
-                        >
-                            Pages
-                        </Link>
-                        <Link
-                            href="/admin/mail-settings"
-                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
-                        >
-                            Mail Configuration
-                        </Link>
-                        <Link
-                            href="/admin/global/header"
-                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
-                        >
-                            Header
-                        </Link>
-                        <Link
-                            href="/admin/global/footer"
-                            className="block rounded-md px-4 py-2 hover:bg-slate-800"
-                        >
-                            Footer
-                        </Link>
+                            <div>
+                                <h1 className="text-sm font-semibold text-slate-900 sm:text-base">
+                                    Corporate
+                                    Website
+                                    Admin
+                                </h1>
 
-                    </nav>
-                </aside>
+                                <p className="hidden text-xs text-slate-500 sm:block">
+                                    Manage
+                                    website
+                                    content and
+                                    settings
+                                </p>
+                            </div>
+                        </div>
 
-                <div className="flex-1">
-                    <header className="border-b bg-white px-8 py-4">
-                        <h1 className="font-semibold">
-                            Corporate Website Admin
-                        </h1>
+                        {/* Logged-in user */}
+                        <div className="flex items-center gap-3">
+                            <div className="hidden text-right sm:block">
+                                <div className="text-sm font-semibold text-slate-800">
+                                    {user?.name ??
+                                        "Administrator"}
+                                </div>
+
+                                <div className="text-xs text-slate-500">
+                                    {user?.email ??
+                                        ""}
+                                </div>
+                            </div>
+
+                            <Link
+                                href="/profile"
+                                className="flex size-9 items-center justify-center rounded-full bg-slate-100 text-slate-600 transition hover:bg-slate-200"
+                            >
+                                <User className="size-4" />
+                            </Link>
+                        </div>
                     </header>
 
-                    <main className="p-8">
+                    {/* Main Content */}
+                    <main className="p-4 sm:p-6 lg:p-8">
                         {children}
                     </main>
                 </div>

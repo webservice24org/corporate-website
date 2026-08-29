@@ -33,7 +33,70 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => $request->user(),
+                'user' => fn () => $request->user()
+                    ? [
+                        'id' => $request->user()->id,
+
+                        'name' => $request->user()->name,
+
+                        'email' => $request->user()->email,
+
+                        'email_verified_at' =>
+                            $request->user()->email_verified_at,
+
+                        /*
+                        * Spatie Roles
+                        */
+                        'roles' =>
+                            $request->user()
+                                ->getRoleNames()
+                                ->values()
+                                ->all(),
+
+                        /*
+                        * Effective Permissions
+                        *
+                        * Includes permissions received
+                        * through assigned roles.
+                        */
+                        'permissions' =>
+                            $request->user()
+                                ->getAllPermissions()
+                                ->pluck('name')
+                                ->values()
+                                ->all(),
+
+                        /*
+                        * Super Admin shortcut for React.
+                        *
+                        * Backend security still comes
+                        * from Gate::before().
+                        */
+                        'is_super_admin' =>
+                            $request->user()
+                                ->hasRole(
+                                    'super-admin'
+                                ),
+
+                        /*
+                        * Profile
+                        */
+                        'profile_photo' =>
+                            $request->user()
+                                ->profile
+                                ?->profile_photo,
+
+                        'designation' =>
+                            $request->user()
+                                ->profile
+                                ?->designation,
+
+                        'department' =>
+                            $request->user()
+                                ->profile
+                                ?->department,
+                    ]
+                    : null,
             ],
             
             'flash' => [

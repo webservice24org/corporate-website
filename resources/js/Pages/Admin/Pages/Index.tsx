@@ -4,11 +4,19 @@ import { Head, Link } from "@inertiajs/react";
 import { columns, type Page } from "./columns";
 import { DataTable } from "./data-table";
 
+import {
+    useAuthorization,
+} from "@/hooks/useAuthorization";
+
 type Props = {
     pages: Page[];
 };
 
 export default function Index({ pages }: Props) {
+    const {
+        can,
+    } = useAuthorization();
+
     return (
         <AdminLayout>
             <Head title="Pages" />
@@ -24,13 +32,16 @@ export default function Index({ pages }: Props) {
                             Create and manage website pages.
                         </p>
                     </div>
-
-                    <Link
-                        href="/admin/pages/create"
-                        className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
-                    >
-                        Create Page
-                    </Link>
+                    {can(
+                        "pages.create",
+                    ) && (
+                        <Link
+                            href="/admin/pages/create"
+                            className="inline-flex h-8 items-center justify-center rounded-lg bg-primary px-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
+                        >
+                            Create Page
+                        </Link>
+                    )}
                 </div>
 
                 <DataTable

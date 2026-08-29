@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Services\DynamicMailConfig;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
@@ -27,25 +28,83 @@ class PasswordResetLinkController extends Controller
      *
      * @throws ValidationException
      */
-    public function store(Request $request): RedirectResponse
-    {
+    public function store(
+        Request $request,
+        DynamicMailConfig $mailConfig
+    ): RedirectResponse {
         $request->validate([
-            'email' => 'required|email',
+            'email' => [
+                'required',
+                'email',
+            ],
         ]);
 
-        // We will send the password reset link to this user. Once we have attempted
-        // to send the link, we will examine the response then see the message we
-        // need to show to the user. Finally, we'll send out a proper response.
+        /*
+         |--------------------------------------------------------------------------
+         | Apply Dynamic SMTP Configuration
+         |--------------------------------------------------------------------------
+         |
+         | This loads the currently active SMTP settings from the database.
+         |
+         | Today:
+         |     Mailtrap SMTP
+         |
+         | Later on cPanel:
+         |     Your real SMTP / business email
+         |
+         | No code change will be required here. You will only update the
+         | Mail Settings from the Admin panel.
+         |
+         */
+
+        $mailSettings = $mailConfig->apply();
+
+        if (! $mailSettings) {
+            throw ValidationException::withMessages([
+                'email' => [
+                    'Mail configuration is not available. Please contact the administrator.',
+                ],
+            ]);
+        }
+
+        /*
+         |--------------------------------------------------------------------------
+         | Send Password Reset Link
+         |--------------------------------------------------------------------------
+         |
+         | Since the dynamic mail configuration has already been applied,
+         | Laravel's password broker will use those SMTP settings when
+         | sending the reset notification.
+         |
+         */
+
         $status = Password::sendResetLink(
             $request->only('email')
         );
 
-        if ($status == Password::RESET_LINK_SENT) {
-            return back()->with('status', __($status));
+        /*
+         |--------------------------------------------------------------------------
+         | Successful Reset Link Request
+         |--------------------------------------------------------------------------
+         */
+
+        if ($status === Password::RESET_LINK_SENT) {
+            return back()->with(
+                'status',
+                __($status)
+            );
         }
 
+        /*
+         |--------------------------------------------------------------------------
+         | Failed Reset Link Request
+         |--------------------------------------------------------------------------
+         */
+
         throw ValidationException::withMessages([
-            'email' => [trans($status)],
+            'email' => [
+                trans($status),
+            ],
         ]);
     }
 }

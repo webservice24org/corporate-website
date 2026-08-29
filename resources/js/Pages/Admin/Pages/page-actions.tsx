@@ -33,6 +33,10 @@ import {
 } from "@/Components/ui/alert-dialog";
 
 import type { Page } from "./columns";
+import {
+    useAuthorization,
+} from "@/hooks/useAuthorization";
+
 
 type Props = {
     page: Page;
@@ -73,6 +77,10 @@ export default function PageActions({ page }: Props) {
             },
         });
     };
+    const {
+        can,
+    } = useAuthorization();
+
 
     return (
         <>
@@ -91,26 +99,34 @@ export default function PageActions({ page }: Props) {
                     </DropdownMenuLabel>
 
                     <DropdownMenuGroup>
-                        <DropdownMenuItem
-                            onAction={() =>
-                                router.visit(
-                                    `/admin/pages/${page.id}/builder`,
-                                )
-                            }
-                        >
-                            <Blocks />
-                            Page Builder
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            onAction={() =>
-                                router.visit(
-                                    `/admin/pages/${page.id}/edit`,
-                                )
-                            }
-                        >
-                            <Pencil />
-                            Edit
-                        </DropdownMenuItem>
+                        {can(
+                            "page-builder.view",
+                        ) && (
+                            <DropdownMenuItem
+                                onAction={() =>
+                                    router.visit(
+                                        `/admin/pages/${page.id}/builder`,
+                                    )
+                                }
+                            >
+                                <Blocks />
+                                Page Builder
+                            </DropdownMenuItem>
+                        )}
+                        {can(
+                            "pages.edit",
+                        ) && (
+                            <DropdownMenuItem
+                                onAction={() =>
+                                    router.visit(
+                                        `/admin/pages/${page.id}/edit`,
+                                    )
+                                }
+                            >
+                                <Pencil />
+                                Edit
+                            </DropdownMenuItem>
+                        )}
 
                         <DropdownMenuItem
                             onAction={copySlug}
@@ -121,7 +137,9 @@ export default function PageActions({ page }: Props) {
                     </DropdownMenuGroup>
 
                     <DropdownMenuSeparator />
-
+                    {can(
+                        "pages.delete",
+                    ) && (        
                     <DropdownMenuItem
                         variant="destructive"
                         onAction={() =>
@@ -131,6 +149,7 @@ export default function PageActions({ page }: Props) {
                         <Trash2 />
                         Delete
                     </DropdownMenuItem>
+                    )}
                 </DropdownMenu>
             </DropdownMenuTrigger>
 

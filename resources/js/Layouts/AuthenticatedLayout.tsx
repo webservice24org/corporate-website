@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import type { PageProps } from '@/types';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -9,7 +10,7 @@ export default function Authenticated({
     header,
     children,
 }: PropsWithChildren<{ header?: ReactNode }>) {
-    const user = usePage().props.auth.user;
+    const user = usePage<PageProps>().props.auth.user!;
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -69,6 +70,7 @@ export default function Authenticated({
                                         >
                                             Profile
                                         </Dropdown.Link>
+
                                         <Dropdown.Link
                                             href={route('logout')}
                                             method="post"
@@ -107,6 +109,7 @@ export default function Authenticated({
                                         strokeWidth="2"
                                         d="M4 6h16M4 12h16M4 18h16"
                                     />
+
                                     <path
                                         className={
                                             showingNavigationDropdown
@@ -144,6 +147,7 @@ export default function Authenticated({
                             <div className="text-base font-medium text-gray-800">
                                 {user.name}
                             </div>
+
                             <div className="text-sm font-medium text-gray-500">
                                 {user.email}
                             </div>
@@ -153,6 +157,7 @@ export default function Authenticated({
                             <ResponsiveNavLink href={route('profile.edit')}>
                                 Profile
                             </ResponsiveNavLink>
+
                             <ResponsiveNavLink
                                 method="post"
                                 href={route('logout')}

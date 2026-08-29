@@ -10,17 +10,26 @@ class Page extends Model
     protected $fillable = [
         'title',
         'slug',
+
+        'description',
+        'featured_image',
+        'layout',
+
         'status',
         'template',
+
         'meta_title',
         'meta_description',
+
         'published_at',
+        'is_home',
     ];
 
     protected function casts(): array
     {
         return [
             'published_at' => 'datetime',
+            'is_home' => 'boolean',
         ];
     }
     public function sections(): HasMany
