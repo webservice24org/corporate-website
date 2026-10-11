@@ -14,6 +14,8 @@ use App\Http\Controllers\NewsletterSubscriberController;
 
 use App\Http\Controllers\Frontend\HomeController;
 use App\Http\Controllers\Frontend\PageController as FrontendPageController;
+use App\Http\Controllers\Frontend\DepotRegistrationController;
+use App\Http\Controllers\Frontend\DealerRegistrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -120,7 +122,7 @@ Route::middleware('auth')->group(function () {
 |--------------------------------------------------------------------------
 */
 
-Route::prefix('admin')
+Route::prefix('admin/')
     ->name('admin.')
     ->middleware(['auth'])
     ->group(function () {
@@ -691,6 +693,45 @@ Route::prefix('admin')
             );
 
     });
+
+  Route::get(
+    'depot-registration',
+    [
+        DepotRegistrationController::class,
+        'create',
+    ]
+)->name(
+    'frontend.depot-registration.create'
+);
+
+Route::post(
+    '/depot-registration',
+    [
+        DepotRegistrationController::class,
+        'store',
+    ]
+)->name(
+    'frontend.depot-registration.store'
+);  
+
+
+Route::get('/dealer-registration', [DealerRegistrationController::class, 'create'])
+    ->name('frontend.dealer-registration.create');
+
+Route::post('/dealer-registration', [DealerRegistrationController::class, 'store'])
+    ->name('frontend.dealer-registration.store');
+
+/*
+|--------------------------------------------------------------------------
+| ERP Routes
+|--------------------------------------------------------------------------
+|
+| ERP routes are kept in their own route file so the ERP can grow
+| independently from the CMS and public website.
+|
+*/
+
+require __DIR__.'/erp.php';
 
 
 /*

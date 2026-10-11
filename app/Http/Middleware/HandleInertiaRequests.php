@@ -138,6 +138,77 @@ class HandleInertiaRequests extends Middleware
                         'settings',
                         'is_active',
                     ]),
+            'erpNotifications' => function () use ($request) {
+                $user = $request->user();
+
+                if (!$user) {
+                    return [
+                        'unread_count' => 0,
+                        'items' => [],
+                    ];
+                }
+
+                return [
+                    'unread_count' =>
+                        $user
+                            ->unreadNotifications()
+                            ->count(),
+
+                    'items' =>
+                        $user
+                            ->notifications()
+                            ->latest()
+                            ->limit(8)
+                            ->get()
+                            ->map(
+                                fn ($notification) => [
+                                    'id' =>
+                                        $notification->id,
+
+                                    'type' =>
+                                        $notification
+                                            ->data['type']
+                                        ?? 'notification',
+
+                                    'title' =>
+                                        $notification
+                                            ->data['title']
+                                        ?? 'Notification',
+
+                                    'message' =>
+                                        $notification
+                                            ->data['message']
+                                        ?? null,
+
+                                    'url' =>
+                                        $notification
+                                            ->data['url']
+                                        ?? null,
+
+                                    'lead_id' =>
+                                        $notification
+                                            ->data['lead_id']
+                                        ?? null,
+
+                                    'lead_number' =>
+                                        $notification
+                                            ->data['lead_number']
+                                        ?? null,
+
+                                    'read_at' =>
+                                        $notification
+                                            ->read_at
+                                            ?->toISOString(),
+
+                                    'created_at' =>
+                                        $notification
+                                            ->created_at
+                                            ?->toISOString(),
+                                ]
+                            )
+                            ->values(),
+                ];
+            },
         ];
     }
 }

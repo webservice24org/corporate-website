@@ -16,6 +16,7 @@ import {
     Mailbox,
     PanelBottom,
     PanelTop,
+    PanelsTopLeft,
     Settings,
     Users,
     X,
@@ -452,8 +453,35 @@ export default function AdminSidebar({
                     )}
                 </div>
 
-                {/* Bottom user / logout */}
+                {/* Bottom actions */}
                 <div className="border-t border-slate-800 p-3">
+                    {can(
+                        "erp.dashboard.view",
+                    ) && (
+                        <Link
+                            href="/erp/dashboard"
+                            onClick={
+                                closeMobile
+                            }
+                            className="
+                                mb-1 flex w-full items-center
+                                gap-3 rounded-lg
+                                px-3 py-2.5
+                                text-left text-sm
+                                font-medium text-slate-400
+                                transition
+                                hover:bg-indigo-500/10
+                                hover:text-indigo-400
+                            "
+                        >
+                            <PanelsTopLeft className="size-5" />
+
+                            <span>
+                                Open ERP
+                            </span>
+                        </Link>
+                    )}
+
                     <Link
                         href="/logout"
                         method="post"

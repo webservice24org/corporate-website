@@ -13,6 +13,7 @@ import {
 
 import {
     Menu,
+    PanelsTopLeft,
     User,
 } from "lucide-react";
 
@@ -23,6 +24,9 @@ import AdminSidebar from "@/Components/Admin/AdminSidebar";
 import type {
     PageProps,
 } from "@/types";
+import {
+    useAuthorization,
+} from "@/hooks/useAuthorization";
 
 export default function AdminLayout({
     children,
@@ -37,6 +41,10 @@ export default function AdminLayout({
 
     const user =
         page.props.auth?.user;
+
+    const {
+        can,
+    } = useAuthorization();
 
     return (
         <div className="min-h-screen bg-slate-100">
@@ -86,8 +94,32 @@ export default function AdminLayout({
                             </div>
                         </div>
 
-                        {/* Logged-in user */}
+                        {/* Top-right actions */}
                         <div className="flex items-center gap-3">
+                            {can(
+                                "erp.dashboard.view",
+                            ) && (
+                                <Link
+                                    href="/erp/dashboard"
+                                    className="
+                                        hidden items-center gap-2
+                                        rounded-lg border
+                                        border-indigo-200
+                                        bg-indigo-50
+                                        px-3 py-2
+                                        text-sm font-medium
+                                        text-indigo-700
+                                        transition
+                                        hover:bg-indigo-100
+                                        md:flex
+                                    "
+                                >
+                                    <PanelsTopLeft className="size-4" />
+
+                                    ERP
+                                </Link>
+                            )}
+
                             <div className="hidden text-right sm:block">
                                 <div className="text-sm font-semibold text-slate-800">
                                     {user?.name ??

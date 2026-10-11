@@ -9,6 +9,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class User extends Authenticatable
 {
@@ -52,6 +53,37 @@ class User extends Authenticatable
     public function profile(): HasOne
     {
         return $this->hasOne(UserProfile::class);
+    }
+
+    public function employee(): HasOne
+    {
+        return $this->hasOne(
+            Employee::class
+        );
+    }
+
+    public function ownedLeads(): HasMany
+    {
+        return $this->hasMany(
+            Lead::class,
+            'owner_user_id'
+        );
+    }
+
+    public function assignedCrmActivities(): HasMany
+    {
+        return $this->hasMany(
+            CrmActivity::class,
+            'assigned_to_user_id'
+        );
+    }
+
+    public function createdCrmActivities(): HasMany
+    {
+        return $this->hasMany(
+            CrmActivity::class,
+            'created_by_user_id'
+        );
     }
 
 
