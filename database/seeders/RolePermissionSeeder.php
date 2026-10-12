@@ -318,6 +318,10 @@ class RolePermissionSeeder extends Seeder
             'erp.opening-stocks.delete',
             'erp.opening-stocks.post',
 
+            // Low-stock report and warehouse reorder thresholds
+            'erp.low-stock-reports.view',
+            'erp.inventory-reorder-settings.manage',
+
         ];
 
         foreach (

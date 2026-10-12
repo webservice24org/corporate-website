@@ -27,7 +27,7 @@ import type {
 
 type SharedProps =
     PageProps & {
-        erpNotifications:
+        erpNotifications?:
             ErpNotificationShared;
     };
 
@@ -97,6 +97,16 @@ export default function NotificationBell() {
         usePage<SharedProps>()
             .props;
 
+    const notifications = erpNotifications ?? {
+        unread_count: 0,
+        items: [],
+    };
+
+    const [
+        pending,
+        setPending,
+    ] = useState(false);
+
     const [
         open,
         setOpen,
@@ -118,11 +128,11 @@ export default function NotificationBell() {
             const interval =
                 window.setInterval(
                     () => {
-                       router.reload({
-                            only: [
-                                "erpNotifications",
-                            ],
-                        });
+                        if (document.visibilityState === "visible") {
+                            router.reload({
+                                only: ["erpNotifications"],
+                            });
+                        }
                     },
                     60_000
                 );
@@ -164,11 +174,20 @@ export default function NotificationBell() {
                 handleClickOutside
             );
 
+            const handleEscape = (event: KeyboardEvent) => {
+                if (event.key === "Escape") {
+                    setOpen(false);
+                }
+            };
+
+            document.addEventListener("keydown", handleEscape);
+
             return () => {
                 document.removeEventListener(
                     "mousedown",
                     handleClickOutside
                 );
+                document.removeEventListener("keydown", handleEscape);
             };
         },
         []
@@ -220,6 +239,12 @@ export default function NotificationBell() {
 
     const markAllRead =
         () => {
+            if (pending) {
+                return;
+            }
+
+            setPending(true);
+
             router.post(
                 "/erp/notifications/read-all",
                 {},
@@ -227,14 +252,12 @@ export default function NotificationBell() {
                     preserveScroll:
                         true,
 
-                    onSuccess:
-                        () => {
-                            router.reload({
-                            only: [
-                                "erpNotifications",
-                                ],
-                            });
-                        },
+                    onSuccess: () => {
+                        router.reload({
+                            only: ["erpNotifications"],
+                        });
+                    },
+                    onFinish: () => setPending(false),
                 }
             );
         };
@@ -258,22 +281,24 @@ export default function NotificationBell() {
                 }
                 className="relative inline-flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900"
                 aria-label="Notifications"
+                aria-expanded={open}
+                aria-haspopup="dialog"
             >
                 <Bell className="h-5 w-5" />
 
-                {erpNotifications.unread_count >
+                {notifications.unread_count >
                     0 && (
                     <span className="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-semibold leading-none text-white">
-                        {erpNotifications.unread_count >
+                        {notifications.unread_count >
                         99
                             ? "99+"
-                            : erpNotifications.unread_count}
+                            : notifications.unread_count}
                     </span>
                 )}
             </button>
 
             {open && (
-                <div className="absolute right-0 z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
+                <div role="dialog" aria-label="Recent notifications" className="absolute right-0 z-50 mt-2 w-[min(24rem,calc(100vw-2rem))] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-950">
                     <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 dark:border-slate-800">
                         <div>
                             <h3 className="text-sm font-semibold">
@@ -282,19 +307,18 @@ export default function NotificationBell() {
 
                             <p className="mt-0.5 text-xs text-slate-500">
                                 {
-                                    erpNotifications.unread_count
+                                    notifications.unread_count
                                 }{" "}
                                 unread
                             </p>
                         </div>
 
-                        {erpNotifications.unread_count >
+                        {notifications.unread_count >
                             0 && (
                             <button
                                 type="button"
-                                onClick={
-                                    markAllRead
-                                }
+                                onClick={markAllRead}
+                                disabled={pending}
                                 className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
                             >
                                 <CheckCheck className="h-4 w-4" />
@@ -305,7 +329,7 @@ export default function NotificationBell() {
                     </div>
 
                     <div className="max-h-[28rem] overflow-y-auto">
-                        {erpNotifications.items.map(
+                        {notifications.items.map(
                             (
                                 notification
                             ) => (
@@ -384,7 +408,7 @@ export default function NotificationBell() {
                             )
                         )}
 
-                        {erpNotifications.items.length ===
+                        {notifications.items.length ===
                             0 && (
                             <div className="px-6 py-10 text-center">
                                 <Bell className="mx-auto h-8 w-8 text-slate-300 dark:text-slate-700" />
@@ -404,11 +428,7 @@ export default function NotificationBell() {
                     <div className="border-t border-slate-200 p-2 dark:border-slate-800">
                         <Link
                             href="/erp/notifications"
-                            onClick={() =>
-                                setOpen(
-                                    false
-                                )
-                            }
+                            onClick={() => setOpen(false)}
                             className="flex h-9 items-center justify-center rounded-md text-sm font-medium hover:bg-slate-100 dark:hover:bg-slate-900"
                         >
                             View all notifications

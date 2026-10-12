@@ -45,7 +45,7 @@ import {
     BanknoteCheck,
     WalletCards,
     Settings,
-    Warehouse, FileText, Landmark, Store, BookOpen, ArrowLeftRight,
+    Warehouse, FileText, Landmark, Store, BookOpen, ArrowLeftRight, AlertTriangle,
 } from "lucide-react";
 
 import { useAuthorization } from "@/hooks/useAuthorization";
@@ -212,7 +212,8 @@ export default function ERPSidebar({
         can("erp.inventory-stock.view") ||
         can("erp.stock-movements.view") ||
         can("erp.opening-stocks.view") ||
-        can("erp.stock-transfers.view");
+        can("erp.stock-transfers.view") ||
+        can("erp.low-stock-reports.view");
 
     const inventoryActive =
         url.startsWith("/erp/inventory/products") ||
@@ -223,7 +224,8 @@ export default function ERPSidebar({
         url.startsWith("/erp/inventory/stock-movements") ||
         url.startsWith("/erp/inventory/stock") || 
         url.startsWith("/erp/inventory/opening-stocks") ||
-        url.startsWith("/erp/inventory/stock-transfers");
+        url.startsWith("/erp/inventory/stock-transfers") ||
+        url.startsWith("/erp/inventory/low-stock");
 
     const [inventoryExpanded, setInventoryExpanded] = useState(false);
     const inventoryOpen = inventoryActive || inventoryExpanded;
@@ -1089,6 +1091,17 @@ export default function ERPSidebar({
                                             href="/erp/inventory/opening-stocks"
                                             label="Opening Stock"
                                             icon={ClipboardList}
+                                            currentUrl={url}
+                                            onClick={closeMobile}
+                                        />
+                                    )}
+
+                                    {/* Low-Stock Report: reorder settings are edited inside this page. */}
+                                    {can("erp.low-stock-reports.view") && (
+                                        <SidebarLink
+                                            href="/erp/inventory/low-stock"
+                                            label="Low-Stock Report"
+                                            icon={AlertTriangle}
                                             currentUrl={url}
                                             onClick={closeMobile}
                                         />

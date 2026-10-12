@@ -41,7 +41,9 @@ use App\Http\Controllers\ERP\HRM\PayrollPeriodController;
 use App\Http\Controllers\ERP\HRM\PayrollSettingController;
 use App\Http\Controllers\ERP\HRM\SalaryComponentController;
 use App\Http\Controllers\ERP\Inventory\BrandController;
+use App\Http\Controllers\ERP\Inventory\InventoryReorderSettingController;
 use App\Http\Controllers\ERP\Inventory\InventoryStockController;
+use App\Http\Controllers\ERP\Inventory\LowStockReportController;
 use App\Http\Controllers\ERP\Inventory\OpeningStockController;
 use App\Http\Controllers\ERP\Inventory\ProductCategoryController;
 use App\Http\Controllers\ERP\Inventory\ProductController;
@@ -350,6 +352,8 @@ Route::prefix('erp/')->name('erp.')->middleware(['auth'])->group(function () {
     Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
     Route::post('notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
     Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
+    Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
+
 
     /*
     |--------------------------------------------------------------------------
@@ -550,6 +554,21 @@ Route::prefix('erp/')->name('erp.')->middleware(['auth'])->group(function () {
 
     Route::get('inventory/stock', [InventoryStockController::class, 'index'])->middleware('can:erp.inventory-stock.view')->name('inventory.stock.index');
     Route::get('inventory/stock-movements', [StockMovementController::class, 'index'])->middleware('can:erp.stock-movements.view')->name('inventory.stock-movements.index');
+
+    /*
+     |--------------------------------------------------------------------------
+     | Inventory - Low-Stock Report & Reorder Settings
+     |--------------------------------------------------------------------------
+     */
+    Route::prefix('inventory/low-stock')->name('inventory.low-stock.')->group(function () {
+        Route::get('/', [LowStockReportController::class, 'index'])
+            ->middleware('can:erp.low-stock-reports.view')
+            ->name('index');
+
+        Route::put('/reorder-settings', [InventoryReorderSettingController::class, 'update'])
+            ->middleware('can:erp.inventory-reorder-settings.manage')
+            ->name('reorder-settings.update');
+    });
 
     /*
     |--------------------------------------------------------------------------

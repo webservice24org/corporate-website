@@ -13,3 +13,9 @@ Schedule::command(
 )
     ->everyMinute()
     ->withoutOverlapping();
+
+// Inventory alerts: reconcile every five minutes, without overlapping runs.
+// The command is discovered automatically from app/Console/Commands in standard Laravel 12 apps.
+Schedule::command('inventory:scan-low-stock-alerts')
+    ->everyFiveMinutes()
+    ->withoutOverlapping(15);

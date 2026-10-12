@@ -26,6 +26,7 @@ class LowStockService
      * Filters:
      * - warehouse_id: int|null
      * - product_id: int|null
+     * - category_id: int|null
      * - status: string|null
      * - include_healthy: bool (default false)
      *
@@ -51,6 +52,10 @@ class LowStockService
 
         $productId = $this->positiveId(
             $filters['product_id'] ?? null
+        );
+
+        $categoryId = $this->positiveId(
+            $filters['category_id'] ?? null
         );
 
         $status = $filters['status'] ?? null;
@@ -113,6 +118,13 @@ class LowStockService
                 $productId !== null,
                 fn(Builder $query) => $query->whereKey($productId)
             )
+            ->when(
+                $categoryId !== null,
+                fn(Builder $query) => $query->where(
+                    'product_category_id',
+                    $categoryId
+                )
+            )
             ->with([
                 'variants' => fn($query) => $query
                     ->where('is_active', true)
@@ -162,8 +174,8 @@ class LowStockService
                             ? $product->variants
                             : collect([null]);
 
-                        // Never invent a non-variant row for a
-                        // product configured to use variants.
+                        // Do not invent a non-variant row
+                        // for products configured with variants.
                         if ($variants->isEmpty()) {
                             continue;
                         }
@@ -189,8 +201,7 @@ class LowStockService
                                 /** @var InventoryReorderSetting|null $setting */
                                 $setting = $settingMap->get($key);
 
-                                // Only use a setting if its nullable
-                                // variant ID matches its variant key.
+                                // Reject inconsistent variant settings.
                                 if (
                                     $setting !== null &&
                                     (
@@ -203,11 +214,15 @@ class LowStockService
                                 }
 
                                 $onHand = (string) (
-                                    $balance !== null ? $balance->quantity_on_hand : '0'
+                                    $balance !== null
+                                    ? $balance->quantity_on_hand
+                                    : '0'
                                 );
 
                                 $reserved = (string) (
-                                    $balance !== null ? $balance->quantity_reserved : '0'
+                                    $balance !== null
+                                    ? $balance->quantity_reserved
+                                    : '0'
                                 );
 
                                 $available = bcsub(
@@ -255,6 +270,7 @@ class LowStockService
 
                                 $rows[] = [
                                     'company_id' => $companyId,
+
                                     'warehouse_id' => (int) $warehouse->id,
                                     'warehouse_name' => $warehouse->name,
                                     'warehouse_code' => $warehouse->code,
