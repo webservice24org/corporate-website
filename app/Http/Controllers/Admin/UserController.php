@@ -204,21 +204,15 @@ class UserController extends Controller
         ]);
 
         DB::transaction(
-            function () use (
-                $request,
-                $validated
-            ) {
+            function () use ($request, $validated) {
                 $user = User::create([
-                    'name' =>
-                        $validated['name'],
+                    'name' => $validated['name'],
 
-                    'email' =>
-                        $validated['email'],
+                    'email' => $validated['email'],
 
-                    'password' =>
-                        Hash::make(
-                            $validated['password']
-                        ),
+                    'password' => Hash::make(
+                        $validated['password']
+                    ),
                 ]);
 
                 $photoPath = null;
@@ -240,47 +234,36 @@ class UserController extends Controller
                 }
 
                 $user->profile()->create([
-                    'profile_photo' =>
-                        $photoPath,
+                    'profile_photo' => $photoPath,
 
-                    'phone' =>
-                        $validated['phone'] ??
+                    'phone' => $validated['phone'] ??
                         null,
 
-                    'employee_id' =>
-                        $validated['employee_id'] ??
+                    'employee_id' => $validated['employee_id'] ??
                         null,
 
-                    'designation' =>
-                        $validated['designation'] ??
+                    'designation' => $validated['designation'] ??
                         null,
 
-                    'department' =>
-                        $validated['department'] ??
+                    'department' => $validated['department'] ??
                         null,
 
-                    'date_of_birth' =>
-                        $validated['date_of_birth'] ??
+                    'date_of_birth' => $validated['date_of_birth'] ??
                         null,
 
-                    'gender' =>
-                        $validated['gender'] ??
+                    'gender' => $validated['gender'] ??
                         null,
 
-                    'address' =>
-                        $validated['address'] ??
+                    'address' => $validated['address'] ??
                         null,
 
-                    'city' =>
-                        $validated['city'] ??
+                    'city' => $validated['city'] ??
                         null,
 
-                    'country' =>
-                        $validated['country'] ??
+                    'country' => $validated['country'] ??
                         null,
 
-                    'bio' =>
-                        $validated['bio'] ??
+                    'bio' => $validated['bio'] ??
                         null,
                 ]);
 
@@ -314,27 +297,21 @@ class UserController extends Controller
                 'user' => [
                     'id' => $user->id,
 
-                    'name' =>
-                        $user->name,
+                    'name' => $user->name,
 
-                    'email' =>
-                        $user->email,
+                    'email' => $user->email,
 
-                    'email_verified_at' =>
-                        $user->email_verified_at,
+                    'email_verified_at' => $user->email_verified_at,
 
-                    'roles' =>
-                        $user
-                            ->roles
-                            ->pluck('name')
-                            ->values(),
+                    'roles' => $user
+                        ->roles
+                        ->pluck('name')
+                        ->values(),
 
-                    'profile' =>
-                        $user->profile,
+                    'profile' => $user->profile,
                 ],
 
-                'roles' =>
-                    $this->roles(),
+                'roles' => $this->roles(),
             ]
         );
     }
@@ -403,8 +380,8 @@ class UserController extends Controller
                     'user_profiles',
                     'employee_id'
                 )->ignore(
-                    $user->profile?->id
-                ),
+                        $user->profile?->getKey()
+                    ),
             ],
 
             'designation' => [
@@ -456,23 +433,17 @@ class UserController extends Controller
         ]);
 
         DB::transaction(
-            function () use (
-                $request,
-                $validated,
-                $user
-            ) {
+            function () use ($request, $validated, $user) {
                 $userData = [
-                    'name' =>
-                        $validated['name'],
+                    'name' => $validated['name'],
 
-                    'email' =>
-                        $validated['email'],
+                    'email' => $validated['email'],
                 ];
 
                 if (
-                    ! empty(
-                        $validated['password']
-                    )
+                    !empty(
+                    $validated['password']
+                )
                 ) {
                     $userData['password'] =
                         Hash::make(
@@ -490,8 +461,7 @@ class UserController extends Controller
                         ->firstOrCreate([]);
 
                 $photoPath =
-                    $profile
-                        ->profile_photo;
+                    $profile->getAttribute('profile_photo');
 
                 if (
                     $request->boolean(
@@ -502,8 +472,8 @@ class UserController extends Controller
                         Storage::disk(
                             'public'
                         )->delete(
-                            $photoPath
-                        );
+                                $photoPath
+                            );
                     }
 
                     $photoPath = null;
@@ -518,8 +488,8 @@ class UserController extends Controller
                         Storage::disk(
                             'public'
                         )->delete(
-                            $photoPath
-                        );
+                                $photoPath
+                            );
                     }
 
                     $photoPath =
@@ -534,47 +504,36 @@ class UserController extends Controller
                 }
 
                 $profile->update([
-                    'profile_photo' =>
-                        $photoPath,
+                    'profile_photo' => $photoPath,
 
-                    'phone' =>
-                        $validated['phone'] ??
+                    'phone' => $validated['phone'] ??
                         null,
 
-                    'employee_id' =>
-                        $validated['employee_id'] ??
+                    'employee_id' => $validated['employee_id'] ??
                         null,
 
-                    'designation' =>
-                        $validated['designation'] ??
+                    'designation' => $validated['designation'] ??
                         null,
 
-                    'department' =>
-                        $validated['department'] ??
+                    'department' => $validated['department'] ??
                         null,
 
-                    'date_of_birth' =>
-                        $validated['date_of_birth'] ??
+                    'date_of_birth' => $validated['date_of_birth'] ??
                         null,
 
-                    'gender' =>
-                        $validated['gender'] ??
+                    'gender' => $validated['gender'] ??
                         null,
 
-                    'address' =>
-                        $validated['address'] ??
+                    'address' => $validated['address'] ??
                         null,
 
-                    'city' =>
-                        $validated['city'] ??
+                    'city' => $validated['city'] ??
                         null,
 
-                    'country' =>
-                        $validated['country'] ??
+                    'country' => $validated['country'] ??
                         null,
 
-                    'bio' =>
-                        $validated['bio'] ??
+                    'bio' => $validated['bio'] ??
                         null,
                 ]);
 
@@ -637,16 +596,10 @@ class UserController extends Controller
             }
         }
 
-        if (
-            $user->profile?->profile_photo
-        ) {
-            Storage::disk(
-                'public'
-            )->delete(
-                $user
-                    ->profile
-                    ->profile_photo
-            );
+        $profilePhoto = $user->profile?->getAttribute('profile_photo');
+
+        if (is_string($profilePhoto) && $profilePhoto !== '') {
+            Storage::disk('public')->delete($profilePhoto);
         }
 
         $user->delete();

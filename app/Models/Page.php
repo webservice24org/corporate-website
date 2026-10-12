@@ -32,10 +32,10 @@ class Page extends Model
             'is_home' => 'boolean',
         ];
     }
+
     public function sections(): HasMany
     {
         return $this->hasMany(PageSection::class)
             ->orderBy('sort_order');
     }
-
 }

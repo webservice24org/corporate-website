@@ -80,7 +80,7 @@ class RolePermissionSeeder extends Seeder
             'erp.companies.create',
             'erp.companies.edit',
             'erp.companies.delete',
-            
+
             'erp.branches.view',
             'erp.branches.create',
             'erp.branches.edit',
@@ -259,7 +259,7 @@ class RolePermissionSeeder extends Seeder
             'erp.dealer-documents.create',
             'erp.dealer-documents.verify',
             'erp.dealer-documents.delete',
-            
+
             'erp.depots.activity.view',
             'erp.dealers.activity.view',
             'erp.customers.view',
@@ -302,12 +302,21 @@ class RolePermissionSeeder extends Seeder
             'erp.warehouses.delete',
             'erp.stock-movements.view',
 
+            // Stock transfer permissions used by routes/erp.php
+            'erp.stock-transfers.view',
+            'erp.stock-transfers.create',
+            'erp.stock-transfers.edit',
+            'erp.stock-transfers.delete',
+            'erp.stock-transfers.post',
+
             'erp.inventory-stock.view',
             'erp.stock-movements.view',
 
-
-
-            
+            'erp.opening-stocks.view',
+            'erp.opening-stocks.create',
+            'erp.opening-stocks.edit',
+            'erp.opening-stocks.delete',
+            'erp.opening-stocks.post',
 
         ];
 

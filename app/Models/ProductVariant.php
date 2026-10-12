@@ -55,4 +55,14 @@ class ProductVariant extends Model
         );
     }
 
+
+    public function inventoryReorderSettings(): HasMany
+    {
+        return $this->hasMany(
+            InventoryReorderSetting::class,
+            'product_variant_id'
+        );
+    }
+
+
 }

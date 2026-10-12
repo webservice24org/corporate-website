@@ -58,6 +58,4 @@ class Designation extends Model
             Employee::class
         );
     }
-
-
 }

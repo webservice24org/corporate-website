@@ -44,17 +44,13 @@ class DepotApplication extends Model
         return [
             'years_in_business' => 'integer',
 
-            'requested_credit_limit' =>
-                'decimal:2',
+            'requested_credit_limit' => 'decimal:2',
 
-            'reviewed_at' =>
-                'datetime',
+            'reviewed_at' => 'datetime',
 
-            'approved_at' =>
-                'datetime',
+            'approved_at' => 'datetime',
 
-            'rejected_at' =>
-                'datetime',
+            'rejected_at' => 'datetime',
         ];
     }
 

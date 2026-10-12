@@ -35,7 +35,7 @@ class AttendanceSettingController extends Controller
             );
 
         if (
-            !$companyId &&
+            ! $companyId &&
             $companies->isNotEmpty()
         ) {
             $companyId =
@@ -56,12 +56,10 @@ class AttendanceSettingController extends Controller
             $setting =
                 AttendanceSetting::firstOrCreate(
                     [
-                        'company_id' =>
-                            $company->id,
+                        'company_id' => $company->id,
                     ],
                     [
-                        'timezone' =>
-                            $company->timezone
+                        'timezone' => $company->timezone
                             ?: 'Asia/Dhaka',
                     ]
                 );
@@ -70,14 +68,11 @@ class AttendanceSettingController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Settings/Index',
             [
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'selectedCompanyId' =>
-                    $company?->id,
+                'selectedCompanyId' => $company?->id,
 
-                'setting' =>
-                    $setting,
+                'setting' => $setting,
             ]
         );
     }

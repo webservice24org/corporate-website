@@ -114,7 +114,7 @@ class Product extends Model
     public function getGalleryImageUrlsAttribute(): array
     {
         return collect($this->gallery_images ?? [])
-            ->map(fn (string $path) => [
+            ->map(fn(string $path) => [
                 'path' => $path,
                 'url' => Storage::url($path),
             ])
@@ -134,5 +134,12 @@ class Product extends Model
         );
     }
 
+
+    public function inventoryReorderSettings(): HasMany
+    {
+        return $this->hasMany(
+            InventoryReorderSetting::class
+        );
+    }
 
 }

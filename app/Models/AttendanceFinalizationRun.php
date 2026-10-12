@@ -27,32 +27,23 @@ class AttendanceFinalizationRun extends Model
     ];
 
     protected $casts = [
-        'attendance_date' =>
-            'date:Y-m-d',
+        'attendance_date' => 'date:Y-m-d',
 
-        'result_summary' =>
-            'array',
+        'result_summary' => 'array',
 
-        'employees_checked' =>
-            'integer',
+        'employees_checked' => 'integer',
 
-        'absent_created' =>
-            'integer',
+        'absent_created' => 'integer',
 
-        'off_day_created' =>
-            'integer',
+        'off_day_created' => 'integer',
 
-        'off_day_work_updated' =>
-            'integer',
+        'off_day_work_updated' => 'integer',
 
-        'existing_attendance_skipped' =>
-            'integer',
+        'existing_attendance_skipped' => 'integer',
 
-        'manual_records_skipped' =>
-            'integer',
+        'manual_records_skipped' => 'integer',
 
-        'no_shift_skipped' =>
-            'integer',
+        'no_shift_skipped' => 'integer',
     ];
 
     public function company(): BelongsTo

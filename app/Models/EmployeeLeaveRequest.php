@@ -85,7 +85,4 @@ class EmployeeLeaveRequest extends Model
             'cancelled_by'
         );
     }
-
-
-
 }

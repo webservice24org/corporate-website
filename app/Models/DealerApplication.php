@@ -60,11 +60,9 @@ class DealerApplication extends Model
             'approved_at' => 'datetime',
             'rejected_at' => 'datetime',
 
-            'requested_credit_limit' =>
-                'decimal:2',
+            'requested_credit_limit' => 'decimal:2',
 
-            'years_in_business' =>
-                'integer',
+            'years_in_business' => 'integer',
         ];
     }
 
@@ -73,7 +71,7 @@ class DealerApplication extends Model
         static::creating(
             function (DealerApplication $application) {
                 if (
-                    !$application->public_token
+                    ! $application->public_token
                 ) {
                     $application->public_token =
                         (string) Str::uuid();

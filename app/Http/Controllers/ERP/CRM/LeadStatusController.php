@@ -47,19 +47,17 @@ class LeadStatusController extends Controller
                 ])
                 ->when(
                     $filters['company_id'] ?? null,
-                    fn ($query, $companyId) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query, $companyId) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters['status'] ?? null,
-                    fn ($query, $status) =>
-                        $query->where(
-                            'status',
-                            $status === 'active'
-                        )
+                    fn ($query, $status) => $query->where(
+                        'status',
+                        $status === 'active'
+                    )
                 )
                 ->when(
                     $filters['search'] ?? null,
@@ -93,14 +91,11 @@ class LeadStatusController extends Controller
         return Inertia::render(
             'ERP/CRM/LeadStatuses/Index',
             [
-                'statuses' =>
-                    $statuses,
+                'statuses' => $statuses,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -110,8 +105,7 @@ class LeadStatusController extends Controller
         return Inertia::render(
             'ERP/CRM/LeadStatuses/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
             ]
         );
     }
@@ -146,11 +140,9 @@ class LeadStatusController extends Controller
         return Inertia::render(
             'ERP/CRM/LeadStatuses/Edit',
             [
-                'leadStatus' =>
-                    $leadStatus,
+                'leadStatus' => $leadStatus,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
             ]
         );
     }
@@ -190,8 +182,7 @@ class LeadStatusController extends Controller
                 ->exists()
         ) {
             throw ValidationException::withMessages([
-                'lead_status' =>
-                    'This lead status is already used by leads. Deactivate it instead of deleting it.',
+                'lead_status' => 'This lead status is already used by leads. Deactivate it instead of deleting it.',
             ]);
         }
 
@@ -234,13 +225,12 @@ class LeadStatusController extends Controller
                     'code'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'company_id',
-                                $request->integer(
-                                    'company_id'
-                                )
+                        fn ($query) => $query->where(
+                            'company_id',
+                            $request->integer(
+                                'company_id'
                             )
+                        )
                     )
                     ->ignore(
                         $leadStatus?->id
@@ -290,45 +280,35 @@ class LeadStatusController extends Controller
             $data['is_lost']
         ) {
             throw ValidationException::withMessages([
-                'is_won' =>
-                    'A lead status cannot be both Won and Lost.',
+                'is_won' => 'A lead status cannot be both Won and Lost.',
             ]);
         }
 
         return [
-            'company_id' =>
-                $data['company_id'],
+            'company_id' => $data['company_id'],
 
-            'name' =>
+            'name' => trim(
+                $data['name']
+            ),
+
+            'code' => strtoupper(
                 trim(
-                    $data['name']
-                ),
+                    $data['code']
+                )
+            ),
 
-            'code' =>
-                strtoupper(
-                    trim(
-                        $data['code']
-                    )
-                ),
+            'probability' => $data['probability'],
 
-            'probability' =>
-                $data['probability'],
+            'is_won' => $data['is_won'],
 
-            'is_won' =>
-                $data['is_won'],
+            'is_lost' => $data['is_lost'],
 
-            'is_lost' =>
-                $data['is_lost'],
-
-            'description' =>
-                $data['description']
+            'description' => $data['description']
                 ?? null,
 
-            'sort_order' =>
-                $data['sort_order'],
+            'sort_order' => $data['sort_order'],
 
-            'status' =>
-                $data['status'],
+            'status' => $data['status'],
         ];
     }
 

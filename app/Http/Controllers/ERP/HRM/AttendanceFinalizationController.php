@@ -21,29 +21,27 @@ class AttendanceFinalizationController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Finalization/Index',
             [
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                            'timezone',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                        'timezone',
+                    ]),
 
-                'runs' =>
-                    AttendanceFinalizationRun::query()
-                        ->with([
-                            'company:id,name',
-                            'runBy:id,name',
-                        ])
-                        ->orderByDesc(
-                            'created_at'
-                        )
-                        ->paginate(20),
+                'runs' => AttendanceFinalizationRun::query()
+                    ->with([
+                        'company:id,name',
+                        'runBy:id,name',
+                    ])
+                    ->orderByDesc(
+                        'created_at'
+                    )
+                    ->paginate(20),
             ]
         );
     }
@@ -109,26 +107,22 @@ class AttendanceFinalizationController extends Controller
                 )
         ) {
             throw ValidationException::withMessages([
-                'attendance_date' =>
-                    'Only completed past attendance dates can be finalized.',
+                'attendance_date' => 'Only completed past attendance dates can be finalized.',
             ]);
         }
 
         $run =
             $finalizer->finalize(
-                companyId:
-                    (int)
+                companyId: (int)
                     $data[
                         'company_id'
                     ],
 
-                attendanceDate:
-                    $data[
+                attendanceDate: $data[
                         'attendance_date'
                     ],
 
-                runBy:
-                    $request->user()?->id
+                runBy: $request->user()?->id
             );
 
         return back()->with(

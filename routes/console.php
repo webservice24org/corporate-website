@@ -13,5 +13,3 @@ Schedule::command(
 )
     ->everyMinute()
     ->withoutOverlapping();
-
-

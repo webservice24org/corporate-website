@@ -26,35 +26,25 @@ class MasterProfileActivityLogger
         ?Request $request = null
     ): MasterProfileActivity {
         return MasterProfileActivity::create([
-            'subject_type' =>
-                $subject->getMorphClass(),
+            'subject_type' => $subject->getMorphClass(),
 
-            'subject_id' =>
-                $subject->getKey(),
+            'subject_id' => $subject->getKey(),
 
-            'actor_id' =>
-                $actorId,
+            'actor_id' => $actorId,
 
-            'source' =>
-                $source,
+            'source' => $source,
 
-            'action' =>
-                $action,
+            'action' => $action,
 
-            'description' =>
-                $description,
+            'description' => $description,
 
-            'changes' =>
-                $changes ?: null,
+            'changes' => $changes ?: null,
 
-            'meta' =>
-                $meta ?: null,
+            'meta' => $meta ?: null,
 
-            'ip_address' =>
-                $request?->ip(),
+            'ip_address' => $request?->ip(),
 
-            'user_agent' =>
-                $request?->userAgent(),
+            'user_agent' => $request?->userAgent(),
         ]);
     }
 
@@ -95,46 +85,37 @@ class MasterProfileActivityLogger
             }
 
             $changes[$field] = [
-                'old' =>
-                    $this->displayValue(
-                        $field,
-                        $oldValue
-                    ),
+                'old' => $this->displayValue(
+                    $field,
+                    $oldValue
+                ),
 
-                'new' =>
-                    $this->displayValue(
-                        $field,
-                        $newValue
-                    ),
+                'new' => $this->displayValue(
+                    $field,
+                    $newValue
+                ),
             ];
         }
 
-        if (!$changes) {
+        if (! $changes) {
             return null;
         }
 
         return $this->record(
-            subject:
-                $subject,
+            subject: $subject,
 
-            actorId:
-                $actorId,
+            actorId: $actorId,
 
-            action:
-                'profile.updated',
+            action: 'profile.updated',
 
-            source:
-                $source,
+            source: $source,
 
-            description:
-                $description ??
+            description: $description ??
                 'Master profile updated.',
 
-            changes:
-                $changes,
+            changes: $changes,
 
-            request:
-                $request
+            request: $request
         );
     }
 
@@ -183,44 +164,37 @@ class MasterProfileActivityLogger
         }
 
         return match ($field) {
-            'company_id' =>
-                Company::query()
-                    ->whereKey($value)
-                    ->value('name') ??
+            'company_id' => Company::query()
+                ->whereKey($value)
+                ->value('name') ??
                 $value,
 
-            'division_id' =>
-                Division::query()
-                    ->whereKey($value)
-                    ->value('name') ??
+            'division_id' => Division::query()
+                ->whereKey($value)
+                ->value('name') ??
                 $value,
 
-            'district_id' =>
-                District::query()
-                    ->whereKey($value)
-                    ->value('name') ??
+            'district_id' => District::query()
+                ->whereKey($value)
+                ->value('name') ??
                 $value,
 
-            'depot_id' =>
-                Depot::query()
-                    ->whereKey($value)
-                    ->value('name') ??
+            'depot_id' => Depot::query()
+                ->whereKey($value)
+                ->value('name') ??
                 $value,
 
-            'upazila_id' =>
-                Upazila::query()
-                    ->whereKey($value)
-                    ->value('name') ??
+            'upazila_id' => Upazila::query()
+                ->whereKey($value)
+                ->value('name') ??
                 $value,
 
-            'manager_user_id' =>
-                User::query()
-                    ->whereKey($value)
-                    ->value('name') ??
+            'manager_user_id' => User::query()
+                ->whereKey($value)
+                ->value('name') ??
                 $value,
 
-            default =>
-                $value,
+            default => $value,
         };
     }
 }

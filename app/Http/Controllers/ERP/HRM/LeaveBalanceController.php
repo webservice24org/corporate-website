@@ -66,19 +66,15 @@ class LeaveBalanceController extends Controller
                 'recentAdjustments' => $recentAdjustments,
 
                 'filters' => [
-                    'search' =>
-                        $request->search,
+                    'search' => $request->search,
 
-                    'company_id' =>
-                        $companyId
+                    'company_id' => $companyId
                             ? (string) $companyId
                             : '',
 
-                    'leave_type_id' =>
-                        $request->leave_type_id,
+                    'leave_type_id' => $request->leave_type_id,
 
-                    'year' =>
-                        (string) $year,
+                    'year' => (string) $year,
                 ],
             ]
         );
@@ -138,10 +134,9 @@ class LeaveBalanceController extends Controller
             )
             ->first();
 
-        if (!$leaveType) {
+        if (! $leaveType) {
             throw ValidationException::withMessages([
-                'leave_type_id' =>
-                    'The selected leave type does not belong to this employee company.',
+                'leave_type_id' => 'The selected leave type does not belong to this employee company.',
             ]);
         }
 
@@ -153,26 +148,19 @@ class LeaveBalanceController extends Controller
                 $balanceService
             ): void {
                 EmployeeLeaveBalanceAdjustment::create([
-                    'employee_id' =>
-                        $employee->id,
+                    'employee_id' => $employee->id,
 
-                    'leave_type_id' =>
-                        $leaveType->id,
+                    'leave_type_id' => $leaveType->id,
 
-                    'year' =>
-                        $data['year'],
+                    'year' => $data['year'],
 
-                    'days' =>
-                        $data['days'],
+                    'days' => $data['days'],
 
-                    'adjustment_type' =>
-                        'manual',
+                    'adjustment_type' => 'manual',
 
-                    'reason' =>
-                        $data['reason'],
+                    'reason' => $data['reason'],
 
-                    'adjusted_by' =>
-                        auth()->id(),
+                    'adjusted_by' => auth()->id(),
                 ]);
 
                 $balanceService->recalculate(
@@ -235,7 +223,7 @@ class LeaveBalanceController extends Controller
         int $year,
         LeaveBalanceService $balanceService
     ): void {
-        if (!$companyId) {
+        if (! $companyId) {
             return;
         }
 
@@ -290,11 +278,10 @@ class LeaveBalanceController extends Controller
                 function ($query, $companyId) {
                     $query->whereHas(
                         'employee',
-                        fn ($employeeQuery) =>
-                            $employeeQuery->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn ($employeeQuery) => $employeeQuery->where(
+                            'company_id',
+                            $companyId
+                        )
                     );
                 }
             )
@@ -335,11 +322,10 @@ class LeaveBalanceController extends Controller
             )
             ->when(
                 $request->leave_type_id,
-                fn ($query, $leaveTypeId) =>
-                    $query->where(
-                        'leave_type_id',
-                        $leaveTypeId
-                    )
+                fn ($query, $leaveTypeId) => $query->where(
+                    'leave_type_id',
+                    $leaveTypeId
+                )
             )
             ->orderBy('employee_id')
             ->orderBy('leave_type_id')
@@ -349,35 +335,25 @@ class LeaveBalanceController extends Controller
         $balances->through(
             function (EmployeeLeaveBalance $balance): array {
                 return [
-                    'id' =>
-                        $balance->id,
+                    'id' => $balance->id,
 
-                    'year' =>
-                        $balance->year,
+                    'year' => $balance->year,
 
-                    'opening_balance' =>
-                        (float) $balance->opening_balance,
+                    'opening_balance' => (float) $balance->opening_balance,
 
-                    'entitled_days' =>
-                        (float) $balance->entitled_days,
+                    'entitled_days' => (float) $balance->entitled_days,
 
-                    'adjustment_days' =>
-                        (float) $balance->adjustment_days,
+                    'adjustment_days' => (float) $balance->adjustment_days,
 
-                    'used_days' =>
-                        (float) $balance->used_days,
+                    'used_days' => (float) $balance->used_days,
 
-                    'pending_days' =>
-                        (float) $balance->pending_days,
+                    'pending_days' => (float) $balance->pending_days,
 
-                    'available_days' =>
-                        $balance->available_days,
+                    'available_days' => $balance->available_days,
 
-                    'employee' =>
-                        $balance->employee,
+                    'employee' => $balance->employee,
 
-                    'leave_type' =>
-                        $balance->leaveType,
+                    'leave_type' => $balance->leaveType,
                 ];
             }
         );
@@ -391,11 +367,10 @@ class LeaveBalanceController extends Controller
         return LeaveType::query()
             ->when(
                 $companyId,
-                fn ($query, $companyId) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn ($query, $companyId) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             )
             ->where(
                 'status',
@@ -425,11 +400,10 @@ class LeaveBalanceController extends Controller
                 function ($query, $companyId) {
                     $query->whereHas(
                         'employee',
-                        fn ($employeeQuery) =>
-                            $employeeQuery->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn ($employeeQuery) => $employeeQuery->where(
+                            'company_id',
+                            $companyId
+                        )
                     );
                 }
             )

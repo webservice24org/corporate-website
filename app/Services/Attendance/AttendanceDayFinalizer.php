@@ -6,12 +6,14 @@ use App\Models\AttendanceFinalizationRun;
 use App\Models\AttendanceHoliday;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSetting;
+use App\Models\AttendanceShift;
+use App\Models\LeaveType;
 use App\Models\Company;
 use App\Models\Employee;
+use App\Models\EmployeeLeaveRequest;
 use App\Models\EmployeeShiftAssignment;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
-use App\Models\EmployeeLeaveRequest;
 
 class AttendanceDayFinalizer
 {
@@ -87,9 +89,7 @@ class AttendanceDayFinalizer
                     'active'
                 )
                 ->where(
-                    function ($query) use (
-                        $attendanceDate
-                    ) {
+                    function ($query) use ($attendanceDate) {
                         $query
                             ->whereNull(
                                 'joining_date'
@@ -102,9 +102,7 @@ class AttendanceDayFinalizer
                     }
                 )
                 ->where(
-                    function ($query) use (
-                        $attendanceDate
-                    ) {
+                    function ($query) use ($attendanceDate) {
                         $query
                             ->whereNull(
                                 'termination_date'
@@ -125,12 +123,7 @@ class AttendanceDayFinalizer
             ]++;
 
             DB::transaction(
-                function () use (
-                    $employee,
-                    $attendanceDate,
-                    $timezone,
-                    &$summary
-                ): void {
+                function () use ($employee, $attendanceDate, $timezone, &$summary): void {
                     $this->finalizeEmployeeDay(
                         $employee,
                         $attendanceDate,
@@ -142,55 +135,43 @@ class AttendanceDayFinalizer
         }
 
         return AttendanceFinalizationRun::create([
-            'company_id' =>
-                $company->id,
+            'company_id' => $company->id,
 
-            'run_by' =>
-                $runBy,
+            'run_by' => $runBy,
 
-            'attendance_date' =>
-                $attendanceDate,
+            'attendance_date' => $attendanceDate,
 
-            'status' =>
-                'completed',
+            'status' => 'completed',
 
-            'employees_checked' =>
-                $summary[
-                    'employees_checked'
-                ],
+            'employees_checked' => $summary[
+                'employees_checked'
+            ],
 
-            'absent_created' =>
-                $summary[
-                    'absent_created'
-                ],
+            'absent_created' => $summary[
+                'absent_created'
+            ],
 
-            'off_day_created' =>
-                $summary[
-                    'off_day_created'
-                ],
+            'off_day_created' => $summary[
+                'off_day_created'
+            ],
 
-            'off_day_work_updated' =>
-                $summary[
-                    'off_day_work_updated'
-                ],
+            'off_day_work_updated' => $summary[
+                'off_day_work_updated'
+            ],
 
-            'existing_attendance_skipped' =>
-                $summary[
-                    'existing_attendance_skipped'
-                ],
+            'existing_attendance_skipped' => $summary[
+                'existing_attendance_skipped'
+            ],
 
-            'manual_records_skipped' =>
-                $summary[
-                    'manual_records_skipped'
-                ],
+            'manual_records_skipped' => $summary[
+                'manual_records_skipped'
+            ],
 
-            'no_shift_skipped' =>
-                $summary[
-                    'no_shift_skipped'
-                ],
+            'no_shift_skipped' => $summary[
+                'no_shift_skipped'
+            ],
 
-            'result_summary' =>
-                $summary,
+            'result_summary' => $summary,
         ]);
     }
 
@@ -217,9 +198,7 @@ class AttendanceDayFinalizer
                     $attendanceDate
                 )
                 ->where(
-                    function ($query) use (
-                        $attendanceDate
-                    ) {
+                    function ($query) use ($attendanceDate) {
                         $query
                             ->whereNull(
                                 'effective_to'
@@ -248,8 +227,13 @@ class AttendanceDayFinalizer
             return;
         }
 
-        $shift =
-            $assignment->shift;
+        $shift = $assignment->shift;
+
+        if (!$shift instanceof AttendanceShift) {
+            $summary['no_shift_skipped']++;
+
+            return;
+        }
 
         $record =
             AttendanceRecord::query()
@@ -383,7 +367,7 @@ class AttendanceDayFinalizer
             if (
                 $holiday &&
                 $record->attendance_status
-                    !== 'off_day_work'
+                !== 'off_day_work'
             ) {
                 $details =
                     $record
@@ -391,18 +375,14 @@ class AttendanceDayFinalizer
                     ?? [];
 
                 $details['holiday'] = [
-                    'id' =>
-                        $holiday->id,
+                    'id' => $holiday->id,
 
-                    'name' =>
-                        $holiday->name,
+                    'name' => $holiday->name,
 
-                    'type' =>
-                        $holiday
-                            ->holiday_type,
+                    'type' => $holiday
+                        ->holiday_type,
 
-                    'is_paid' =>
-                        $holiday->is_paid,
+                    'is_paid' => $holiday->is_paid,
                 ];
 
                 $details[
@@ -410,11 +390,9 @@ class AttendanceDayFinalizer
                 ] = true;
 
                 $record->update([
-                    'attendance_status' =>
-                        'off_day_work',
+                    'attendance_status' => 'off_day_work',
 
-                    'calculation_details' =>
-                        $details,
+                    'calculation_details' => $details,
                 ]);
 
                 $summary[
@@ -467,167 +445,124 @@ class AttendanceDayFinalizer
             ]++;
         }
 
+        $leaveType = $approvedLeave?->leaveType;
+        $leaveType = $leaveType instanceof LeaveType ? $leaveType : null;
+
         $calculationDetails = [
-            'timezone' =>
-                $timezone,
+            'timezone' => $timezone,
 
-            'working_day' =>
-                $workingDay,
+            'working_day' => $workingDay,
 
-            'finalized' =>
-                true,
+            'finalized' => true,
 
-            'finalized_at' =>
-                now()->toIso8601String(),
+            'finalized_at' => now()->toIso8601String(),
 
-            'finalization_reason' =>
-                $holiday
-                    ? 'holiday'
+            'finalization_reason' => $holiday
+                ? 'holiday'
+                : (
+                    !$workingDay
+                    ? 'weekly_off'
                     : (
-                        !$workingDay
-                            ? 'weekly_off'
-                            : (
-                                $approvedLeave
-                                    ? 'approved_leave'
-                                    : 'no_attendance'
-                            )
-                    ),
+                        $approvedLeave
+                        ? 'approved_leave'
+                        : 'no_attendance'
+                    )
+                ),
 
-            'leave_reconciliation_pending' =>
-                false,
+            'leave_reconciliation_pending' => false,
 
-            'leave' =>
-                $approvedLeave
-                    ? [
-                        'request_id' =>
-                            $approvedLeave->id,
+            'leave' => $approvedLeave
+                ? [
+                    'request_id' => $approvedLeave->id,
 
-                        'leave_type_id' =>
-                            $approvedLeave
-                                ->leave_type_id,
+                    'leave_type_id' => $approvedLeave
+                        ->leave_type_id,
 
-                        'leave_type_name' =>
-                            $approvedLeave
-                                ->leaveType
-                                ?->name,
+                    'leave_type_name' => $leaveType?->name,
 
-                        'leave_type_code' =>
-                            $approvedLeave
-                                ->leaveType
-                                ?->code,
+                    'leave_type_code' => $leaveType?->code,
 
-                        'is_paid' =>
-                            $approvedLeave
-                                ->leaveType
-                                ?->is_paid,
+                    'is_paid' => $leaveType?->is_paid,
 
-                        'duration_type' =>
-                            $approvedLeave
-                                ->duration_type,
+                    'duration_type' => $approvedLeave
+                        ->duration_type,
 
-                        'half_day_period' =>
-                            $approvedLeave
-                                ->half_day_period,
-                    ]
-                    : null,
+                    'half_day_period' => $approvedLeave
+                        ->half_day_period,
+                ]
+                : null,
         ];
 
         if ($holiday) {
             $calculationDetails[
                 'holiday'
             ] = [
-                'id' =>
-                    $holiday->id,
+                'id' => $holiday->id,
 
-                'name' =>
-                    $holiday->name,
+                'name' => $holiday->name,
 
-                'type' =>
-                    $holiday
-                        ->holiday_type,
+                'type' => $holiday
+                    ->holiday_type,
 
-                'is_paid' =>
-                    $holiday->is_paid,
+                'is_paid' => $holiday->is_paid,
             ];
         }
 
         AttendanceRecord::query()
             ->updateOrCreate(
                 [
-                    'employee_id' =>
-                        $employee->id,
+                    'employee_id' => $employee->id,
 
-                    'attendance_date' =>
-                        $attendanceDate,
+                    'attendance_date' => $attendanceDate,
                 ],
                 [
-                    'company_id' =>
-                        $employee->company_id,
+                    'company_id' => $employee->company_id,
 
-                    'shift_id' =>
-                        $shift->id,
+                    'shift_id' => $shift->id,
 
-                    'branch_id' =>
-                        $employee->branch_id,
+                    'branch_id' => $employee->branch_id,
 
-                    'department_id' =>
-                        $employee->department_id,
+                    'department_id' => $employee->department_id,
 
-                    'designation_id' =>
-                        $employee->designation_id,
+                    'designation_id' => $employee->designation_id,
 
-                    'scheduled_start_at' =>
-                        $scheduledStartLocal
-                            ->utc()
-                            ->format(
-                                'Y-m-d H:i:s'
-                            ),
+                    'scheduled_start_at' => $scheduledStartLocal
+                        ->utc()
+                        ->format(
+                            'Y-m-d H:i:s'
+                        ),
 
-                    'scheduled_end_at' =>
-                        $scheduledEndLocal
-                            ->utc()
-                            ->format(
-                                'Y-m-d H:i:s'
-                            ),
+                    'scheduled_end_at' => $scheduledEndLocal
+                        ->utc()
+                        ->format(
+                            'Y-m-d H:i:s'
+                        ),
 
-                    'check_in_at' =>
-                        null,
+                    'check_in_at' => null,
 
-                    'check_out_at' =>
-                        null,
+                    'check_out_at' => null,
 
-                    'worked_minutes' =>
-                        0,
+                    'worked_minutes' => 0,
 
-                    'break_minutes' =>
-                        0,
+                    'break_minutes' => 0,
 
-                    'late_minutes' =>
-                        0,
+                    'late_minutes' => 0,
 
-                    'early_leave_minutes' =>
-                        0,
+                    'early_leave_minutes' => 0,
 
-                    'overtime_minutes' =>
-                        0,
+                    'overtime_minutes' => 0,
 
-                    'punch_count' =>
-                        0,
+                    'punch_count' => 0,
 
-                    'attendance_status' =>
-                        $attendanceStatus,
+                    'attendance_status' => $attendanceStatus,
 
-                    'source' =>
-                        'finalizer',
+                    'source' => 'finalizer',
 
-                    'is_manual' =>
-                        false,
+                    'is_manual' => false,
 
-                    'calculation_details' =>
-                        $calculationDetails,
+                    'calculation_details' => $calculationDetails,
 
-                    'processed_at' =>
-                        now(),
+                    'processed_at' => now(),
                 ]
             );
     }
@@ -650,9 +585,7 @@ class AttendanceDayFinalizer
                 'active'
             )
             ->where(
-                function ($query) use (
-                    $employee
-                ) {
+                function ($query) use ($employee) {
                     $query
                         ->whereNull(
                             'branch_id'
@@ -696,7 +629,7 @@ class AttendanceDayFinalizer
 
             if (
                 json_last_error()
-                    === JSON_ERROR_NONE
+                === JSON_ERROR_NONE
             ) {
                 $workingDays =
                     $decoded;
@@ -722,12 +655,11 @@ class AttendanceDayFinalizer
                 $workingDays
             )
                 ->map(
-                    fn ($day) =>
-                        strtolower(
-                            trim(
-                                (string) $day
-                            )
+                    fn($day) => strtolower(
+                        trim(
+                            (string) $day
                         )
+                    )
                 )
                 ->values();
 
@@ -755,8 +687,8 @@ class AttendanceDayFinalizer
         }
 
         $isoDay =
-            (string)
-                $date->dayOfWeekIso;
+            (string) 
+            $date->dayOfWeekIso;
 
         if (
             $normalized

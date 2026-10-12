@@ -4,8 +4,8 @@ namespace App\Http\Controllers\ERP\CRM;
 
 use App\Http\Controllers\Controller;
 use App\Models\Company;
-use App\Models\Customer;
 use App\Models\CrmActivity;
+use App\Models\Customer;
 use App\Models\Lead;
 use App\Models\Opportunity;
 use App\Models\User;
@@ -36,16 +36,16 @@ class CrmActivityController extends Controller
                 'createdBy:id,name,email',
                 'activityable',
             ])
-            ->when($filters['company_id'] ?? null, fn ($query, $companyId) => $query->where('company_id', $companyId))
-            ->when($filters['activity_type'] ?? null, fn ($query, $type) => $query->where('activity_type', $type))
-            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
-            ->when($filters['priority'] ?? null, fn ($query, $priority) => $query->where('priority', $priority))
-            ->when($filters['assigned_to_user_id'] ?? null, fn ($query, $userId) => $query->where('assigned_to_user_id', $userId))
+            ->when($filters['company_id'] ?? null, fn($query, $companyId) => $query->where('company_id', $companyId))
+            ->when($filters['activity_type'] ?? null, fn($query, $type) => $query->where('activity_type', $type))
+            ->when($filters['status'] ?? null, fn($query, $status) => $query->where('status', $status))
+            ->when($filters['priority'] ?? null, fn($query, $priority) => $query->where('priority', $priority))
+            ->when($filters['assigned_to_user_id'] ?? null, fn($query, $userId) => $query->where('assigned_to_user_id', $userId))
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('subject', 'like', "%{$search}%")
-                      ->orWhere('description', 'like', "%{$search}%")
-                      ->orWhere('outcome', 'like', "%{$search}%");
+                        ->orWhere('description', 'like', "%{$search}%")
+                        ->orWhere('outcome', 'like', "%{$search}%");
                 });
             })
             ->orderByRaw('CASE WHEN status IN ("planned", "in_progress") THEN 0 ELSE 1 END')
@@ -170,7 +170,7 @@ class CrmActivityController extends Controller
             'completed_at' => $this->completedAt(
                 $data['status'],
                 $data['completed_at'] ?? null,
-                $crmActivity->completed_at?->toDateTimeString()
+                $crmActivity->completed_at
             ),
             'outcome' => $data['outcome'] ?? null,
         ]);
@@ -192,6 +192,7 @@ class CrmActivityController extends Controller
             ->with('success', 'CRM activity deleted successfully.');
     }
 
+    /** @return Lead|Customer|Opportunity */
     private function resolveSubject(string $type, int $id): Model
     {
         return match ($type) {

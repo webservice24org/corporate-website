@@ -2,15 +2,18 @@
 
 namespace App\Services\Attendance;
 
+use App\Models\AttendanceHoliday;
 use App\Models\AttendanceRawPunch;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSetting;
+use App\Models\AttendanceShift;
+use App\Models\Company;
+use App\Models\AttendanceDevice;
 use App\Models\Employee;
 use App\Models\EmployeeShiftAssignment;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use App\Models\AttendanceHoliday;
 
 class AttendanceProcessor
 {
@@ -81,11 +84,9 @@ class AttendanceProcessor
                     $date;
 
                 $days[$key] = [
-                    'employee_id' =>
-                        $punch->employee_id,
+                    'employee_id' => $punch->employee_id,
 
-                    'date' =>
-                        $date,
+                    'date' => $date,
                 ];
             }
         }
@@ -97,11 +98,9 @@ class AttendanceProcessor
             try {
                 $record =
                     $this->processEmployeeDay(
-                        employeeId:
-                            $day['employee_id'],
+                        employeeId: $day['employee_id'],
 
-                        attendanceDate:
-                            $day['date']
+                        attendanceDate: $day['date']
                     );
 
                 if ($record) {
@@ -115,17 +114,13 @@ class AttendanceProcessor
         }
 
         return [
-            'pending_punches' =>
-                $punches->count(),
+            'pending_punches' => $punches->count(),
 
-            'candidate_days' =>
-                count($days),
+            'candidate_days' => count($days),
 
-            'processed_records' =>
-                $processedRecords,
+            'processed_records' => $processedRecords,
 
-            'failed_days' =>
-                $failedDays,
+            'failed_days' => $failedDays,
         ];
     }
 
@@ -139,7 +134,7 @@ class AttendanceProcessor
         AttendanceRecord $record
     ): ?AttendanceRecord {
         $attendanceDate =
-            (string)
+            (string) 
             $record->getRawOriginal(
                 'attendance_date'
             );
@@ -189,9 +184,7 @@ class AttendanceProcessor
                     $attendanceDate
                 )
                 ->where(
-                    function ($query) use (
-                        $attendanceDate
-                    ) {
+                    function ($query) use ($attendanceDate) {
                         $query
                             ->whereNull(
                                 'effective_to'
@@ -216,12 +209,16 @@ class AttendanceProcessor
             return null;
         }
 
-        $shift =
-            $assignment->shift;
+        $shift = $assignment->shift;
 
-        $timezone =
-            $employee->company?->timezone
-            ?: 'Asia/Dhaka';
+        if (!$shift instanceof AttendanceShift) {
+            return null;
+        }
+
+        $company = $employee->company;
+        $timezone = $company instanceof Company && $company->timezone
+            ? $company->timezone
+            : 'Asia/Dhaka';
 
         $setting =
             AttendanceSetting::query()
@@ -347,16 +344,16 @@ class AttendanceProcessor
 
         $existingRawPunchIds =
             $existingRecord
-                ? $existingRecord
-                    ->rawPunches()
-                    ->pluck(
-                        'attendance_raw_punches.id'
-                    )
-                    ->map(
-                        fn ($id) => (int) $id
-                    )
-                    ->all()
-                : [];
+            ? $existingRecord
+                ->rawPunches()
+                ->pluck(
+                    'attendance_raw_punches.id'
+                )
+                ->map(
+                    fn($id) => (int) $id
+                )
+                ->all()
+            : [];
 
         /*
         |--------------------------------------------------------------------------
@@ -380,19 +377,17 @@ class AttendanceProcessor
         |--------------------------------------------------------------------------
         */
 
-        $existingCalculationDetails =
-            $existingRecord
-                ? (
-                    $existingRecord
-                        ->calculation_details
-                    ?? []
-                )
-                : [];
+        $existingCalculationDetails = $existingRecord->calculation_details ?? [];
+
+        if (is_string($existingCalculationDetails)) {
+            $decodedDetails = json_decode($existingCalculationDetails, true);
+            $existingCalculationDetails = is_array($decodedDetails) ? $decodedDetails : [];
+        }
 
         $isFinalizedPlaceholder =
             $existingRecord &&
             $existingRecord->source
-                === 'finalizer' &&
+            === 'finalizer' &&
             in_array(
                 $existingRecord
                     ->attendance_status,
@@ -402,11 +397,10 @@ class AttendanceProcessor
                 ],
                 true
             ) &&
-            (int)
-                $existingRecord
-                    ->punch_count === 0;
+            (int) 
+            $existingRecord
+                ->punch_count === 0;
 
-                    
         /*
         |--------------------------------------------------------------------------
         | Fetch raw punches
@@ -447,9 +441,7 @@ class AttendanceProcessor
                     ]
                 )
                 ->where(
-                    function ($query) use (
-                        $existingRawPunchIds
-                    ) {
+                    function ($query) use ($existingRawPunchIds) {
                         $query->where(
                             function ($pendingQuery) {
                                 $pendingQuery
@@ -493,8 +485,7 @@ class AttendanceProcessor
 
         $duplicateWindowSeconds =
             (int) (
-                $setting
-                    ?->duplicate_punch_window_seconds
+                ($setting instanceof AttendanceSetting ? $setting->duplicate_punch_window_seconds : null)
                 ?? 10
             );
 
@@ -528,11 +519,11 @@ class AttendanceProcessor
 
         $checkOutLocal =
             $effectivePunches->count() >= 2
-                ? $this->rawUtcToLocal(
-                    $lastPunch,
-                    $timezone
-                )
-                : null;
+            ? $this->rawUtcToLocal(
+                $lastPunch,
+                $timezone
+            )
+            : null;
 
         /*
         |--------------------------------------------------------------------------
@@ -548,8 +539,7 @@ class AttendanceProcessor
                     'late_grace_minutes',
                 ],
                 (int) (
-                    $setting
-                        ?->grace_minutes
+                    ($setting instanceof AttendanceSetting ? $setting->grace_minutes : null)
                     ?? 0
                 )
             );
@@ -561,8 +551,7 @@ class AttendanceProcessor
                     'early_leave_grace_minutes',
                 ],
                 (int) (
-                    $setting
-                        ?->early_leave_grace_minutes
+                    ($setting instanceof AttendanceSetting ? $setting->early_leave_grace_minutes : null)
                     ?? 0
                 )
             );
@@ -574,8 +563,7 @@ class AttendanceProcessor
                     'half_day_minutes',
                 ],
                 (int) (
-                    $setting
-                        ?->half_day_minutes
+                    ($setting instanceof AttendanceSetting ? $setting->half_day_minutes : null)
                     ?? 240
                 )
             );
@@ -587,8 +575,7 @@ class AttendanceProcessor
                     'minimum_work_minutes',
                 ],
                 (int) (
-                    $setting
-                        ?->minimum_full_day_minutes
+                    ($setting instanceof AttendanceSetting ? $setting->minimum_full_day_minutes : null)
                     ?? 480
                 )
             );
@@ -600,8 +587,7 @@ class AttendanceProcessor
                     'overtime_after_minutes',
                 ],
                 (int) (
-                    $setting
-                        ?->overtime_after_minutes
+                    ($setting instanceof AttendanceSetting ? $setting->overtime_after_minutes : null)
                     ?? 0
                 )
             );
@@ -674,11 +660,11 @@ class AttendanceProcessor
                 ->greaterThan(
                     $lateThreshold
                 )
-                ? $scheduledStartLocal
-                    ->diffInMinutes(
-                        $checkInLocal
-                    )
-                : 0;
+            ? $scheduledStartLocal
+                ->diffInMinutes(
+                    $checkInLocal
+                )
+            : 0;
 
         /*
         |--------------------------------------------------------------------------
@@ -738,7 +724,6 @@ class AttendanceProcessor
             }
         }
 
-        
         /*
         |--------------------------------------------------------------------------
         | Working day?
@@ -775,9 +760,7 @@ class AttendanceProcessor
                     'active'
                 )
                 ->where(
-                    function ($query) use (
-                        $employee
-                    ) {
+                    function ($query) use ($employee) {
                         $query->whereNull(
                             'branch_id'
                         );
@@ -845,49 +828,34 @@ class AttendanceProcessor
 
         if ($isFinalizedPlaceholder) {
             $finalizationHistory[] = [
-                'previous_status' =>
-                    $existingRecord
-                        ->attendance_status,
+                'previous_status' => $existingRecord
+                    ->attendance_status,
 
-                'previous_source' =>
-                    $existingRecord
-                        ->source,
+                'previous_source' => $existingRecord
+                    ->source,
 
-                'previous_processed_at' =>
-                    $existingRecord
-                        ->processed_at
-                        ?->toIso8601String(),
+                'previous_processed_at' => $existingRecord->processed_at
+                    ? CarbonImmutable::parse($existingRecord->processed_at)->toIso8601String()
+                    : null,
 
-                'finalized_at' =>
-                    $existingCalculationDetails[
-                        'finalized_at'
-                    ] ?? null,
+                'finalized_at' => $existingCalculationDetails[
+                    'finalized_at'
+                ] ?? null,
 
-                'finalization_reason' =>
-                    $existingCalculationDetails[
-                        'finalization_reason'
-                    ] ?? null,
+                'finalization_reason' => $existingCalculationDetails[
+                    'finalization_reason'
+                ] ?? null,
 
-                'reconciled_at' =>
-                    now()->toIso8601String(),
+                'reconciled_at' => now()->toIso8601String(),
 
-                'reason' =>
-                    'late_biometric_punch',
+                'reason' => 'late_biometric_punch',
             ];
         }
 
-        $previousFinalizationHistory =
-            $existingCalculationDetails[
-                'finalization_history'
-            ] ?? [];
-
-        if (
-            !is_array(
-                $previousFinalizationHistory
-            )
-        ) {
-            $previousFinalizationHistory = [];
-        }
+        $previousFinalizationHistory = $existingCalculationDetails['finalization_history'] ?? [];
+        $previousFinalizationHistory = is_array($previousFinalizationHistory)
+            ? $previousFinalizationHistory
+            : [];
 
         $finalizationHistory =
             array_merge(
@@ -902,177 +870,117 @@ class AttendanceProcessor
         */
 
         return DB::transaction(
-            function () use (
-                $employee,
-                $shift,
-                $attendanceDate,
-                $scheduledStartLocal,
-                $scheduledEndLocal,
-                $checkInLocal,
-                $checkOutLocal,
-                $workedMinutes,
-                $breakMinutes,
-                $lateMinutes,
-                $earlyLeaveMinutes,
-                $overtimeMinutes,
-                $attendanceStatus,
-                $rawPunches,
-                $effectivePunches,
-                $duplicateWindowSeconds,
-                $timezone,
-                $workingDay,
-                $holiday,
-                $existingRawPunchIds,
-                $isFinalizedPlaceholder,
-                $finalizationHistory
-            ): AttendanceRecord {
+            function () use ($employee, $shift, $attendanceDate, $scheduledStartLocal, $scheduledEndLocal, $checkInLocal, $checkOutLocal, $workedMinutes, $breakMinutes, $lateMinutes, $earlyLeaveMinutes, $overtimeMinutes, $attendanceStatus, $rawPunches, $effectivePunches, $duplicateWindowSeconds, $timezone, $workingDay, $holiday, $existingRawPunchIds, $isFinalizedPlaceholder, $finalizationHistory): AttendanceRecord {
                 $record =
                     AttendanceRecord::query()
                         ->updateOrCreate(
                             [
-                                'employee_id' =>
-                                    $employee->id,
+                                'employee_id' => $employee->id,
 
-                                'attendance_date' =>
-                                    $attendanceDate,
+                                'attendance_date' => $attendanceDate,
                             ],
                             [
-                                'company_id' =>
-                                    $employee->company_id,
+                                'company_id' => $employee->company_id,
 
-                                'shift_id' =>
-                                    $shift->id,
+                                'shift_id' => $shift->id,
 
-                                'branch_id' =>
-                                    $employee->branch_id,
+                                'branch_id' => $employee->branch_id,
 
-                                'department_id' =>
-                                    $employee->department_id,
+                                'department_id' => $employee->department_id,
 
-                                'designation_id' =>
-                                    $employee->designation_id,
+                                'designation_id' => $employee->designation_id,
 
-                                'scheduled_start_at' =>
-                                    $scheduledStartLocal
-                                        ->utc()
-                                        ->format(
-                                            'Y-m-d H:i:s'
-                                        ),
+                                'scheduled_start_at' => $scheduledStartLocal
+                                    ->utc()
+                                    ->format(
+                                        'Y-m-d H:i:s'
+                                    ),
 
-                                'scheduled_end_at' =>
-                                    $scheduledEndLocal
-                                        ->utc()
-                                        ->format(
-                                            'Y-m-d H:i:s'
-                                        ),
+                                'scheduled_end_at' => $scheduledEndLocal
+                                    ->utc()
+                                    ->format(
+                                        'Y-m-d H:i:s'
+                                    ),
 
-                                'check_in_at' =>
-                                    $checkInLocal
-                                        ->utc()
-                                        ->format(
-                                            'Y-m-d H:i:s'
-                                        ),
+                                'check_in_at' => $checkInLocal
+                                    ->utc()
+                                    ->format(
+                                        'Y-m-d H:i:s'
+                                    ),
 
-                                'check_out_at' =>
-                                    $checkOutLocal
+                                'check_out_at' => $checkOutLocal
                                         ?->utc()
-                                        ->format(
-                                            'Y-m-d H:i:s'
-                                        ),
+                                    ->format(
+                                        'Y-m-d H:i:s'
+                                    ),
 
-                                'worked_minutes' =>
-                                    $workedMinutes,
+                                'worked_minutes' => $workedMinutes,
 
-                                'break_minutes' =>
-                                    $breakMinutes,
+                                'break_minutes' => $breakMinutes,
 
-                                'late_minutes' =>
-                                    $lateMinutes,
+                                'late_minutes' => $lateMinutes,
 
-                                'early_leave_minutes' =>
-                                    $earlyLeaveMinutes,
+                                'early_leave_minutes' => $earlyLeaveMinutes,
 
-                                'overtime_minutes' =>
-                                    $overtimeMinutes,
+                                'overtime_minutes' => $overtimeMinutes,
 
-                                'punch_count' =>
-                                    $rawPunches->count(),
+                                'punch_count' => $rawPunches->count(),
 
-                                'attendance_status' =>
-                                    $attendanceStatus,
+                                'attendance_status' => $attendanceStatus,
 
-                                'source' =>
-                                    'automatic',
+                                'source' => 'automatic',
 
-                                'is_manual' =>
-                                    false,
+                                'is_manual' => false,
 
                                 'calculation_details' => [
-                                    'timezone' =>
-                                        $timezone,
+                                    'timezone' => $timezone,
 
-                                    'working_day' =>
-                                        $workingDay,
+                                    'working_day' => $workingDay,
 
-                                    'holiday' =>
-                                        $holiday
-                                            ? [
-                                                'id' =>
-                                                    $holiday->id,
+                                    'holiday' => $holiday
+                                        ? [
+                                            'id' => $holiday->id,
 
-                                                'name' =>
-                                                    $holiday->name,
+                                            'name' => $holiday->name,
 
-                                                'type' =>
-                                                    $holiday
-                                                        ->holiday_type,
+                                            'type' => $holiday
+                                                ->holiday_type,
 
-                                                'is_paid' =>
-                                                    $holiday->is_paid,
-                                            ]
-                                            : null,
+                                            'is_paid' => $holiday->is_paid,
+                                        ]
+                                        : null,
 
-                                    'raw_punch_count' =>
-                                        $rawPunches
-                                            ->count(),
+                                    'raw_punch_count' => $rawPunches
+                                        ->count(),
 
-                                    'effective_punch_count' =>
+                                    'effective_punch_count' => $effectivePunches
+                                        ->count(),
+
+                                    'duplicate_punch_count' => $rawPunches
+                                        ->count() -
                                         $effectivePunches
                                             ->count(),
 
-                                    'duplicate_punch_count' =>
-                                        $rawPunches
-                                            ->count() -
-                                        $effectivePunches
-                                            ->count(),
+                                    'duplicate_window_seconds' => $duplicateWindowSeconds,
 
-                                    'duplicate_window_seconds' =>
-                                        $duplicateWindowSeconds,
+                                    'effective_raw_punch_ids' => $effectivePunches
+                                        ->pluck('id')
+                                        ->values()
+                                        ->all(),
 
-                                    'effective_raw_punch_ids' =>
-                                        $effectivePunches
-                                            ->pluck('id')
-                                            ->values()
-                                            ->all(),
+                                    'all_raw_punch_ids' => $rawPunches
+                                        ->pluck('id')
+                                        ->values()
+                                        ->all(),
 
-                                    'all_raw_punch_ids' =>
-                                        $rawPunches
-                                            ->pluck('id')
-                                            ->values()
-                                            ->all(),
+                                    'late_punch_reconciliation' => $isFinalizedPlaceholder,
 
-                                    'late_punch_reconciliation' =>
-                                        $isFinalizedPlaceholder,
+                                    'finalization_history' => $finalizationHistory,
 
-                                    'finalization_history' =>
-                                        $finalizationHistory,
-
-                                    'leave_reconciliation_pending' =>
-                                        false,
+                                    'leave_reconciliation_pending' => false,
                                 ],
 
-                                'processed_at' =>
-                                    now(),
+                                'processed_at' => now(),
                             ]
                         );
 
@@ -1086,7 +994,7 @@ class AttendanceProcessor
                     $rawPunches
                         ->pluck('id')
                         ->map(
-                            fn ($id) => (int) $id
+                            fn($id) => (int) $id
                         )
                         ->values()
                         ->all();
@@ -1099,7 +1007,7 @@ class AttendanceProcessor
                             $rawPunchIds
                         )
                         ->map(
-                            fn ($id) => (int) $id
+                            fn($id) => (int) $id
                         )
                         ->unique()
                         ->values()
@@ -1128,17 +1036,13 @@ class AttendanceProcessor
                         $rawPunchIds
                     )
                     ->update([
-                        'processing_status' =>
-                            'processed',
+                        'processing_status' => 'processed',
 
-                        'processing_error' =>
-                            null,
+                        'processing_error' => null,
 
-                        'processed_at' =>
-                            now(),
+                        'processed_at' => now(),
 
-                        'updated_at' =>
-                            now(),
+                        'updated_at' => now(),
                     ]);
 
                 return $record;
@@ -1215,8 +1119,8 @@ class AttendanceProcessor
             ),
             'UTC'
         )->setTimezone(
-            $timezone
-        );
+                $timezone
+            );
     }
 
     /*
@@ -1234,16 +1138,14 @@ class AttendanceProcessor
             return $punch->source_timezone;
         }
 
-        if (
-            $punch->device?->timezone
-        ) {
-            return $punch->device->timezone;
+        $device = $punch->device;
+        if ($device instanceof AttendanceDevice && $device->timezone) {
+            return $device->timezone;
         }
 
-        if (
-            $punch->company?->timezone
-        ) {
-            return $punch->company->timezone;
+        $company = $punch->company;
+        if ($company instanceof Company && $company->timezone) {
+            return $company->timezone;
         }
 
         return 'Asia/Dhaka';
@@ -1357,12 +1259,11 @@ class AttendanceProcessor
                 $workingDays
             )
                 ->map(
-                    fn ($day) =>
-                        strtolower(
-                            trim(
-                                (string) $day
-                            )
+                    fn($day) => strtolower(
+                        trim(
+                            (string) $day
                         )
+                    )
                 )
                 ->values();
 
@@ -1398,8 +1299,8 @@ class AttendanceProcessor
         */
 
         $isoDay =
-            (string)
-                $date->dayOfWeekIso;
+            (string) 
+            $date->dayOfWeekIso;
 
         if (
             $normalized->contains(

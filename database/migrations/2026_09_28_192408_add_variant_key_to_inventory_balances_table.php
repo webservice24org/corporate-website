@@ -28,10 +28,9 @@ return new class extends Migration
         )->whereNotNull(
             'product_variant_id'
         )->update([
-            'variant_key' =>
-                DB::raw(
-                    'product_variant_id'
-                ),
+            'variant_key' => DB::raw(
+                'product_variant_id'
+            ),
         ]);
 
         Schema::table(

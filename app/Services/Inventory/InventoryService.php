@@ -138,21 +138,7 @@ class InventoryService
         );
 
         return DB::transaction(
-            function () use (
-                $warehouse,
-                $product,
-                $variant,
-                $quantity,
-                $movementType,
-                $direction,
-                $unitCost,
-                $referenceType,
-                $referenceId,
-                $referenceNumber,
-                $occurredAt,
-                $createdBy,
-                $notes,
-            ): StockMovement {
+            function () use ($warehouse, $product, $variant, $quantity, $movementType, $direction, $unitCost, $referenceType, $referenceId, $referenceNumber, $occurredAt, $createdBy, $notes, ): StockMovement {
                 /*
                  * Re-fetch and lock the Warehouse.
                  *
@@ -212,12 +198,9 @@ class InventoryService
 
                 $balance =
                     $this->lockBalance(
-                        warehouse:
-                            $lockedWarehouse,
-                        product:
-                            $lockedProduct,
-                        variant:
-                            $lockedVariant,
+                        warehouse: $lockedWarehouse,
+                        product: $lockedProduct,
+                        variant: $lockedVariant,
                     );
 
                 $before =
@@ -247,14 +230,10 @@ class InventoryService
 
                     $newAverageCost =
                         $this->calculateIncomingAverageCost(
-                            quantityBefore:
-                                $before,
-                            averageCostBefore:
-                                $oldAverageCost,
-                            incomingQuantity:
-                                $quantity,
-                            incomingUnitCost:
-                                $unitCost,
+                            quantityBefore: $before,
+                            averageCostBefore: $oldAverageCost,
+                            incomingQuantity: $quantity,
+                            incomingUnitCost: $unitCost,
                         );
                 } else {
                     $after = bcsub(
@@ -278,8 +257,7 @@ class InventoryService
                         ) < 0
                     ) {
                         throw ValidationException::withMessages([
-                            'quantity' =>
-                                'Insufficient stock. This product does not allow negative stock.',
+                            'quantity' => 'Insufficient stock. This product does not allow negative stock.',
                         ]);
                     }
 
@@ -299,8 +277,7 @@ class InventoryService
                         ) < 0
                     ) {
                         throw ValidationException::withMessages([
-                            'quantity' =>
-                                'This stock-out would reduce on-hand stock below the currently reserved quantity.',
+                            'quantity' => 'This stock-out would reduce on-hand stock below the currently reserved quantity.',
                         ]);
                     }
 
@@ -312,8 +289,11 @@ class InventoryService
                         $oldAverageCost;
                 }
 
-                $movementTime =
-                    $occurredAt ?? now();
+                $movementTime = $occurredAt === null
+                    ? now()
+                    : \Illuminate\Support\Carbon::instance(
+                        $occurredAt->toDateTime()
+                    );
 
                 $totalCost = bcmul(
                     $quantity,
@@ -323,15 +303,15 @@ class InventoryService
 
                 /*
                  * Update current state.
+                 *
+                 * Decimal values remain strings to preserve
+                 * four-decimal inventory precision.
                  */
-                $balance->quantity_on_hand =
-                    $after;
-
-                $balance->average_cost =
-                    $newAverageCost;
-
-                $balance->last_movement_at =
-                    $movementTime;
+                $balance->forceFill([
+                    'quantity_on_hand' => $after,
+                    'average_cost' => $newAverageCost,
+                    'last_movement_at' => $movementTime,
+                ]);
 
                 $balance->save();
 
@@ -339,60 +319,43 @@ class InventoryService
                  * Append immutable ledger entry.
                  */
                 return StockMovement::create([
-                    'company_id' =>
-                        $lockedWarehouse
-                            ->company_id,
+                    'company_id' => $lockedWarehouse
+                        ->company_id,
 
-                    'warehouse_id' =>
-                        $lockedWarehouse
-                            ->getKey(),
+                    'warehouse_id' => $lockedWarehouse
+                        ->getKey(),
 
-                    'product_id' =>
-                        $lockedProduct
-                            ->getKey(),
+                    'product_id' => $lockedProduct
+                        ->getKey(),
 
-                    'product_variant_id' =>
-                        $lockedVariant
+                    'product_variant_id' => $lockedVariant
                             ?->getKey(),
 
-                    'movement_type' =>
-                        $movementType,
+                    'movement_type' => $movementType,
 
-                    'direction' =>
-                        $direction,
+                    'direction' => $direction,
 
-                    'quantity' =>
-                        $quantity,
+                    'quantity' => $quantity,
 
-                    'unit_cost' =>
-                        $unitCost,
+                    'unit_cost' => $unitCost,
 
-                    'total_cost' =>
-                        $totalCost,
+                    'total_cost' => $totalCost,
 
-                    'balance_before' =>
-                        $before,
+                    'balance_before' => $before,
 
-                    'balance_after' =>
-                        $after,
+                    'balance_after' => $after,
 
-                    'reference_type' =>
-                        $referenceType,
+                    'reference_type' => $referenceType,
 
-                    'reference_id' =>
-                        $referenceId,
+                    'reference_id' => $referenceId,
 
-                    'reference_number' =>
-                        $referenceNumber,
+                    'reference_number' => $referenceNumber,
 
-                    'occurred_at' =>
-                        $movementTime,
+                    'occurred_at' => $movementTime,
 
-                    'created_by' =>
-                        $createdBy,
+                    'created_by' => $createdBy,
 
-                    'notes' =>
-                        $notes,
+                    'notes' => $notes,
                 ]);
             },
             5
@@ -405,9 +368,9 @@ class InventoryService
      * This does not create a row.
      */
     public function getBalance(
-    Warehouse $warehouse,
-    Product $product,
-    ?ProductVariant $variant = null,
+        Warehouse $warehouse,
+        Product $product,
+        ?ProductVariant $variant = null,
     ): ?InventoryBalance {
         return InventoryBalance::query()
             ->where(
@@ -433,12 +396,10 @@ class InventoryService
         Product $product,
         ?ProductVariant $variant = null,
     ): string {
+        $balance = $this->getBalance($warehouse, $product, $variant);
+
         return $this->decimal(
-            $this->getBalance(
-                $warehouse,
-                $product,
-                $variant
-            )?->quantity_on_hand ?? 0
+            $balance !== null ? $balance->quantity_on_hand : 0
         );
     }
 
@@ -450,12 +411,10 @@ class InventoryService
         Product $product,
         ?ProductVariant $variant = null,
     ): string {
+        $balance = $this->getBalance($warehouse, $product, $variant);
+
         return $this->decimal(
-            $this->getBalance(
-                $warehouse,
-                $product,
-                $variant
-            )?->quantity_reserved ?? 0
+            $balance !== null ? $balance->quantity_reserved : 0
         );
     }
 
@@ -494,9 +453,9 @@ class InventoryService
      * balance row.
      */
     private function lockBalance(
-    Warehouse $warehouse,
-    Product $product,
-    ?ProductVariant $variant,
+        Warehouse $warehouse,
+        Product $product,
+        ?ProductVariant $variant,
     ): InventoryBalance {
         $variantKey =
             $variant?->getKey() ?? 0;
@@ -524,8 +483,7 @@ class InventoryService
                 (int) $warehouse->company_id
             ) {
                 throw ValidationException::withMessages([
-                    'warehouse_id' =>
-                        'The existing inventory balance belongs to a different company.',
+                    'warehouse_id' => 'The existing inventory balance belongs to a different company.',
                 ]);
             }
 
@@ -533,36 +491,27 @@ class InventoryService
         }
 
         /*
-        * The UNIQUE database constraint protects the
-        * first creation of the balance identity.
-        */
+         * The UNIQUE database constraint protects the
+         * first creation of the balance identity.
+         */
         InventoryBalance::create([
-            'company_id' =>
-                $warehouse->company_id,
+            'company_id' => $warehouse->company_id,
 
-            'warehouse_id' =>
-                $warehouse->getKey(),
+            'warehouse_id' => $warehouse->getKey(),
 
-            'product_id' =>
-                $product->getKey(),
+            'product_id' => $product->getKey(),
 
-            'product_variant_id' =>
-                $variant?->getKey(),
+            'product_variant_id' => $variant?->getKey(),
 
-            'variant_key' =>
-                $variantKey,
+            'variant_key' => $variantKey,
 
-            'quantity_on_hand' =>
-                '0.0000',
+            'quantity_on_hand' => '0.0000',
 
-            'quantity_reserved' =>
-                '0.0000',
+            'quantity_reserved' => '0.0000',
 
-            'average_cost' =>
-                '0.0000',
+            'average_cost' => '0.0000',
 
-            'last_movement_at' =>
-                null,
+            'last_movement_at' => null,
         ]);
 
         return InventoryBalance::query()
@@ -590,16 +539,14 @@ class InventoryService
             !$product->isStockItem()
         ) {
             throw ValidationException::withMessages([
-                'product_id' =>
-                    'The selected product is not configured as an inventory stock item.',
+                'product_id' => 'The selected product is not configured as an inventory stock item.',
             ]);
         }
 
         if ($product->has_variants) {
             if ($variant === null) {
                 throw ValidationException::withMessages([
-                    'product_variant_id' =>
-                        'A product variant is required for this product.',
+                    'product_variant_id' => 'A product variant is required for this product.',
                 ]);
             }
 
@@ -608,8 +555,7 @@ class InventoryService
                 (int) $product->getKey()
             ) {
                 throw ValidationException::withMessages([
-                    'product_variant_id' =>
-                        'The selected variant does not belong to the selected product.',
+                    'product_variant_id' => 'The selected variant does not belong to the selected product.',
                 ]);
             }
 
@@ -618,8 +564,7 @@ class InventoryService
 
         if ($variant !== null) {
             throw ValidationException::withMessages([
-                'product_variant_id' =>
-                    'This product does not use variants.',
+                'product_variant_id' => 'This product does not use variants.',
             ]);
         }
     }
@@ -633,15 +578,13 @@ class InventoryService
             (int) $product->company_id
         ) {
             throw ValidationException::withMessages([
-                'warehouse_id' =>
-                    'The warehouse and product must belong to the same company.',
+                'warehouse_id' => 'The warehouse and product must belong to the same company.',
             ]);
         }
 
         if (!$warehouse->is_active) {
             throw ValidationException::withMessages([
-                'warehouse_id' =>
-                    'Inventory transactions cannot be posted to an inactive warehouse.',
+                'warehouse_id' => 'Inventory transactions cannot be posted to an inactive warehouse.',
             ]);
         }
     }
@@ -657,8 +600,7 @@ class InventoryService
             )
         ) {
             throw ValidationException::withMessages([
-                'movement_type' =>
-                    'The selected stock movement type is invalid.',
+                'movement_type' => 'The selected stock movement type is invalid.',
             ]);
         }
     }
@@ -674,8 +616,7 @@ class InventoryService
             )
         ) {
             throw ValidationException::withMessages([
-                'direction' =>
-                    'The selected stock movement direction is invalid.',
+                'direction' => 'The selected stock movement direction is invalid.',
             ]);
         }
     }
@@ -754,14 +695,13 @@ class InventoryService
             ) <= 0
         ) {
             throw ValidationException::withMessages([
-                $field =>
-                    ucfirst(
-                        str_replace(
-                            '_',
-                            ' ',
-                            $field
-                        )
-                    ) .
+                $field => ucfirst(
+                    str_replace(
+                        '_',
+                        ' ',
+                        $field
+                    )
+                ) .
                     ' must be greater than zero.',
             ]);
         }
@@ -787,14 +727,13 @@ class InventoryService
             ) < 0
         ) {
             throw ValidationException::withMessages([
-                $field =>
-                    ucfirst(
-                        str_replace(
-                            '_',
-                            ' ',
-                            $field
-                        )
-                    ) .
+                $field => ucfirst(
+                    str_replace(
+                        '_',
+                        ' ',
+                        $field
+                    )
+                ) .
                     ' cannot be negative.',
             ]);
         }
@@ -810,14 +749,13 @@ class InventoryService
             !is_numeric($value)
         ) {
             throw ValidationException::withMessages([
-                $field =>
-                    ucfirst(
-                        str_replace(
-                            '_',
-                            ' ',
-                            $field
-                        )
-                    ) .
+                $field => ucfirst(
+                    str_replace(
+                        '_',
+                        ' ',
+                        $field
+                    )
+                ) .
                     ' must be numeric.',
             ]);
         }

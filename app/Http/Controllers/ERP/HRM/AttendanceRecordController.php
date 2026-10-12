@@ -8,11 +8,11 @@ use App\Models\AttendanceShift;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Department;
+use App\Services\Attendance\AttendanceProcessor;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Services\Attendance\AttendanceProcessor;
-use Illuminate\Http\RedirectResponse;
 
 class AttendanceRecordController extends Controller
 {
@@ -82,67 +82,60 @@ class AttendanceRecordController extends Controller
 
             ->when(
                 $filters['company_id'] ?? null,
-                fn ($query, $companyId) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn ($query, $companyId) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             )
 
             ->when(
                 $filters['branch_id'] ?? null,
-                fn ($query, $branchId) =>
-                    $query->where(
-                        'branch_id',
-                        $branchId
-                    )
+                fn ($query, $branchId) => $query->where(
+                    'branch_id',
+                    $branchId
+                )
             )
 
             ->when(
                 $filters['department_id'] ?? null,
-                fn ($query, $departmentId) =>
-                    $query->where(
-                        'department_id',
-                        $departmentId
-                    )
+                fn ($query, $departmentId) => $query->where(
+                    'department_id',
+                    $departmentId
+                )
             )
 
             ->when(
                 $filters['shift_id'] ?? null,
-                fn ($query, $shiftId) =>
-                    $query->where(
-                        'shift_id',
-                        $shiftId
-                    )
+                fn ($query, $shiftId) => $query->where(
+                    'shift_id',
+                    $shiftId
+                )
             )
 
             ->when(
                 $filters['attendance_status'] ?? null,
-                fn ($query, $status) =>
-                    $query->where(
-                        'attendance_status',
-                        $status
-                    )
+                fn ($query, $status) => $query->where(
+                    'attendance_status',
+                    $status
+                )
             )
 
             ->when(
                 $filters['date_from'] ?? null,
-                fn ($query, $dateFrom) =>
-                    $query->whereDate(
-                        'attendance_date',
-                        '>=',
-                        $dateFrom
-                    )
+                fn ($query, $dateFrom) => $query->whereDate(
+                    'attendance_date',
+                    '>=',
+                    $dateFrom
+                )
             )
 
             ->when(
                 $filters['date_to'] ?? null,
-                fn ($query, $dateTo) =>
-                    $query->whereDate(
-                        'attendance_date',
-                        '<=',
-                        $dateTo
-                    )
+                fn ($query, $dateTo) => $query->whereDate(
+                    'attendance_date',
+                    '<=',
+                    $dateTo
+                )
             )
 
             ->orderByDesc('attendance_date')
@@ -156,64 +149,52 @@ class AttendanceRecordController extends Controller
                 'records' => $records,
 
                 'filters' => [
-                    'search' =>
-                        $filters['search'] ?? '',
-                    'company_id' =>
-                        $filters['company_id'] ?? '',
-                    'branch_id' =>
-                        $filters['branch_id'] ?? '',
-                    'department_id' =>
-                        $filters['department_id'] ?? '',
-                    'shift_id' =>
-                        $filters['shift_id'] ?? '',
-                    'attendance_status' =>
-                        $filters['attendance_status'] ?? '',
-                    'date_from' =>
-                        $filters['date_from'] ?? '',
-                    'date_to' =>
-                        $filters['date_to'] ?? '',
+                    'search' => $filters['search'] ?? '',
+                    'company_id' => $filters['company_id'] ?? '',
+                    'branch_id' => $filters['branch_id'] ?? '',
+                    'department_id' => $filters['department_id'] ?? '',
+                    'shift_id' => $filters['shift_id'] ?? '',
+                    'attendance_status' => $filters['attendance_status'] ?? '',
+                    'date_from' => $filters['date_from'] ?? '',
+                    'date_to' => $filters['date_to'] ?? '',
                 ],
 
-                'companies' =>
-                    Company::query()
-                        ->where('status', 'active')
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where('status', 'active')
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-                'branches' =>
-                    Branch::query()
-                        ->where('status', 'active')
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                        ]),
+                'branches' => Branch::query()
+                    ->where('status', 'active')
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                    ]),
 
-                'departments' =>
-                    Department::query()
-                        ->where('status', 'active')
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'branch_id',
-                            'name',
-                        ]),
+                'departments' => Department::query()
+                    ->where('status', 'active')
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'branch_id',
+                        'name',
+                    ]),
 
-                'shifts' =>
-                    AttendanceShift::query()
-                        ->where('status', 'active')
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                            'code',
-                        ]),
+                'shifts' => AttendanceShift::query()
+                    ->where('status', 'active')
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                        'code',
+                    ]),
             ]
         );
     }
@@ -267,5 +248,4 @@ class AttendanceRecordController extends Controller
             'Attendance record reprocessed successfully.'
         );
     }
-
 }

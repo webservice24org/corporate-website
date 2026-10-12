@@ -43,41 +43,29 @@ class AttendanceShift extends Model
     protected function casts(): array
     {
         return [
-            'crosses_midnight' =>
-                'boolean',
+            'crosses_midnight' => 'boolean',
 
-            'working_days' =>
-                'array',
+            'working_days' => 'array',
 
-            'break_is_paid' =>
-                'boolean',
+            'break_is_paid' => 'boolean',
 
-            'check_in_window_before_minutes' =>
-                'integer',
+            'check_in_window_before_minutes' => 'integer',
 
-            'check_in_window_after_minutes' =>
-                'integer',
+            'check_in_window_after_minutes' => 'integer',
 
-            'check_out_window_before_minutes' =>
-                'integer',
+            'check_out_window_before_minutes' => 'integer',
 
-            'check_out_window_after_minutes' =>
-                'integer',
+            'check_out_window_after_minutes' => 'integer',
 
-            'grace_minutes' =>
-                'integer',
+            'grace_minutes' => 'integer',
 
-            'early_leave_grace_minutes' =>
-                'integer',
+            'early_leave_grace_minutes' => 'integer',
 
-            'minimum_work_minutes' =>
-                'integer',
+            'minimum_work_minutes' => 'integer',
 
-            'half_day_minutes' =>
-                'integer',
+            'half_day_minutes' => 'integer',
 
-            'overtime_after_minutes' =>
-                'integer',
+            'overtime_after_minutes' => 'integer',
         ];
     }
 
@@ -88,7 +76,6 @@ class AttendanceShift extends Model
         );
     }
 
-    
     public function employeeAssignments(): HasMany
     {
         return $this->hasMany(
@@ -96,7 +83,6 @@ class AttendanceShift extends Model
             'shift_id'
         );
     }
-        
 
     public function scopeActive(
         $query

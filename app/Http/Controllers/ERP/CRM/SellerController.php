@@ -7,13 +7,13 @@ use App\Models\Dealer;
 use App\Models\Seller;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Filesystem\FilesystemAdapter;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class SellerController extends Controller
@@ -44,13 +44,8 @@ class SellerController extends Controller
             ])
             ->when(
                 $filters['search'] ?? null,
-                function (
-                    Builder $query,
-                    string $search
-                ) {
-                    $query->where(function (
-                        Builder $query
-                    ) use ($search) {
+                function (Builder $query, string $search) {
+                    $query->where(function (Builder $query) use ($search) {
                         $query
                             ->where(
                                 'business_name',
@@ -82,32 +77,29 @@ class SellerController extends Controller
             )
             ->when(
                 $filters['dealer_id'] ?? null,
-                fn (
-                    Builder $query,
-                    int $dealerId
-                ) =>
-                    $query->where(
+                fn(
+                Builder $query,
+                int $dealerId
+            ) => $query->where(
                         'dealer_id',
                         $dealerId
                     )
             )
             ->when(
                 ($filters['status'] ?? null)
-                    === 'active',
-                fn (Builder $query) =>
-                    $query->where(
-                        'is_active',
-                        true
-                    )
+                === 'active',
+                fn(Builder $query) => $query->where(
+                    'is_active',
+                    true
+                )
             )
             ->when(
                 ($filters['status'] ?? null)
-                    === 'inactive',
-                fn (Builder $query) =>
-                    $query->where(
-                        'is_active',
-                        false
-                    )
+                === 'inactive',
+                fn(Builder $query) => $query->where(
+                    'is_active',
+                    false
+                )
             )
             ->latest()
             ->paginate(20)
@@ -135,12 +127,9 @@ class SellerController extends Controller
                 'sellers' => $sellers,
                 'dealers' => $dealers,
                 'filters' => [
-                    'search' =>
-                        $filters['search'] ?? '',
-                    'dealer_id' =>
-                        $filters['dealer_id'] ?? '',
-                    'status' =>
-                        $filters['status'] ?? '',
+                    'search' => $filters['search'] ?? '',
+                    'dealer_id' => $filters['dealer_id'] ?? '',
+                    'status' => $filters['status'] ?? '',
                 ],
             ]
         );
@@ -352,8 +341,7 @@ class SellerController extends Controller
                     'dealers',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query
+                        fn($query) => $query
                             ->where(
                                 'is_active',
                                 true
@@ -361,7 +349,7 @@ class SellerController extends Controller
                             ->whereNull(
                                 'deleted_at'
                             )
-                ),
+                    ),
             ],
 
             'business_name' => [
@@ -487,9 +475,7 @@ class SellerController extends Controller
                 'depot.district:id,name',
                 'upazila:id,name,name_bn',
             ])
-            ->where(function (
-                Builder $query
-            ) use ($seller) {
+            ->where(function (Builder $query) use ($seller) {
                 $query->where(
                     'is_active',
                     true
@@ -533,7 +519,8 @@ class SellerController extends Controller
         Seller $seller
     ): StreamedResponse {
         abort_unless(
-            $seller->proprietor_photo,
+            $seller->proprietor_photo !== null
+            && $seller->proprietor_photo !== '',
             404
         );
 
@@ -554,6 +541,4 @@ class SellerController extends Controller
             $seller->proprietor_photo
         );
     }
-
-
 }

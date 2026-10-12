@@ -5,8 +5,8 @@ namespace App\Http\Controllers\Frontend;
 use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\DepotApplication;
-use App\Models\Division;
 use App\Models\District;
+use App\Models\Division;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -22,30 +22,27 @@ class DepotRegistrationController extends Controller
         return Inertia::render(
             'Frontend/DepotRegistration/Create',
             [
-                'companies' =>
-                    Company::query()
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-                'divisions' =>
-                    Division::query()
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'divisions' => Division::query()
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-                'districts' =>
-                    District::query()
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'division_id',
-                            'name',
-                        ]),
+                'districts' => District::query()
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'division_id',
+                        'name',
+                    ]),
             ]
         );
     }
@@ -198,7 +195,7 @@ class DepotRegistrationController extends Controller
                     'mimes:pdf,jpg,jpeg,png',
                     'max:5120',
                 ],
-                
+
                 'proprietor_photo' => [
                     'nullable',
                     'image',
@@ -233,69 +230,51 @@ class DepotRegistrationController extends Controller
                 ) {
                     $application =
                         DepotApplication::create([
-                            'company_id' =>
-                                $validated['company_id'],
+                            'company_id' => $validated['company_id'],
 
-                            'division_id' =>
-                                $validated['division_id'],
+                            'division_id' => $validated['division_id'],
 
-                            'district_id' =>
-                                $validated['district_id'],
+                            'district_id' => $validated['district_id'],
 
-                            'business_name' =>
-                                $validated['business_name'],
+                            'business_name' => $validated['business_name'],
 
-                            'proprietor_name' =>
-                                $validated['proprietor_name'],
+                            'proprietor_name' => $validated['proprietor_name'],
 
-                            'phone' =>
-                                $validated['phone'],
+                            'phone' => $validated['phone'],
 
-                            'alternate_phone' =>
-                                $validated['alternate_phone']
+                            'alternate_phone' => $validated['alternate_phone']
                                 ?? null,
 
-                            'email' =>
-                                $validated['email']
+                            'email' => $validated['email']
                                 ?? null,
 
-                            'trade_license_number' =>
-                                $validated['trade_license_number']
+                            'trade_license_number' => $validated['trade_license_number']
                                 ?? null,
 
-                            'nid_number' =>
-                                $validated['nid_number']
+                            'nid_number' => $validated['nid_number']
                                 ?? null,
 
-                            'tin_number' =>
-                                $validated['tin_number']
+                            'tin_number' => $validated['tin_number']
                                 ?? null,
 
-                            'vat_number' =>
-                                $validated['vat_number']
+                            'vat_number' => $validated['vat_number']
                                 ?? null,
 
-                            'business_address' =>
-                                $validated['business_address'],
+                            'business_address' => $validated['business_address'],
 
-                            'postal_code' =>
-                                $validated['postal_code']
+                            'postal_code' => $validated['postal_code']
                                 ?? null,
 
-                            'years_in_business' =>
-                                $validated['years_in_business']
+                            'years_in_business' => $validated['years_in_business']
                                 ?? null,
 
-                            'requested_credit_limit' =>
-                                $validated['requested_credit_limit']
+                            'requested_credit_limit' => $validated['requested_credit_limit']
                                 ?? null,
 
-                            'business_description' =>
-                                $validated['business_description']
+                            'business_description' => $validated['business_description']
                                 ?? null,
 
-                            'status' =>
-                                'pending',
+                            'status' => 'pending',
                         ]);
 
                     if ($request->hasFile('proprietor_photo')) {
@@ -312,28 +291,22 @@ class DepotRegistrationController extends Controller
                     }
 
                     $documents = [
-                        'bank_check' =>
-                            'bank_check',
+                        'bank_check' => 'bank_check',
 
-                        'trade_license_document' =>
-                            'trade_license',
+                        'trade_license_document' => 'trade_license',
 
-                        'nid_document' =>
-                            'nid',
+                        'nid_document' => 'nid',
 
-                        'tin_document' =>
-                            'tin',
+                        'tin_document' => 'tin',
 
-                        'vat_document' =>
-                            'vat',
+                        'vat_document' => 'vat',
                     ];
 
                     foreach (
-                        $documents as
-                        $field => $type
+                        $documents as $field => $type
                     ) {
                         if (
-                            !$request->hasFile(
+                            ! $request->hasFile(
                                 $field
                             )
                         ) {
@@ -354,26 +327,20 @@ class DepotRegistrationController extends Controller
                         $application
                             ->documents()
                             ->create([
-                                'document_type' =>
-                                    $type,
+                                'document_type' => $type,
 
-                                'disk' =>
-                                    'local',
+                                'disk' => 'local',
 
-                                'path' =>
-                                    $path,
+                                'path' => $path,
 
-                                'original_name' =>
-                                    $file
-                                        ->getClientOriginalName(),
+                                'original_name' => $file
+                                    ->getClientOriginalName(),
 
-                                'mime_type' =>
-                                    $file
-                                        ->getMimeType(),
+                                'mime_type' => $file
+                                    ->getMimeType(),
 
-                                'file_size' =>
-                                    $file
-                                        ->getSize(),
+                                'file_size' => $file
+                                    ->getSize(),
                             ]);
                     }
                 }
@@ -384,8 +351,7 @@ class DepotRegistrationController extends Controller
             return back()
                 ->withInput()
                 ->withErrors([
-                    'registration' =>
-                        'Unable to submit the depot registration. Please try again.',
+                    'registration' => 'Unable to submit the depot registration. Please try again.',
                 ]);
         }
 
@@ -394,8 +360,4 @@ class DepotRegistrationController extends Controller
             'Your depot registration application has been submitted successfully and is awaiting approval.'
         );
     }
-
-
-
-
 }

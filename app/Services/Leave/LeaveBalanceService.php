@@ -17,31 +17,23 @@ class LeaveBalanceService
     ): EmployeeLeaveBalance {
         return EmployeeLeaveBalance::firstOrCreate(
             [
-                'employee_id' =>
-                    $employee->id,
+                'employee_id' => $employee->id,
 
-                'leave_type_id' =>
-                    $leaveType->id,
+                'leave_type_id' => $leaveType->id,
 
-                'year' =>
-                    $year,
+                'year' => $year,
             ],
             [
-                'opening_balance' =>
-                    0,
+                'opening_balance' => 0,
 
-                'entitled_days' =>
-                    $leaveType
-                        ->annual_allowance,
+                'entitled_days' => $leaveType
+                    ->annual_allowance,
 
-                'adjustment_days' =>
-                    0,
+                'adjustment_days' => 0,
 
-                'used_days' =>
-                    0,
+                'used_days' => 0,
 
-                'pending_days' =>
-                    0,
+                'pending_days' => 0,
             ]
         );
     }
@@ -137,18 +129,14 @@ class LeaveBalanceService
                 ->sum('days');
 
         $balance->update([
-            'entitled_days' =>
-                $leaveType
-                    ->annual_allowance,
+            'entitled_days' => $leaveType
+                ->annual_allowance,
 
-            'used_days' =>
-                $used,
+            'used_days' => $used,
 
-            'pending_days' =>
-                $pending,
+            'pending_days' => $pending,
 
-            'adjustment_days' =>
-                $adjustments,
+            'adjustment_days' => $adjustments,
         ]);
 
         return $balance->refresh();

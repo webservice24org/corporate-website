@@ -67,20 +67,15 @@ class Employee extends Model
     protected function casts(): array
     {
         return [
-            'date_of_birth' =>
-                'date:Y-m-d',
+            'date_of_birth' => 'date:Y-m-d',
 
-            'joining_date' =>
-                'date:Y-m-d',
+            'joining_date' => 'date:Y-m-d',
 
-            'probation_end_date' =>
-                'date:Y-m-d',
+            'probation_end_date' => 'date:Y-m-d',
 
-            'confirmation_date' =>
-                'date:Y-m-d',
+            'confirmation_date' => 'date:Y-m-d',
 
-            'termination_date' =>
-                'date:Y-m-d',
+            'termination_date' => 'date:Y-m-d',
         ];
     }
 
@@ -142,33 +137,33 @@ class Employee extends Model
         );
     }
 
-        public function documents(): HasMany
-        {
-            return $this->hasMany(
-                EmployeeDocument::class
-            );
-        }
+    public function documents(): HasMany
+    {
+        return $this->hasMany(
+            EmployeeDocument::class
+        );
+    }
 
-        public function employmentHistories(): HasMany
-        {
-            return $this->hasMany(
-                EmployeeEmploymentHistory::class
-            );
-        }
+    public function employmentHistories(): HasMany
+    {
+        return $this->hasMany(
+            EmployeeEmploymentHistory::class
+        );
+    }
 
-        public function shiftAssignments(): HasMany
-        {
-            return $this->hasMany(
-                EmployeeShiftAssignment::class
-            );
-        }
+    public function shiftAssignments(): HasMany
+    {
+        return $this->hasMany(
+            EmployeeShiftAssignment::class
+        );
+    }
 
-        public function attendanceDeviceUsers(): HasMany
-        {
-            return $this->hasMany(
-                AttendanceDeviceUser::class
-            );
-        }
+    public function attendanceDeviceUsers(): HasMany
+    {
+        return $this->hasMany(
+            AttendanceDeviceUser::class
+        );
+    }
 
     public function attendanceRawPunches(): HasMany
     {
@@ -211,6 +206,4 @@ class Employee extends Model
             EmployeeSalaryStructure::class
         );
     }
-
-
 }

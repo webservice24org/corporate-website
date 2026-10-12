@@ -82,39 +82,34 @@ class LeaveAttendanceReconciler
                 continue;
             }
 
-            $details =
-                $record->calculation_details
-                ?? [];
+            $details = $record->getAttribute('calculation_details');
+
+            if (!is_array($details)) {
+                $details = [];
+            }
 
             $details['leave'] = [
-                'request_id' =>
-                    $request->id,
+                'request_id' => $request->id,
 
-                'leave_type_id' =>
-                    $request->leave_type_id,
+                'leave_type_id' => $request->leave_type_id,
 
-                'leave_type_name' =>
-                    $request
-                        ->leaveType
-                        ?->name,
+                'leave_type_name' => $request
+                    ->leaveType
+                        ?->getAttribute('name'),
 
-                'leave_type_code' =>
-                    $request
-                        ->leaveType
-                        ?->code,
+                'leave_type_code' => $request
+                    ->leaveType
+                        ?->getAttribute('code'),
 
-                'is_paid' =>
-                    $request
-                        ->leaveType
-                        ?->is_paid,
+                'is_paid' => $request
+                    ->leaveType
+                        ?->getAttribute('is_paid'),
 
-                'duration_type' =>
-                    $request
-                        ->duration_type,
+                'duration_type' => $request
+                    ->duration_type,
 
-                'half_day_period' =>
-                    $request
-                        ->half_day_period,
+                'half_day_period' => $request
+                    ->half_day_period,
             ];
 
             $details[
@@ -135,14 +130,11 @@ class LeaveAttendanceReconciler
                 false;
 
             $record->update([
-                'attendance_status' =>
-                    'leave',
+                'attendance_status' => 'leave',
 
-                'calculation_details' =>
-                    $details,
+                'calculation_details' => $details,
 
-                'processed_at' =>
-                    now(),
+                'processed_at' => now(),
             ]);
 
             $updated++;
@@ -240,9 +232,11 @@ class LeaveAttendanceReconciler
                 continue;
             }
 
-            $details =
-                $record->calculation_details
-                ?? [];
+            $details = $record->getAttribute('calculation_details');
+
+            if (!is_array($details)) {
+                $details = [];
+            }
 
             $leaveDetails =
                 $details['leave']

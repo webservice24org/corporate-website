@@ -14,7 +14,7 @@ class DynamicMailConfig
             ->latest()
             ->first();
 
-        if (! $settings) {
+        if (!$settings) {
             return null;
         }
 
@@ -23,35 +23,25 @@ class DynamicMailConfig
 
             'mail.mailers.smtp.transport' => 'smtp',
 
-            'mail.mailers.smtp.host' =>
-                $settings->host,
+            'mail.mailers.smtp.host' => $settings->host,
 
-            'mail.mailers.smtp.port' =>
-                (int) $settings->port,
+            'mail.mailers.smtp.port' => (int) $settings->port,
 
-            'mail.mailers.smtp.username' =>
-                $settings->username,
+            'mail.mailers.smtp.username' => $settings->username,
 
-            'mail.mailers.smtp.password' =>
-                $settings->password,
+            'mail.mailers.smtp.password' => $settings->password,
 
-            'mail.mailers.smtp.timeout' =>
-                null,
+            'mail.mailers.smtp.timeout' => null,
 
-            'mail.mailers.smtp.local_domain' =>
-                env(
-                    'MAIL_EHLO_DOMAIN',
-                    parse_url(
-                        config('app.url'),
-                        PHP_URL_HOST
-                    )
-                ),
+            'mail.mailers.smtp.local_domain' => (config('mail.mailers.smtp.local_domain')
+                ?? parse_url(
+                    (string) config('app.url'),
+                    PHP_URL_HOST
+                )),
 
-            'mail.from.address' =>
-                $settings->from_address,
+            'mail.from.address' => $settings->from_address,
 
-            'mail.from.name' =>
-                $settings->from_name,
+            'mail.from.name' => $settings->from_name,
         ]);
 
         /*
@@ -64,8 +54,7 @@ class DynamicMailConfig
             $settings->encryption === 'ssl'
         ) {
             config([
-                'mail.mailers.smtp.scheme' =>
-                    'smtps',
+                'mail.mailers.smtp.scheme' => 'smtps',
             ]);
         } else {
             /*
@@ -76,8 +65,7 @@ class DynamicMailConfig
              * supported by the server.
              */
             config([
-                'mail.mailers.smtp.scheme' =>
-                    null,
+                'mail.mailers.smtp.scheme' => null,
             ]);
         }
 

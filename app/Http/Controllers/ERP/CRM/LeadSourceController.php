@@ -46,19 +46,17 @@ class LeadSourceController extends Controller
                 ])
                 ->when(
                     $filters['company_id'] ?? null,
-                    fn ($query, $companyId) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query, $companyId) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters['status'] ?? null,
-                    fn ($query, $status) =>
-                        $query->where(
-                            'status',
-                            $status === 'active'
-                        )
+                    fn ($query, $status) => $query->where(
+                        'status',
+                        $status === 'active'
+                    )
                 )
                 ->when(
                     $filters['search'] ?? null,
@@ -94,8 +92,7 @@ class LeadSourceController extends Controller
             [
                 'sources' => $sources,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
                 'filters' => $filters,
             ]
@@ -107,8 +104,7 @@ class LeadSourceController extends Controller
         return Inertia::render(
             'ERP/CRM/LeadSources/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
             ]
         );
     }
@@ -143,11 +139,9 @@ class LeadSourceController extends Controller
         return Inertia::render(
             'ERP/CRM/LeadSources/Edit',
             [
-                'leadSource' =>
-                    $leadSource,
+                'leadSource' => $leadSource,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
             ]
         );
     }
@@ -187,8 +181,7 @@ class LeadSourceController extends Controller
                 ->exists()
         ) {
             throw ValidationException::withMessages([
-                'lead_source' =>
-                    'This lead source is already used by leads. Deactivate it instead of deleting it.',
+                'lead_source' => 'This lead source is already used by leads. Deactivate it instead of deleting it.',
             ]);
         }
 
@@ -231,13 +224,12 @@ class LeadSourceController extends Controller
                     'code'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'company_id',
-                                $request->integer(
-                                    'company_id'
-                                )
+                        fn ($query) => $query->where(
+                            'company_id',
+                            $request->integer(
+                                'company_id'
                             )
+                        )
                     )
                     ->ignore(
                         $leadSource?->id
@@ -267,30 +259,24 @@ class LeadSourceController extends Controller
         array $data
     ): array {
         return [
-            'company_id' =>
-                $data['company_id'],
+            'company_id' => $data['company_id'],
 
-            'name' =>
+            'name' => trim(
+                $data['name']
+            ),
+
+            'code' => strtoupper(
                 trim(
-                    $data['name']
-                ),
+                    $data['code']
+                )
+            ),
 
-            'code' =>
-                strtoupper(
-                    trim(
-                        $data['code']
-                    )
-                ),
-
-            'description' =>
-                $data['description']
+            'description' => $data['description']
                 ?? null,
 
-            'sort_order' =>
-                $data['sort_order'],
+            'sort_order' => $data['sort_order'],
 
-            'status' =>
-                $data['status'],
+            'status' => $data['status'],
         ];
     }
 

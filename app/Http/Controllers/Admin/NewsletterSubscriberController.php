@@ -22,43 +22,36 @@ class NewsletterSubscriberController extends Controller
         $subscribers = NewsletterSubscriber::query()
             ->when(
                 $status,
-                fn ($query) =>
-                    $query->where('status', $status)
+                fn ($query) => $query->where('status', $status)
             )
             ->latest('subscribed_at')
             ->paginate(20)
             ->withQueryString();
 
         $counts = [
-            'all' =>
-                NewsletterSubscriber::count(),
+            'all' => NewsletterSubscriber::count(),
 
-            'active' =>
-                NewsletterSubscriber::where(
-                    'status',
-                    'active'
-                )->count(),
+            'active' => NewsletterSubscriber::where(
+                'status',
+                'active'
+            )->count(),
 
-            'unsubscribed' =>
-                NewsletterSubscriber::where(
-                    'status',
-                    'unsubscribed'
-                )->count(),
+            'unsubscribed' => NewsletterSubscriber::where(
+                'status',
+                'unsubscribed'
+            )->count(),
         ];
 
         return inertia(
             'Admin/NewsletterSubscribers/Index',
             [
-                'subscribers' =>
-                    $subscribers,
+                'subscribers' => $subscribers,
 
                 'filters' => [
-                    'status' =>
-                        $status,
+                    'status' => $status,
                 ],
 
-                'counts' =>
-                    $counts,
+                'counts' => $counts,
             ]
         );
     }
@@ -67,11 +60,9 @@ class NewsletterSubscriberController extends Controller
         NewsletterSubscriber $newsletterSubscriber
     ) {
         $newsletterSubscriber->update([
-            'status' =>
-                'unsubscribed',
+            'status' => 'unsubscribed',
 
-            'unsubscribed_at' =>
-                now(),
+            'unsubscribed_at' => now(),
         ]);
 
         return back()->with(
@@ -84,14 +75,11 @@ class NewsletterSubscriberController extends Controller
         NewsletterSubscriber $newsletterSubscriber
     ) {
         $newsletterSubscriber->update([
-            'status' =>
-                'active',
+            'status' => 'active',
 
-            'subscribed_at' =>
-                now(),
+            'subscribed_at' => now(),
 
-            'unsubscribed_at' =>
-                null,
+            'unsubscribed_at' => null,
         ]);
 
         return back()->with(

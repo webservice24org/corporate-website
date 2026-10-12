@@ -4,7 +4,6 @@ namespace App\Http\Requests\ERP\Inventory;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-
 class OpeningStockRequest extends FormRequest
 {
     public function authorize(): bool
@@ -77,26 +76,19 @@ class OpeningStockRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'company_id' =>
-                'company',
+            'company_id' => 'company',
 
-            'warehouse_id' =>
-                'warehouse',
+            'warehouse_id' => 'warehouse',
 
-            'document_date' =>
-                'document date',
+            'document_date' => 'document date',
 
-            'items.*.product_id' =>
-                'product',
+            'items.*.product_id' => 'product',
 
-            'items.*.product_variant_id' =>
-                'product variant',
+            'items.*.product_variant_id' => 'product variant',
 
-            'items.*.quantity' =>
-                'quantity',
+            'items.*.quantity' => 'quantity',
 
-            'items.*.unit_cost' =>
-                'unit cost',
+            'items.*.unit_cost' => 'unit cost',
         ];
     }
 }

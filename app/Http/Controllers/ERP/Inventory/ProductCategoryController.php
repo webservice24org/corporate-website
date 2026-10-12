@@ -78,7 +78,7 @@ class ProductCategoryController extends Controller
     {
         $data = $this->data($request, $productCategory);
 
-        if (!empty($data['parent_id']) && (int) $data['parent_id'] === $productCategory->id) {
+        if (! empty($data['parent_id']) && (int) $data['parent_id'] === $productCategory->id) {
             return back()->withErrors([
                 'parent_id' => 'A category cannot be its own parent.',
             ]);
@@ -136,7 +136,7 @@ class ProductCategoryController extends Controller
             'is_active' => ['required', 'boolean'],
         ]);
 
-        if (!empty($data['parent_id'])) {
+        if (! empty($data['parent_id'])) {
             ProductCategory::query()
                 ->whereKey($data['parent_id'])
                 ->where('company_id', $data['company_id'])

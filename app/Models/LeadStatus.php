@@ -44,5 +44,4 @@ class LeadStatus extends Model
             Lead::class
         );
     }
-    
 }

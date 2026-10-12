@@ -27,26 +27,19 @@ class EmployeeSalaryStructureItem extends Model
     protected function casts(): array
     {
         return [
-            'amount' =>
-                'decimal:2',
+            'amount' => 'decimal:2',
 
-            'percentage' =>
-                'decimal:4',
+            'percentage' => 'decimal:4',
 
-            'calculated_amount' =>
-                'decimal:2',
+            'calculated_amount' => 'decimal:2',
 
-            'is_taxable' =>
-                'boolean',
+            'is_taxable' => 'boolean',
 
-            'affects_gross_salary' =>
-                'boolean',
+            'affects_gross_salary' => 'boolean',
 
-            'is_recurring' =>
-                'boolean',
+            'is_recurring' => 'boolean',
 
-            'sort_order' =>
-                'integer',
+            'sort_order' => 'integer',
         ];
     }
 

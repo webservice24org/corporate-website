@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Models\Lead;
+use App\Models\User;
+use Carbon\CarbonImmutable;
 use App\Notifications\LeadFollowUpReminder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -70,18 +72,13 @@ class SendLeadFollowUpNotifications extends Command
 
             ->chunkById(
                 100,
-                function ($leads) use (
-                    &$sent
-                ) {
+                function ($leads) use (&$sent) {
                     foreach (
                         $leads as $lead
                     ) {
                         try {
                             DB::transaction(
-                                function () use (
-                                    $lead,
-                                    &$sent
-                                ) {
+                                function () use ($lead, &$sent) {
                                     /*
                                      * Lock and re-check so
                                      * duplicate scheduler
@@ -98,31 +95,27 @@ class SendLeadFollowUpNotifications extends Command
                                                 $lead->id
                                             );
 
+                                    $owner = $lockedLead?->owner;
+                                    $followUpAt = $lockedLead?->next_follow_up_at;
+
                                     if (
                                         !$lockedLead ||
                                         !$lockedLead->is_active ||
-                                        !$lockedLead->owner ||
-                                        !$lockedLead->next_follow_up_at ||
-                                        $lockedLead
-                                            ->follow_up_notification_sent_at ||
-                                        $lockedLead
-                                            ->next_follow_up_at
-                                            ->isFuture()
+                                        !$owner instanceof User ||
+                                        !is_string($followUpAt) ||
+                                        $followUpAt === '' ||
+                                        $lockedLead->follow_up_notification_sent_at ||
+                                        CarbonImmutable::parse($followUpAt)->isFuture()
                                     ) {
                                         return;
                                     }
 
-                                    $lockedLead
-                                        ->owner
-                                        ->notify(
-                                            new LeadFollowUpReminder(
-                                                $lockedLead
-                                            )
-                                        );
+                                    $owner->notify(
+                                        new LeadFollowUpReminder($lockedLead)
+                                    );
 
                                     $lockedLead->forceFill([
-                                        'follow_up_notification_sent_at' =>
-                                            now(),
+                                        'follow_up_notification_sent_at' => now(),
                                     ])->saveQuietly();
 
                                     $sent++;

@@ -67,20 +67,18 @@ class SalaryComponentController extends Controller
                 ->when(
                     $filters['company_id']
                         ?? null,
-                    fn ($query, $companyId) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query, $companyId) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters['component_type']
                         ?? null,
-                    fn ($query, $type) =>
-                        $query->where(
-                            'component_type',
-                            $type
-                        )
+                    fn ($query, $type) => $query->where(
+                        'component_type',
+                        $type
+                    )
                 )
                 ->when(
                     $filters['status']
@@ -134,14 +132,11 @@ class SalaryComponentController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/SalaryComponents/Index',
             [
-                'components' =>
-                    $components,
+                'components' => $components,
 
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -151,11 +146,9 @@ class SalaryComponentController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/SalaryComponents/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'baseComponents' =>
-                    $this->baseComponents(),
+                'baseComponents' => $this->baseComponents(),
             ]
         );
     }
@@ -188,16 +181,13 @@ class SalaryComponentController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/SalaryComponents/Edit',
             [
-                'salaryComponent' =>
-                    $salaryComponent,
+                'salaryComponent' => $salaryComponent,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'baseComponents' =>
-                    $this->baseComponents(
-                        $salaryComponent
-                    ),
+                'baseComponents' => $this->baseComponents(
+                    $salaryComponent
+                ),
             ]
         );
     }
@@ -235,8 +225,7 @@ class SalaryComponentController extends Controller
                 ->exists()
         ) {
             throw ValidationException::withMessages([
-                'salary_component' =>
-                    'This component is used as the percentage base for another salary component and cannot be deleted.',
+                'salary_component' => 'This component is used as the percentage base for another salary component and cannot be deleted.',
             ]);
         }
 
@@ -246,8 +235,7 @@ class SalaryComponentController extends Controller
                 ->exists()
         ) {
             throw ValidationException::withMessages([
-                'salary_component' =>
-                    'This component is already used in an employee salary structure. Deactivate it instead of deleting it.',
+                'salary_component' => 'This component is already used in an employee salary structure. Deactivate it instead of deleting it.',
             ]);
         }
 
@@ -297,11 +285,10 @@ class SalaryComponentController extends Controller
                         'code'
                     )
                         ->where(
-                            fn ($query) =>
-                                $query->where(
-                                    'company_id',
-                                    $companyId
-                                )
+                            fn ($query) => $query->where(
+                                'company_id',
+                                $companyId
+                            )
                         )
                         ->ignore(
                             $salaryComponent
@@ -394,8 +381,7 @@ class SalaryComponentController extends Controller
                 )
             ) {
                 throw ValidationException::withMessages([
-                    'percentage_of_component_id' =>
-                        'Select the salary component on which this percentage is calculated.',
+                    'percentage_of_component_id' => 'Select the salary component on which this percentage is calculated.',
                 ]);
             }
 
@@ -414,10 +400,9 @@ class SalaryComponentController extends Controller
                     )
                     ->first();
 
-            if (!$baseComponent) {
+            if (! $baseComponent) {
                 throw ValidationException::withMessages([
-                    'percentage_of_component_id' =>
-                        'The percentage base component must belong to the same company.',
+                    'percentage_of_component_id' => 'The percentage base component must belong to the same company.',
                 ]);
             }
 
@@ -427,8 +412,7 @@ class SalaryComponentController extends Controller
                     $salaryComponent->id
             ) {
                 throw ValidationException::withMessages([
-                    'percentage_of_component_id' =>
-                        'A salary component cannot calculate a percentage of itself.',
+                    'percentage_of_component_id' => 'A salary component cannot calculate a percentage of itself.',
                 ]);
             }
 
@@ -483,12 +467,11 @@ class SalaryComponentController extends Controller
             )
             ->when(
                 $exclude,
-                fn ($query) =>
-                    $query->where(
-                        'id',
-                        '!=',
-                        $exclude->id
-                    )
+                fn ($query) => $query->where(
+                    'id',
+                    '!=',
+                    $exclude->id
+                )
             )
             ->orderBy(
                 'company_id'

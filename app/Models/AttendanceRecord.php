@@ -46,47 +46,33 @@ class AttendanceRecord extends Model
     protected function casts(): array
     {
         return [
-            'attendance_date' =>
-                'date:Y-m-d',
+            'attendance_date' => 'date:Y-m-d',
 
-            'scheduled_start_at' =>
-                'datetime',
+            'scheduled_start_at' => 'datetime',
 
-            'scheduled_end_at' =>
-                'datetime',
+            'scheduled_end_at' => 'datetime',
 
-            'check_in_at' =>
-                'datetime',
+            'check_in_at' => 'datetime',
 
-            'check_out_at' =>
-                'datetime',
+            'check_out_at' => 'datetime',
 
-            'worked_minutes' =>
-                'integer',
+            'worked_minutes' => 'integer',
 
-            'break_minutes' =>
-                'integer',
+            'break_minutes' => 'integer',
 
-            'late_minutes' =>
-                'integer',
+            'late_minutes' => 'integer',
 
-            'early_leave_minutes' =>
-                'integer',
+            'early_leave_minutes' => 'integer',
 
-            'overtime_minutes' =>
-                'integer',
+            'overtime_minutes' => 'integer',
 
-            'punch_count' =>
-                'integer',
+            'punch_count' => 'integer',
 
-            'is_manual' =>
-                'boolean',
+            'is_manual' => 'boolean',
 
-            'calculation_details' =>
-                'array',
+            'calculation_details' => 'array',
 
-            'processed_at' =>
-                'datetime',
+            'processed_at' => 'datetime',
         ];
     }
 

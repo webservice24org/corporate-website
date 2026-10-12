@@ -69,11 +69,10 @@ class CompanyController extends Controller
                     ['active', 'inactive'],
                     true
                 ),
-                fn ($query) =>
-                    $query->where(
-                        'status',
-                        $status
-                    )
+                fn ($query) => $query->where(
+                    'status',
+                    $status
+                )
             )
             ->orderByDesc('is_default')
             ->orderBy('name')
@@ -136,8 +135,7 @@ class CompanyController extends Controller
                         $validated['code']
                     ),
 
-                    'is_default' =>
-                        $makeDefault,
+                    'is_default' => $makeDefault,
                 ]);
             }
         );
@@ -227,8 +225,7 @@ class CompanyController extends Controller
                         $validated['code']
                     ),
 
-                    'is_default' =>
-                        $makeDefault,
+                    'is_default' => $makeDefault,
                 ]);
             }
         );

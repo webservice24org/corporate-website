@@ -23,11 +23,9 @@ class EmployeeShiftAssignment extends Model
     protected function casts(): array
     {
         return [
-            'effective_from' =>
-                'date:Y-m-d',
+            'effective_from' => 'date:Y-m-d',
 
-            'effective_to' =>
-                'date:Y-m-d',
+            'effective_to' => 'date:Y-m-d',
         ];
     }
 

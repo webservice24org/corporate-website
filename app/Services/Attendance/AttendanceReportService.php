@@ -23,61 +23,54 @@ class AttendanceReportService
             ])
             ->when(
                 $filters['company_id'] ?? null,
-                fn (Builder $query, $companyId) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn (Builder $query, $companyId) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             )
             ->when(
                 $filters['branch_id'] ?? null,
-                fn (Builder $query, $branchId) =>
-                    $query->where(
-                        'branch_id',
-                        $branchId
-                    )
+                fn (Builder $query, $branchId) => $query->where(
+                    'branch_id',
+                    $branchId
+                )
             )
             ->when(
                 $filters['department_id'] ?? null,
-                fn (Builder $query, $departmentId) =>
-                    $query->where(
-                        'department_id',
-                        $departmentId
-                    )
+                fn (Builder $query, $departmentId) => $query->where(
+                    'department_id',
+                    $departmentId
+                )
             )
             ->when(
                 $filters['employee_id'] ?? null,
-                fn (Builder $query, $employeeId) =>
-                    $query->where(
-                        'employee_id',
-                        $employeeId
-                    )
+                fn (Builder $query, $employeeId) => $query->where(
+                    'employee_id',
+                    $employeeId
+                )
             )
             ->when(
                 $filters['attendance_status'] ?? null,
-                fn (Builder $query, $status) =>
-                    $query->where(
-                        'attendance_status',
-                        $status
-                    )
+                fn (Builder $query, $status) => $query->where(
+                    'attendance_status',
+                    $status
+                )
             )
             ->when(
                 $filters['date_from'] ?? null,
-                fn (Builder $query, $date) =>
-                    $query->whereDate(
-                        'attendance_date',
-                        '>=',
-                        $date
-                    )
+                fn (Builder $query, $date) => $query->whereDate(
+                    'attendance_date',
+                    '>=',
+                    $date
+                )
             )
             ->when(
                 $filters['date_to'] ?? null,
-                fn (Builder $query, $date) =>
-                    $query->whereDate(
-                        'attendance_date',
-                        '<=',
-                        $date
-                    )
+                fn (Builder $query, $date) => $query->whereDate(
+                    'attendance_date',
+                    '<=',
+                    $date
+                )
             );
     }
 
@@ -186,56 +179,43 @@ class AttendanceReportService
                 ->count();
 
         return [
-            'total_records' =>
-                $total,
+            'total_records' => $total,
 
-            'present' =>
-                $present,
+            'present' => $present,
 
-            'absent' =>
-                $absent,
+            'absent' => $absent,
 
-            'leave' =>
-                $leave,
+            'leave' => $leave,
 
-            'off_day' =>
-                $offDay,
+            'off_day' => $offDay,
 
-            'off_day_work' =>
-                $offDayWork,
+            'off_day_work' => $offDayWork,
 
-            'late' =>
-                $late,
+            'late' => $late,
 
-            'early_leave' =>
-                $earlyLeave,
+            'early_leave' => $earlyLeave,
 
-            'overtime' =>
-                $overtime,
+            'overtime' => $overtime,
 
-            'late_minutes' =>
-                (int)
+            'late_minutes' => (int)
                 (clone $query)
                     ->sum(
                         'late_minutes'
                     ),
 
-            'early_leave_minutes' =>
-                (int)
+            'early_leave_minutes' => (int)
                 (clone $query)
                     ->sum(
                         'early_leave_minutes'
                     ),
 
-            'overtime_minutes' =>
-                (int)
+            'overtime_minutes' => (int)
                 (clone $query)
                     ->sum(
                         'overtime_minutes'
                     ),
 
-            'worked_minutes' =>
-                (int)
+            'worked_minutes' => (int)
                 (clone $query)
                     ->sum(
                         'worked_minutes'
@@ -380,50 +360,46 @@ class AttendanceReportService
             );
 
         return match ($type) {
-            'late' =>
-                $query->where(
-                    'late_minutes',
-                    '>',
-                    0
-                ),
+            'late' => $query->where(
+                'late_minutes',
+                '>',
+                0
+            ),
 
-            'early_leave' =>
-                $query->where(
-                    'early_leave_minutes',
-                    '>',
-                    0
-                ),
+            'early_leave' => $query->where(
+                'early_leave_minutes',
+                '>',
+                0
+            ),
 
-            'overtime' =>
-                $query->where(
-                    'overtime_minutes',
-                    '>',
-                    0
-                ),
+            'overtime' => $query->where(
+                'overtime_minutes',
+                '>',
+                0
+            ),
 
-            default =>
-                $query->where(
-                    function (
-                        Builder $query
-                    ) {
-                        $query
-                            ->where(
-                                'late_minutes',
-                                '>',
-                                0
-                            )
-                            ->orWhere(
-                                'early_leave_minutes',
-                                '>',
-                                0
-                            )
-                            ->orWhere(
-                                'overtime_minutes',
-                                '>',
-                                0
-                            );
-                    }
-                ),
+            default => $query->where(
+                function (
+                    Builder $query
+                ) {
+                    $query
+                        ->where(
+                            'late_minutes',
+                            '>',
+                            0
+                        )
+                        ->orWhere(
+                            'early_leave_minutes',
+                            '>',
+                            0
+                        )
+                        ->orWhere(
+                            'overtime_minutes',
+                            '>',
+                            0
+                        );
+                }
+            ),
         };
     }
 
@@ -433,14 +409,12 @@ class AttendanceReportService
             CarbonImmutable::today();
 
         return [
-            'date_from' =>
-                $today
-                    ->startOfMonth()
-                    ->toDateString(),
+            'date_from' => $today
+                ->startOfMonth()
+                ->toDateString(),
 
-            'date_to' =>
-                $today
-                    ->toDateString(),
+            'date_to' => $today
+                ->toDateString(),
         ];
     }
 }

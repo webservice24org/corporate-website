@@ -38,8 +38,7 @@ class PayrollSetting extends Model
 
             'overtime_enabled' => 'boolean',
 
-            'overtime_rate_multiplier' =>
-                'decimal:4',
+            'overtime_rate_multiplier' => 'decimal:4',
 
             'auto_include_recurring_components' => 'boolean',
 

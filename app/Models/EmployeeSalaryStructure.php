@@ -25,23 +25,17 @@ class EmployeeSalaryStructure extends Model
     protected function casts(): array
     {
         return [
-            'effective_from' =>
-                'date:Y-m-d',
+            'effective_from' => 'date:Y-m-d',
 
-            'effective_to' =>
-                'date:Y-m-d',
+            'effective_to' => 'date:Y-m-d',
 
-            'gross_salary' =>
-                'decimal:2',
+            'gross_salary' => 'decimal:2',
 
-            'total_earnings' =>
-                'decimal:2',
+            'total_earnings' => 'decimal:2',
 
-            'total_deductions' =>
-                'decimal:2',
+            'total_deductions' => 'decimal:2',
 
-            'net_salary' =>
-                'decimal:2',
+            'net_salary' => 'decimal:2',
         ];
     }
 

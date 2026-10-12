@@ -82,56 +82,50 @@ class LeadController extends Controller
 
                 ->when(
                     $filters['company_id'] ?? null,
-                    fn ($query, $companyId) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query, $companyId) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
 
                 ->when(
                     $filters['lead_source_id'] ?? null,
-                    fn ($query, $sourceId) =>
-                        $query->where(
-                            'lead_source_id',
-                            $sourceId
-                        )
+                    fn ($query, $sourceId) => $query->where(
+                        'lead_source_id',
+                        $sourceId
+                    )
                 )
 
                 ->when(
                     $filters['lead_status_id'] ?? null,
-                    fn ($query, $statusId) =>
-                        $query->where(
-                            'lead_status_id',
-                            $statusId
-                        )
+                    fn ($query, $statusId) => $query->where(
+                        'lead_status_id',
+                        $statusId
+                    )
                 )
 
                 ->when(
                     $filters['owner_user_id'] ?? null,
-                    fn ($query, $ownerId) =>
-                        $query->where(
-                            'owner_user_id',
-                            $ownerId
-                        )
+                    fn ($query, $ownerId) => $query->where(
+                        'owner_user_id',
+                        $ownerId
+                    )
                 )
 
                 ->when(
                     $filters['lead_type'] ?? null,
-                    fn ($query, $type) =>
-                        $query->where(
-                            'lead_type',
-                            $type
-                        )
+                    fn ($query, $type) => $query->where(
+                        'lead_type',
+                        $type
+                    )
                 )
 
                 ->when(
                     $filters['active'] ?? null,
-                    fn ($query, $active) =>
-                        $query->where(
-                            'is_active',
-                            $active === 'active'
-                        )
+                    fn ($query, $active) => $query->where(
+                        'is_active',
+                        $active === 'active'
+                    )
                 )
 
                 ->when(
@@ -186,23 +180,17 @@ class LeadController extends Controller
         return Inertia::render(
             'ERP/CRM/Leads/Index',
             [
-                'leads' =>
-                    $leads,
+                'leads' => $leads,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'sources' =>
-                    $this->sources(),
+                'sources' => $this->sources(),
 
-                'statuses' =>
-                    $this->statuses(),
+                'statuses' => $this->statuses(),
 
-                'users' =>
-                    $this->users(),
+                'users' => $this->users(),
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -212,21 +200,17 @@ class LeadController extends Controller
         return Inertia::render(
             'ERP/CRM/Leads/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'sources' =>
-                    $this->sources(
-                        activeOnly: true
-                    ),
+                'sources' => $this->sources(
+                    activeOnly: true
+                ),
 
-                'statuses' =>
-                    $this->statuses(
-                        activeOnly: true
-                    ),
+                'statuses' => $this->statuses(
+                    activeOnly: true
+                ),
 
-                'users' =>
-                    $this->users(),
+                'users' => $this->users(),
             ]
         );
     }
@@ -259,8 +243,8 @@ class LeadController extends Controller
 
     public function show(
         Lead $lead
-            ): Response {
-                $lead->load([
+    ): Response {
+        $lead->load([
             'company:id,name',
 
             'source:id,name,code',
@@ -284,8 +268,7 @@ class LeadController extends Controller
         return Inertia::render(
             'ERP/CRM/Leads/Show',
             [
-                'lead' =>
-                    $lead,
+                'lead' => $lead,
             ]
         );
     }
@@ -296,11 +279,9 @@ class LeadController extends Controller
         return Inertia::render(
             'ERP/CRM/Leads/Edit',
             [
-                'lead' =>
-                    $lead,
+                'lead' => $lead,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
                 /*
                  * Include active options plus
@@ -308,18 +289,15 @@ class LeadController extends Controller
                  * options so old records remain
                  * editable.
                  */
-                'sources' =>
-                    $this->sourcesForLead(
-                        $lead
-                    ),
+                'sources' => $this->sourcesForLead(
+                    $lead
+                ),
 
-                'statuses' =>
-                    $this->statusesForLead(
-                        $lead
-                    ),
+                'statuses' => $this->statusesForLead(
+                    $lead
+                ),
 
-                'users' =>
-                    $this->users(),
+                'users' => $this->users(),
             ]
         );
     }
@@ -392,11 +370,10 @@ class LeadController extends Controller
                     'lead_number'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn ($query) => $query->where(
+                            'company_id',
+                            $companyId
+                        )
                     )
                     ->ignore(
                         $lead?->id
@@ -411,11 +388,10 @@ class LeadController extends Controller
                     'lead_sources',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -427,11 +403,10 @@ class LeadController extends Controller
                     'lead_statuses',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -567,107 +542,83 @@ class LeadController extends Controller
         array $data
     ): array {
         return [
-            'company_id' =>
-                $data['company_id'],
+            'company_id' => $data['company_id'],
 
-            'lead_source_id' =>
-                $data['lead_source_id']
+            'lead_source_id' => $data['lead_source_id']
                 ?? null,
 
-            'lead_status_id' =>
-                $data['lead_status_id'],
+            'lead_status_id' => $data['lead_status_id'],
 
-            'owner_user_id' =>
-                $data['owner_user_id']
+            'owner_user_id' => $data['owner_user_id']
                 ?? null,
 
-            'lead_number' =>
-                strtoupper(
-                    trim(
-                        $data['lead_number']
-                    )
-                ),
+            'lead_number' => strtoupper(
+                trim(
+                    $data['lead_number']
+                )
+            ),
 
-            'lead_type' =>
-                $data['lead_type'],
+            'lead_type' => $data['lead_type'],
 
-            'company_name' =>
-                $data['lead_type'] ===
+            'company_name' => $data['lead_type'] ===
                 'company'
                     ? trim(
                         $data['company_name']
                     )
                     : null,
 
-            'contact_name' =>
+            'contact_name' => trim(
+                $data['contact_name']
+            ),
+
+            'job_title' => $data['job_title']
+                ?? null,
+
+            'email' => $data['email']
+                ?? null,
+
+            'phone' => $data['phone']
+                ?? null,
+
+            'alternate_phone' => $data['alternate_phone']
+                ?? null,
+
+            'website' => $data['website']
+                ?? null,
+
+            'expected_value' => $data['expected_value'],
+
+            'currency' => strtoupper(
                 trim(
-                    $data['contact_name']
-                ),
+                    $data['currency']
+                )
+            ),
 
-            'job_title' =>
-                $data['job_title']
+            'next_follow_up_at' => $data['next_follow_up_at']
                 ?? null,
 
-            'email' =>
-                $data['email']
+            'address_line_1' => $data['address_line_1']
                 ?? null,
 
-            'phone' =>
-                $data['phone']
+            'address_line_2' => $data['address_line_2']
                 ?? null,
 
-            'alternate_phone' =>
-                $data['alternate_phone']
+            'city' => $data['city']
                 ?? null,
 
-            'website' =>
-                $data['website']
+            'state' => $data['state']
                 ?? null,
 
-            'expected_value' =>
-                $data['expected_value'],
-
-            'currency' =>
-                strtoupper(
-                    trim(
-                        $data['currency']
-                    )
-                ),
-
-            'next_follow_up_at' =>
-                $data['next_follow_up_at']
+            'postal_code' => $data['postal_code']
                 ?? null,
 
-            'address_line_1' =>
-                $data['address_line_1']
+            'country' => $data['country']
                 ?? null,
 
-            'address_line_2' =>
-                $data['address_line_2']
+            'notes' => $data['notes']
                 ?? null,
 
-            'city' =>
-                $data['city']
-                ?? null,
-
-            'state' =>
-                $data['state']
-                ?? null,
-
-            'postal_code' =>
-                $data['postal_code']
-                ?? null,
-
-            'country' =>
-                $data['country']
-                ?? null,
-
-            'notes' =>
-                $data['notes']
-                ?? null,
-
-            'is_active' =>
-                $data['is_active'],
+            'is_active' => $data['is_active'],
         ];
     }
 
@@ -691,11 +642,10 @@ class LeadController extends Controller
         return LeadSource::query()
             ->when(
                 $activeOnly,
-                fn ($query) =>
-                    $query->where(
-                        'status',
-                        true
-                    )
+                fn ($query) => $query->where(
+                    'status',
+                    true
+                )
             )
             ->orderBy('company_id')
             ->orderBy('sort_order')
@@ -715,11 +665,10 @@ class LeadController extends Controller
         return LeadStatus::query()
             ->when(
                 $activeOnly,
-                fn ($query) =>
-                    $query->where(
-                        'status',
-                        true
-                    )
+                fn ($query) => $query->where(
+                    'status',
+                    true
+                )
             )
             ->orderBy('company_id')
             ->orderBy('sort_order')

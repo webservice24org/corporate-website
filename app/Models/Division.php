@@ -32,5 +32,4 @@ class Division extends Model
             Warehouse::class
         );
     }
-
 }

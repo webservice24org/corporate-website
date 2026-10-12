@@ -73,7 +73,4 @@ class Branch extends Model
             AttendanceHoliday::class
         );
     }
-
-
-
 }

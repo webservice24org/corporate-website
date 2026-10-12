@@ -32,12 +32,10 @@ class LeadSource extends Model
         );
     }
 
-    
     public function leads(): HasMany
     {
         return $this->hasMany(
             Lead::class
         );
     }
-        
 }

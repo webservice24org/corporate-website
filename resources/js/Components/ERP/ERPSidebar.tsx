@@ -45,7 +45,7 @@ import {
     BanknoteCheck,
     WalletCards,
     Settings,
-    Warehouse, FileText, Landmark, Store, BookOpen,
+    Warehouse, FileText, Landmark, Store, BookOpen, ArrowLeftRight,
 } from "lucide-react";
 
 import { useAuthorization } from "@/hooks/useAuthorization";
@@ -210,7 +210,9 @@ export default function ERPSidebar({
         can("erp.units.view") ||
         can("erp.warehouses.view") ||
         can("erp.inventory-stock.view") ||
-        can("erp.stock-movements.view");
+        can("erp.stock-movements.view") ||
+        can("erp.opening-stocks.view") ||
+        can("erp.stock-transfers.view");
 
     const inventoryActive =
         url.startsWith("/erp/inventory/products") ||
@@ -219,7 +221,9 @@ export default function ERPSidebar({
         url.startsWith("/erp/inventory/units") ||
         url.startsWith("/erp/inventory/warehouses") ||
         url.startsWith("/erp/inventory/stock-movements") ||
-        url.startsWith("/erp/inventory/stock");
+        url.startsWith("/erp/inventory/stock") || 
+        url.startsWith("/erp/inventory/opening-stocks") ||
+        url.startsWith("/erp/inventory/stock-transfers");
 
     const [inventoryExpanded, setInventoryExpanded] = useState(false);
     const inventoryOpen = inventoryActive || inventoryExpanded;
@@ -1075,6 +1079,26 @@ export default function ERPSidebar({
                                             href="/erp/inventory/stock-movements"
                                             label="Stock Movements"
                                             icon={BookOpen}
+                                            currentUrl={url}
+                                            onClick={closeMobile}
+                                        />
+                                    )}
+
+                                    {can("erp.opening-stocks.view") && (
+                                        <SidebarLink
+                                            href="/erp/inventory/opening-stocks"
+                                            label="Opening Stock"
+                                            icon={ClipboardList}
+                                            currentUrl={url}
+                                            onClick={closeMobile}
+                                        />
+                                    )}
+
+                                    {can("erp.stock-transfers.view") && (
+                                        <SidebarLink
+                                            href="/erp/inventory/stock-transfers"
+                                            label="Stock Transfers"
+                                            icon={ArrowLeftRight}
                                             currentUrl={url}
                                             onClick={closeMobile}
                                         />

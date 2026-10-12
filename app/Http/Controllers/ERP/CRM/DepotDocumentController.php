@@ -51,8 +51,7 @@ class DepotDocumentController extends Controller
             [
                 'depot' => $depot,
                 'documents' => $documents,
-                'documentTypes' =>
-                    self::DOCUMENT_TYPES,
+                'documentTypes' => self::DOCUMENT_TYPES,
             ]
         );
     }
@@ -137,8 +136,7 @@ class DepotDocumentController extends Controller
                         true
                     )
                     ->update([
-                        'is_current' =>
-                            false,
+                        'is_current' => false,
                     ]);
 
                 $path =
@@ -148,57 +146,43 @@ class DepotDocumentController extends Controller
                     );
 
                 DepotDocument::create([
-                    'depot_id' =>
-                        $depot->id,
+                    'depot_id' => $depot->id,
 
-                    'document_type' =>
-                        $type,
+                    'document_type' => $type,
 
-                    'title' =>
-                        $validated[
+                    'title' => $validated[
                             'title'
                         ] ?? null,
 
-                    'disk' =>
-                        'local',
+                    'disk' => 'local',
 
-                    'file_path' =>
-                        $path,
+                    'file_path' => $path,
 
-                    'original_name' =>
-                        $file
-                            ->getClientOriginalName(),
+                    'original_name' => $file
+                        ->getClientOriginalName(),
 
-                    'mime_type' =>
-                        $file
-                            ->getClientMimeType(),
+                    'mime_type' => $file
+                        ->getClientMimeType(),
 
-                    'file_size' =>
-                        $file->getSize(),
+                    'file_size' => $file->getSize(),
 
-                    'version' =>
-                        $nextVersion,
+                    'version' => $nextVersion,
 
-                    'is_current' =>
-                        true,
+                    'is_current' => true,
 
                     /*
                      * A replacement must be
                      * verified again.
                      */
-                    'verified_at' =>
-                        null,
+                    'verified_at' => null,
 
-                    'verified_by' =>
-                        null,
+                    'verified_by' => null,
 
-                    'uploaded_by' =>
-                        $request
-                            ->user()
-                            ?->id,
+                    'uploaded_by' => $request
+                        ->user()
+                        ?->id,
 
-                    'notes' =>
-                        $validated[
+                    'notes' => $validated[
                             'notes'
                         ] ?? null,
                 ]);
@@ -222,13 +206,11 @@ class DepotDocumentController extends Controller
         );
 
         $document->update([
-            'verified_at' =>
-                now(),
+            'verified_at' => now(),
 
-            'verified_by' =>
-                $request
-                    ->user()
-                    ?->id,
+            'verified_by' => $request
+                ->user()
+                ?->id,
         ]);
 
         return back()->with(
@@ -247,11 +229,9 @@ class DepotDocumentController extends Controller
         );
 
         $document->update([
-            'verified_at' =>
-                null,
+            'verified_at' => null,
 
-            'verified_by' =>
-                null,
+            'verified_by' => null,
         ]);
 
         return back()->with(
@@ -352,8 +332,7 @@ class DepotDocumentController extends Controller
                 * Preserve the document and file as history.
                 */
                 $document->update([
-                    'is_current' =>
-                        false,
+                    'is_current' => false,
                 ]);
 
                 /*
@@ -383,8 +362,7 @@ class DepotDocumentController extends Controller
 
                     if ($previous) {
                         $previous->update([
-                            'is_current' =>
-                                true,
+                            'is_current' => true,
                         ]);
                     }
                 }
@@ -396,5 +374,4 @@ class DepotDocumentController extends Controller
             'Depot document removed from current documents. History has been preserved.'
         );
     }
-
 }

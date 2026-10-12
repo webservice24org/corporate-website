@@ -34,8 +34,7 @@ class RoleController extends Controller
         return inertia(
             'Admin/Roles/Create',
             [
-                'permissionGroups' =>
-                    $this->permissionGroups(),
+                'permissionGroups' => $this->permissionGroups(),
             ]
         );
     }
@@ -67,11 +66,9 @@ class RoleController extends Controller
         ]);
 
         $role = Role::create([
-            'name' =>
-                $validated['name'],
+            'name' => $validated['name'],
 
-            'guard_name' =>
-                'web',
+            'guard_name' => 'web',
         ]);
 
         $role->syncPermissions(
@@ -103,21 +100,17 @@ class RoleController extends Controller
                 'role' => [
                     'id' => $role->id,
 
-                    'name' =>
-                        $role->name,
+                    'name' => $role->name,
 
-                    'permissions' =>
-                        $role
-                            ->permissions
-                            ->pluck('name')
-                            ->values(),
+                    'permissions' => $role
+                        ->permissions
+                        ->pluck('name')
+                        ->values(),
                 ],
 
-                'permissionGroups' =>
-                    $this->permissionGroups(),
+                'permissionGroups' => $this->permissionGroups(),
 
-                'protectedRole' =>
-                    $role->name ===
+                'protectedRole' => $role->name ===
                     'super-admin',
             ]
         );
@@ -166,8 +159,7 @@ class RoleController extends Controller
         ]);
 
         $role->update([
-            'name' =>
-                $validated['name'],
+            'name' => $validated['name'],
         ]);
 
         $role->syncPermissions(

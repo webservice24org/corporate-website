@@ -16,9 +16,9 @@ class UnitController extends Controller
     public function index(Request $request): Response
     {
         $filters = $request->validate([
-            'search' => ['nullable','string','max:150'],
-            'company_id' => ['nullable','integer','exists:companies,id'],
-            'status' => ['nullable', Rule::in(['active','inactive'])],
+            'search' => ['nullable', 'string', 'max:150'],
+            'company_id' => ['nullable', 'integer', 'exists:companies,id'],
+            'status' => ['nullable', Rule::in(['active', 'inactive'])],
         ]);
 
         $rows = Unit::query()
@@ -39,7 +39,7 @@ class UnitController extends Controller
 
         return Inertia::render('ERP/Inventory/Units/Index', [
             'units' => $rows,
-            'companies' => Company::query()->orderBy('name')->get(['id','name']),
+            'companies' => Company::query()->orderBy('name')->get(['id', 'name']),
             'filters' => $filters,
         ]);
     }
@@ -47,12 +47,14 @@ class UnitController extends Controller
     public function store(Request $request): RedirectResponse
     {
         Unit::create($this->data($request));
+
         return back()->with('success', 'Created successfully.');
     }
 
     public function update(Request $request, Unit $unit): RedirectResponse
     {
         $unit->update($this->data($request, $unit));
+
         return back()->with('success', 'Updated successfully.');
     }
 
@@ -62,18 +64,20 @@ class UnitController extends Controller
             return back()->withErrors(['record' => 'This unit is already used by one or more products.']);
         }
         $unit->delete();
+
         return back()->with('success', 'Deleted successfully.');
     }
 
     private function data(Request $request, ?Unit $unit = null): array
     {
         $companyId = $request->integer('company_id');
+
         return $request->validate([
-            'company_id' => ['required','integer','exists:companies,id'],
-            'name' => ['required','string','max:100', Rule::unique('units','name')->where(fn($q)=>$q->where('company_id',$companyId))->ignore($unit?->id)],
-            'short_name' => ['required','string','max:30', Rule::unique('units','short_name')->where(fn($q)=>$q->where('company_id',$companyId))->ignore($unit?->id)],
-            'decimal_places' => ['required','integer','min:0','max:6'],
-            'is_active' => ['required','boolean'],
+            'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'name' => ['required', 'string', 'max:100', Rule::unique('units', 'name')->where(fn ($q) => $q->where('company_id', $companyId))->ignore($unit?->id)],
+            'short_name' => ['required', 'string', 'max:30', Rule::unique('units', 'short_name')->where(fn ($q) => $q->where('company_id', $companyId))->ignore($unit?->id)],
+            'decimal_places' => ['required', 'integer', 'min:0', 'max:6'],
+            'is_active' => ['required', 'boolean'],
         ]);
     }
 }

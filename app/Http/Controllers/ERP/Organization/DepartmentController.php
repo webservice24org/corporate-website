@@ -18,25 +18,21 @@ class DepartmentController extends Controller
         Request $request
     ): Response {
         $filters = [
-            'search' =>
-                $request->string(
-                    'search'
-                )->toString(),
+            'search' => $request->string(
+                'search'
+            )->toString(),
 
-            'company_id' =>
-                $request->input(
-                    'company_id'
-                ),
+            'company_id' => $request->input(
+                'company_id'
+            ),
 
-            'branch_id' =>
-                $request->input(
-                    'branch_id'
-                ),
+            'branch_id' => $request->input(
+                'branch_id'
+            ),
 
-            'status' =>
-                $request->input(
-                    'status'
-                ),
+            'status' => $request->input(
+                'status'
+            ),
         ];
 
         $departments =
@@ -84,11 +80,10 @@ class DepartmentController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters[
@@ -97,22 +92,20 @@ class DepartmentController extends Controller
                     fn (
                         $query,
                         $branchId
-                    ) =>
-                        $query->where(
-                            'branch_id',
-                            $branchId
-                        )
+                    ) => $query->where(
+                        'branch_id',
+                        $branchId
+                    )
                 )
                 ->when(
                     $filters['status'],
                     fn (
                         $query,
                         $status
-                    ) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    ) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->latest('id')
                 ->paginate(15)
@@ -146,17 +139,13 @@ class DepartmentController extends Controller
         return Inertia::render(
             'ERP/Organization/Departments/Index',
             [
-                'departments' =>
-                    $departments,
+                'departments' => $departments,
 
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'branches' =>
-                    $branches,
+                'branches' => $branches,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -193,11 +182,9 @@ class DepartmentController extends Controller
         return Inertia::render(
             'ERP/Organization/Departments/Create',
             [
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'branches' =>
-                    $branches,
+                'branches' => $branches,
             ]
         );
     }
@@ -217,8 +204,7 @@ class DepartmentController extends Controller
                 $validated['code']
             ),
 
-            'branch_id' =>
-                $validated[
+            'branch_id' => $validated[
                     'branch_id'
                 ] ?? null,
         ]);
@@ -319,14 +305,11 @@ class DepartmentController extends Controller
         return Inertia::render(
             'ERP/Organization/Departments/Edit',
             [
-                'department' =>
-                    $department,
+                'department' => $department,
 
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'branches' =>
-                    $branches,
+                'branches' => $branches,
             ]
         );
     }
@@ -348,8 +331,7 @@ class DepartmentController extends Controller
                 $validated['code']
             ),
 
-            'branch_id' =>
-                $validated[
+            'branch_id' => $validated[
                     'branch_id'
                 ] ?? null,
         ]);
@@ -405,11 +387,10 @@ class DepartmentController extends Controller
                     'branches',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -429,11 +410,10 @@ class DepartmentController extends Controller
                     'code'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn ($query) => $query->where(
+                            'company_id',
+                            $companyId
+                        )
                     )
                     ->ignore(
                         $department?->id

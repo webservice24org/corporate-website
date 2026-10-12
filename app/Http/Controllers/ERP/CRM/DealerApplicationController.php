@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DealerApplication;
 use App\Models\DealerApplicationDocument;
 use App\Services\ERP\CRM\DealerApplicationApprovalService;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -13,8 +14,6 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Filesystem\FilesystemAdapter;
-
 
 class DealerApplicationController extends Controller
 {
@@ -91,20 +90,18 @@ class DealerApplicationController extends Controller
 
                 ->when(
                     $filters['status'] ?? null,
-                    fn ($query, $status) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    fn ($query, $status) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
 
                 ->when(
                     $filters['depot_id'] ?? null,
-                    fn ($query, $depotId) =>
-                        $query->where(
-                            'depot_id',
-                            $depotId
-                        )
+                    fn ($query, $depotId) => $query->where(
+                        'depot_id',
+                        $depotId
+                    )
                 )
 
                 ->latest()
@@ -114,11 +111,9 @@ class DealerApplicationController extends Controller
         return Inertia::render(
             'ERP/CRM/DealerApplications/Index',
             [
-                'applications' =>
-                    $applications,
+                'applications' => $applications,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -151,8 +146,7 @@ class DealerApplicationController extends Controller
         return Inertia::render(
             'ERP/CRM/DealerApplications/Show',
             [
-                'application' =>
-                    $dealerApplication,
+                'application' => $dealerApplication,
             ]
         );
     }
@@ -166,20 +160,16 @@ class DealerApplicationController extends Controller
             'pending'
         ) {
             return back()->withErrors([
-                'application' =>
-                    'Only pending applications can be moved to Under Review.',
+                'application' => 'Only pending applications can be moved to Under Review.',
             ]);
         }
 
         $dealerApplication->update([
-            'status' =>
-                'under_review',
+            'status' => 'under_review',
 
-            'reviewed_by_user_id' =>
-                $request->user()->id,
+            'reviewed_by_user_id' => $request->user()->id,
 
-            'reviewed_at' =>
-                now(),
+            'reviewed_at' => now(),
         ]);
 
         return back()->with(
@@ -282,11 +272,9 @@ class DealerApplicationController extends Controller
         );
 
         $document->update([
-            'verified_by_user_id' =>
-                $request->user()->id,
+            'verified_by_user_id' => $request->user()->id,
 
-            'verified_at' =>
-                now(),
+            'verified_at' => now(),
         ]);
 
         return back()->with(
@@ -317,5 +305,4 @@ class DealerApplicationController extends Controller
             $document->original_name
         );
     }
-
 }

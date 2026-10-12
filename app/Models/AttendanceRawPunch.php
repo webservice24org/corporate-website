@@ -41,23 +41,17 @@ class AttendanceRawPunch extends Model
     protected function casts(): array
     {
         return [
-            'device_punched_at' =>
-                'datetime',
+            'device_punched_at' => 'datetime',
 
-            'punched_at' =>
-                'datetime',
+            'punched_at' => 'datetime',
 
-            'raw_payload' =>
-                'array',
+            'raw_payload' => 'array',
 
-            'mapped_at' =>
-                'datetime',
+            'mapped_at' => 'datetime',
 
-            'processed_at' =>
-                'datetime',
+            'processed_at' => 'datetime',
 
-            'received_at' =>
-                'datetime',
+            'received_at' => 'datetime',
         ];
     }
 
@@ -110,6 +104,4 @@ class AttendanceRawPunch extends Model
             'attendance_record_id'
         )->withTimestamps();
     }
-
-
 }

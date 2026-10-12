@@ -46,8 +46,7 @@ class PayrollSettingController extends Controller
                     'name' => $company->name,
                 ],
 
-                'setting' =>
-                    $setting
+                'setting' => $setting
                         ? $setting->only([
                             'id',
                             'company_id',
@@ -194,7 +193,7 @@ class PayrollSettingController extends Controller
         }
 
         if (
-            !$data[
+            ! $data[
                 'attendance_integration_enabled'
             ]
         ) {
@@ -216,7 +215,7 @@ class PayrollSettingController extends Controller
         }
 
         if (
-            !$data['overtime_enabled']
+            ! $data['overtime_enabled']
         ) {
             $data[
                 'overtime_rate_multiplier'
@@ -234,8 +233,7 @@ class PayrollSettingController extends Controller
 
         PayrollSetting::updateOrCreate(
             [
-                'company_id' =>
-                    $company->id,
+                'company_id' => $company->id,
             ],
             $data
         );
@@ -256,53 +254,37 @@ class PayrollSettingController extends Controller
         return [
             'id' => null,
 
-            'company_id' =>
-                $companyId,
+            'company_id' => $companyId,
 
-            'pay_frequency' =>
-                'monthly',
+            'pay_frequency' => 'monthly',
 
-            'salary_proration_basis' =>
-                'calendar_days',
+            'salary_proration_basis' => 'calendar_days',
 
-            'default_currency' =>
-                'BDT',
+            'default_currency' => 'BDT',
 
-            'default_pay_day' =>
-                25,
+            'default_pay_day' => 25,
 
-            'attendance_integration_enabled' =>
-                true,
+            'attendance_integration_enabled' => true,
 
-            'require_finalized_attendance' =>
-                true,
+            'require_finalized_attendance' => true,
 
-            'attendance_deduction_enabled' =>
-                false,
+            'attendance_deduction_enabled' => false,
 
-            'unpaid_leave_deduction_enabled' =>
-                true,
+            'unpaid_leave_deduction_enabled' => true,
 
-            'overtime_enabled' =>
-                true,
+            'overtime_enabled' => true,
 
-            'overtime_rate_multiplier' =>
-                '1.5000',
+            'overtime_rate_multiplier' => '1.5000',
 
-            'auto_include_recurring_components' =>
-                true,
+            'auto_include_recurring_components' => true,
 
-            'rounding_method' =>
-                'none',
+            'rounding_method' => 'none',
 
-            'rounding_precision' =>
-                2,
+            'rounding_precision' => 2,
 
-            'status' =>
-                true,
+            'status' => true,
 
-            'notes' =>
-                null,
+            'notes' => null,
         ];
     }
 }

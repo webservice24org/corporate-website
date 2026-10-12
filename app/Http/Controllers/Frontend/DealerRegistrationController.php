@@ -45,11 +45,10 @@ class DealerRegistrationController extends Controller
             )
             ->whereHas(
                 'district',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        true
-                    )
+                fn ($query) => $query->where(
+                    'is_active',
+                    true
+                )
             )
             ->with([
                 'district:id,division_id,name,name_bn',
@@ -83,11 +82,10 @@ class DealerRegistrationController extends Controller
                     'depots',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'is_active',
-                            true
-                        )
+                    fn ($query) => $query->where(
+                        'is_active',
+                        true
+                    )
                         ->whereNull(
                             'deleted_at'
                         )
@@ -256,14 +254,13 @@ class DealerRegistrationController extends Controller
             ->firstOrFail();
 
         if (
-            !$upazila->district ||
+            ! $upazila->district ||
             $upazila->district_id !==
                 $depot->district_id
         ) {
             return back()
                 ->withErrors([
-                    'upazila_id' =>
-                        'The selected Upazila does not belong to the Depot district.',
+                    'upazila_id' => 'The selected Upazila does not belong to the Depot district.',
                 ])
                 ->withInput();
         }
@@ -280,69 +277,51 @@ class DealerRegistrationController extends Controller
                 ) {
                     $application =
                         DealerApplication::create([
-                            'company_id' =>
-                                $depot->company_id,
+                            'company_id' => $depot->company_id,
 
-                            'depot_id' =>
-                                $depot->id,
+                            'depot_id' => $depot->id,
 
-                            'upazila_id' =>
-                                $validated['upazila_id'],
+                            'upazila_id' => $validated['upazila_id'],
 
-                            'business_name' =>
-                                $validated['business_name'],
+                            'business_name' => $validated['business_name'],
 
-                            'proprietor_name' =>
-                                $validated['proprietor_name'],
+                            'proprietor_name' => $validated['proprietor_name'],
 
-                            'phone' =>
-                                $validated['phone'],
+                            'phone' => $validated['phone'],
 
-                            'alternate_phone' =>
-                                $validated['alternate_phone'] ??
+                            'alternate_phone' => $validated['alternate_phone'] ??
                                 null,
 
-                            'email' =>
-                                $validated['email'] ??
+                            'email' => $validated['email'] ??
                                 null,
 
-                            'trade_license_number' =>
-                                $validated['trade_license_number'] ??
+                            'trade_license_number' => $validated['trade_license_number'] ??
                                 null,
 
-                            'nid_number' =>
-                                $validated['nid_number'] ??
+                            'nid_number' => $validated['nid_number'] ??
                                 null,
 
-                            'tin_number' =>
-                                $validated['tin_number'] ??
+                            'tin_number' => $validated['tin_number'] ??
                                 null,
 
-                            'vat_number' =>
-                                $validated['vat_number'] ??
+                            'vat_number' => $validated['vat_number'] ??
                                 null,
 
-                            'business_address' =>
-                                $validated['business_address'],
+                            'business_address' => $validated['business_address'],
 
-                            'postal_code' =>
-                                $validated['postal_code'] ??
+                            'postal_code' => $validated['postal_code'] ??
                                 null,
 
-                            'years_in_business' =>
-                                $validated['years_in_business'] ??
+                            'years_in_business' => $validated['years_in_business'] ??
                                 null,
 
-                            'requested_credit_limit' =>
-                                $validated['requested_credit_limit'] ??
+                            'requested_credit_limit' => $validated['requested_credit_limit'] ??
                                 null,
 
-                            'business_description' =>
-                                $validated['business_description'] ??
+                            'business_description' => $validated['business_description'] ??
                                 null,
 
-                            'status' =>
-                                'pending',
+                            'status' => 'pending',
                         ]);
 
                     $directory =
@@ -362,28 +341,22 @@ class DealerRegistrationController extends Controller
                     }
 
                     $documents = [
-                        'bank_check' =>
-                            'bank_check',
+                        'bank_check' => 'bank_check',
 
-                        'trade_license_document' =>
-                            'trade_license',
+                        'trade_license_document' => 'trade_license',
 
-                        'nid_document' =>
-                            'nid',
+                        'nid_document' => 'nid',
 
-                        'tin_document' =>
-                            'tin',
+                        'tin_document' => 'tin',
 
-                        'vat_document' =>
-                            'vat',
+                        'vat_document' => 'vat',
                     ];
 
                     foreach (
-                        $documents as
-                        $field => $type
+                        $documents as $field => $type
                     ) {
                         if (
-                            !$request->hasFile(
+                            ! $request->hasFile(
                                 $field
                             )
                         ) {
@@ -404,23 +377,17 @@ class DealerRegistrationController extends Controller
                         $application
                             ->documents()
                             ->create([
-                                'document_type' =>
-                                    $type,
+                                'document_type' => $type,
 
-                                'disk' =>
-                                    'local',
+                                'disk' => 'local',
 
-                                'path' =>
-                                    $path,
+                                'path' => $path,
 
-                                'original_name' =>
-                                    $file->getClientOriginalName(),
+                                'original_name' => $file->getClientOriginalName(),
 
-                                'mime_type' =>
-                                    $file->getMimeType(),
+                                'mime_type' => $file->getMimeType(),
 
-                                'file_size' =>
-                                    $file->getSize(),
+                                'file_size' => $file->getSize(),
                             ]);
                     }
                 }
@@ -441,6 +408,4 @@ class DealerRegistrationController extends Controller
             'Dealer application submitted successfully. It will be reviewed by our administration team.'
         );
     }
-
-
 }

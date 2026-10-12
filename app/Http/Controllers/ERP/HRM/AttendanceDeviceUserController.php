@@ -5,8 +5,10 @@ namespace App\Http\Controllers\ERP\HRM;
 use App\Http\Controllers\Controller;
 use App\Models\AttendanceDevice;
 use App\Models\AttendanceDeviceUser;
+use App\Models\AttendanceRawPunch;
 use App\Models\Company;
 use App\Models\Employee;
+use App\Services\Attendance\AttendancePunchResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,8 +16,6 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Services\Attendance\AttendancePunchResolver;
-use App\Models\AttendanceRawPunch;
 
 class AttendanceDeviceUserController extends Controller
 {
@@ -23,41 +23,40 @@ class AttendanceDeviceUserController extends Controller
         Request $request
     ): Response {
         $query =
-    AttendanceDeviceUser::query()
-        ->with([
-            'device:id,company_id,branch_id,name,code,provider,model',
-            'device.company:id,name,code',
+            AttendanceDeviceUser::query()
+                ->with([
+                    'device:id,company_id,branch_id,name,code,provider,model',
+                    'device.company:id,name,code',
 
-            'employee:id,company_id,branch_id,department_id,designation_id,employee_number,first_name,middle_name,last_name,employment_status',
+                    'employee:id,company_id,branch_id,department_id,designation_id,employee_number,first_name,middle_name,last_name,employment_status',
 
-            'employee.branch:id,name,code',
-            'employee.department:id,name,code',
-            'employee.designation:id,name,code',
+                    'employee.branch:id,name,code',
+                    'employee.department:id,name,code',
+                    'employee.designation:id,name,code',
 
-            'mappedBy:id,name',
-        ])
-        ->addSelect([
-            'unmapped_punches_count' =>
-                AttendanceRawPunch::query()
-                    ->selectRaw(
-                        'COUNT(*)'
-                    )
-                    ->whereColumn(
-                        'attendance_raw_punches.device_id',
-                        'attendance_device_users.device_id'
-                    )
-                    ->whereColumn(
-                        'attendance_raw_punches.external_user_id',
-                        'attendance_device_users.external_user_id'
-                    )
-                    ->whereNull(
-                        'attendance_raw_punches.employee_id'
-                    )
-                    ->where(
-                        'attendance_raw_punches.processing_status',
-                        'unmapped'
-                    ),
-        ]);
+                    'mappedBy:id,name',
+                ])
+                ->addSelect([
+                    'unmapped_punches_count' => AttendanceRawPunch::query()
+                        ->selectRaw(
+                            'COUNT(*)'
+                        )
+                        ->whereColumn(
+                            'attendance_raw_punches.device_id',
+                            'attendance_device_users.device_id'
+                        )
+                        ->whereColumn(
+                            'attendance_raw_punches.external_user_id',
+                            'attendance_device_users.external_user_id'
+                        )
+                        ->whereNull(
+                            'attendance_raw_punches.employee_id'
+                        )
+                        ->where(
+                            'attendance_raw_punches.processing_status',
+                            'unmapped'
+                        ),
+                ]);
 
         if (
             $request->filled(
@@ -71,11 +70,10 @@ class AttendanceDeviceUserController extends Controller
 
             $query->whereHas(
                 'device',
-                fn (Builder $deviceQuery) =>
-                    $deviceQuery->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn(Builder $deviceQuery) => $deviceQuery->where(
+                    'company_id',
+                    $companyId
+                )
             );
         }
 
@@ -118,9 +116,7 @@ class AttendanceDeviceUserController extends Controller
                 );
 
             $query->where(
-                function (
-                    Builder $builder
-                ) use ($search) {
+                function (Builder $builder) use ($search) {
                     $builder
                         ->where(
                             'external_user_id',
@@ -134,9 +130,7 @@ class AttendanceDeviceUserController extends Controller
                         )
                         ->orWhereHas(
                             'employee',
-                            function (
-                                Builder $employeeQuery
-                            ) use ($search) {
+                            function (Builder $employeeQuery) use ($search) {
                                 $employeeQuery
                                     ->where(
                                         'employee_number',
@@ -162,42 +156,35 @@ class AttendanceDeviceUserController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/DeviceUsers/Index',
             [
-                'mappings' =>
-                    $query
-                        ->orderByDesc('id')
-                        ->paginate(15)
-                        ->withQueryString(),
+                'mappings' => $query
+                    ->orderByDesc('id')
+                    ->paginate(15)
+                    ->withQueryString(),
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'devices' =>
-                    $this->devices(),
+                'devices' => $this->devices(),
 
                 'filters' => [
-                    'search' =>
-                        $request->input(
-                            'search',
-                            ''
-                        ),
+                    'search' => $request->input(
+                        'search',
+                        ''
+                    ),
 
-                    'company_id' =>
-                        $request->input(
-                            'company_id',
-                            ''
-                        ),
+                    'company_id' => $request->input(
+                        'company_id',
+                        ''
+                    ),
 
-                    'device_id' =>
-                        $request->input(
-                            'device_id',
-                            ''
-                        ),
+                    'device_id' => $request->input(
+                        'device_id',
+                        ''
+                    ),
 
-                    'status' =>
-                        $request->input(
-                            'status',
-                            ''
-                        ),
+                    'status' => $request->input(
+                        'status',
+                        ''
+                    ),
                 ],
             ]
         );
@@ -209,99 +196,92 @@ class AttendanceDeviceUserController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/DeviceUsers/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'devices' =>
-                    $this->devices(),
+                'devices' => $this->devices(),
 
-                'employees' =>
-                    $this->employees(),
+                'employees' => $this->employees(),
 
-                'selectedDeviceId' =>
-                    $request->filled(
+                'selectedDeviceId' => $request->filled(
+                    'device_id'
+                )
+                    ? $request->integer(
                         'device_id'
                     )
-                        ? $request->integer(
-                            'device_id'
-                        )
-                        : null,
+                    : null,
 
-                'selectedEmployeeId' =>
-                    $request->filled(
+                'selectedEmployeeId' => $request->filled(
+                    'employee_id'
+                )
+                    ? $request->integer(
                         'employee_id'
                     )
-                        ? $request->integer(
-                            'employee_id'
-                        )
-                        : null,
+                    : null,
             ]
         );
     }
 
     public function store(
-    Request $request,
-    AttendancePunchResolver $resolver
-): RedirectResponse {
-    $validated =
-        $this->validateMapping(
-            $request
-        );
-
-    $device =
-        AttendanceDevice::findOrFail(
-            $validated[
-                'device_id'
-            ]
-        );
-
-    $employee =
-        Employee::findOrFail(
-            $validated[
-                'employee_id'
-            ]
-        );
-
-    $this->ensureSameCompany(
-        $device,
-        $employee
-    );
-
-    $mapping =
-        AttendanceDeviceUser::create([
-            ...$validated,
-
-            'mapped_by' =>
+        Request $request,
+        AttendancePunchResolver $resolver
+    ): RedirectResponse {
+        $validated =
+            $this->validateMapping(
                 $request
-                    ->user()
-                    ?->id,
+            );
 
-            'sync_status' =>
-                'pending',
-        ]);
+        $device =
+            AttendanceDevice::findOrFail(
+                $validated[
+                    'device_id'
+                ]
+            );
 
-    $resolved =
-        $resolver->resolveForMapping(
-            $mapping
+        $employee =
+            Employee::findOrFail(
+                $validated[
+                    'employee_id'
+                ]
+            );
+
+        $this->ensureSameCompany(
+            $device,
+            $employee
         );
 
-    $message =
-        'Device employee mapping created successfully.';
+        $mapping =
+            AttendanceDeviceUser::create([
+                ...$validated,
 
-    if ($resolved > 0) {
-        $message .=
-            " {$resolved} historical unmapped punch" .
-            ($resolved === 1 ? '' : 'es') .
-            ' resolved.';
+                'mapped_by' => $request
+                    ->user()
+                        ?->id,
+
+                'sync_status' => 'pending',
+            ]);
+
+        $resolved =
+            $resolver->resolveForMapping(
+                $mapping
+            );
+
+        $message =
+            'Device employee mapping created successfully.';
+
+        if ($resolved > 0) {
+            $message .=
+                " {$resolved} historical unmapped punch" .
+                ($resolved === 1 ? '' : 'es') .
+                ' resolved.';
+        }
+
+        return to_route(
+            'erp.attendance-device-users.index'
+        )->with(
+                'success',
+                $message
+            );
     }
-
-    return to_route(
-        'erp.attendance-device-users.index'
-    )->with(
-        'success',
-        $message
-    );
-}
 
     public function edit(
         AttendanceDeviceUser $attendanceDeviceUser
@@ -311,104 +291,101 @@ class AttendanceDeviceUserController extends Controller
             'employee:id,company_id,employee_number,first_name,middle_name,last_name',
         ]);
 
+        $device = $attendanceDeviceUser->device;
+
+        abort_unless($device instanceof AttendanceDevice, 404);
+
         return Inertia::render(
             'ERP/HRM/Attendance/DeviceUsers/Edit',
             [
-                'mapping' =>
-                    $attendanceDeviceUser,
+                'mapping' => $attendanceDeviceUser,
 
-                'companies' =>
-                    $this->companies(
-                        $attendanceDeviceUser
-                            ->device
-                            ->company_id
-                    ),
+                'companies' => $this->companies(
+                    $device->company_id
+                ),
 
-                'devices' =>
-                    $this->devices(
-                        $attendanceDeviceUser
-                            ->device_id
-                    ),
+                'devices' => $this->devices(
+                    $attendanceDeviceUser
+                        ->device_id
+                ),
 
-                'employees' =>
-                    $this->employees(
-                        $attendanceDeviceUser
-                            ->employee_id
-                    ),
+                'employees' => $this->employees(
+                    $attendanceDeviceUser
+                        ->employee_id
+                ),
             ]
         );
     }
 
-public function update(
-    Request $request,
-    AttendanceDeviceUser $attendanceDeviceUser,
-    AttendancePunchResolver $resolver
-): RedirectResponse {
-    $validated =
-        $this->validateMapping(
-            $request,
-            $attendanceDeviceUser
+    public function update(
+        Request $request,
+        AttendanceDeviceUser $attendanceDeviceUser,
+        AttendancePunchResolver $resolver
+    ): RedirectResponse {
+        $validated =
+            $this->validateMapping(
+                $request,
+                $attendanceDeviceUser
+            );
+
+        $device =
+            AttendanceDevice::findOrFail(
+                $validated[
+                    'device_id'
+                ]
+            );
+
+        $employee =
+            Employee::findOrFail(
+                $validated[
+                    'employee_id'
+                ]
+            );
+
+        $this->ensureSameCompany(
+            $device,
+            $employee
         );
 
-    $device =
-        AttendanceDevice::findOrFail(
-            $validated[
-                'device_id'
-            ]
-        );
+        $attendanceDeviceUser->update([
+            ...$validated,
 
-    $employee =
-        Employee::findOrFail(
-            $validated[
-                'employee_id'
-            ]
-        );
+            'sync_status' => 'pending',
 
-    $this->ensureSameCompany(
-        $device,
-        $employee
-    );
+            'sync_error' => null,
+        ]);
 
-    $attendanceDeviceUser->update([
-        ...$validated,
+        /*
+        |--------------------------------------------------------------------------
+        | Reload updated values
+        |--------------------------------------------------------------------------
+        */
 
-        'sync_status' =>
-            'pending',
+        $attendanceDeviceUser->refresh();
 
-        'sync_error' =>
-            null,
-    ]);
+        $resolved =
+            $resolver->resolveForMapping(
+                $attendanceDeviceUser
+            );
 
-    /*
-    |--------------------------------------------------------------------------
-    | Reload updated values
-    |--------------------------------------------------------------------------
-    */
+        $message =
+            'Device employee mapping updated successfully.';
 
-    $attendanceDeviceUser->refresh();
+        if ($resolved > 0) {
+            $message .=
+                " {$resolved} historical unmapped punch" .
+                ($resolved === 1 ? '' : 'es') .
+                ' resolved.';
+        }
 
-    $resolved =
-        $resolver->resolveForMapping(
-            $attendanceDeviceUser
-        );
-
-    $message =
-        'Device employee mapping updated successfully.';
-
-    if ($resolved > 0) {
-        $message .=
-            " {$resolved} historical unmapped punch" .
-            ($resolved === 1 ? '' : 'es') .
-            ' resolved.';
+        return to_route(
+            'erp.attendance-device-users.index'
+        )->with(
+                'success',
+                $message
+            );
     }
 
-    return to_route(
-        'erp.attendance-device-users.index'
-    )->with(
-        'success',
-        $message
-    );
-}
     public function destroy(
         AttendanceDeviceUser $attendanceDeviceUser
     ): RedirectResponse {
@@ -417,9 +394,9 @@ public function update(
         return to_route(
             'erp.attendance-device-users.index'
         )->with(
-            'success',
-            'Device employee mapping deleted successfully.'
-        );
+                'success',
+                'Device employee mapping deleted successfully.'
+            );
     }
 
     private function validateMapping(
@@ -436,24 +413,22 @@ public function update(
                 'attendance_device_users',
                 'external_user_id'
             )->where(
-                fn ($query) =>
-                    $query->where(
+                    fn($query) => $query->where(
                         'device_id',
                         $deviceId
                     )
-            );
+                );
 
         $employeeRule =
             Rule::unique(
                 'attendance_device_users',
                 'employee_id'
             )->where(
-                fn ($query) =>
-                    $query->where(
+                    fn($query) => $query->where(
                         'device_id',
                         $deviceId
                     )
-            );
+                );
 
         if ($mapping) {
             $externalIdRule->ignore(
@@ -517,8 +492,7 @@ public function update(
             $employee->company_id
         ) {
             throw ValidationException::withMessages([
-                'employee_id' =>
-                    'The employee and attendance device must belong to the same company.',
+                'employee_id' => 'The employee and attendance device must belong to the same company.',
             ]);
         }
     }
@@ -528,9 +502,7 @@ public function update(
     ) {
         return Company::query()
             ->where(
-                function (
-                    Builder $query
-                ) use ($includeId) {
+                function (Builder $query) use ($includeId) {
                     $query->where(
                         'status',
                         'active'
@@ -560,9 +532,7 @@ public function update(
     ) {
         return AttendanceDevice::query()
             ->where(
-                function (
-                    Builder $query
-                ) use ($includeId) {
+                function (Builder $query) use ($includeId) {
                     $query->where(
                         'status',
                         'active'
@@ -600,9 +570,7 @@ public function update(
                 'designation:id,name,code',
             ])
             ->where(
-                function (
-                    Builder $query
-                ) use ($includeId) {
+                function (Builder $query) use ($includeId) {
                     $query->whereIn(
                         'employment_status',
                         [
@@ -640,38 +608,36 @@ public function update(
     }
 
     public function resolvePunches(
-    AttendanceDeviceUser $attendanceDeviceUser,
-    AttendancePunchResolver $resolver
-): RedirectResponse {
-    if (
-        $attendanceDeviceUser->status !==
-        'active'
-    ) {
-        return back()->with(
-            'error',
-            'Inactive device employee mappings cannot resolve punches.'
-        );
-    }
+        AttendanceDeviceUser $attendanceDeviceUser,
+        AttendancePunchResolver $resolver
+    ): RedirectResponse {
+        if (
+            $attendanceDeviceUser->status !==
+            'active'
+        ) {
+            return back()->with(
+                'error',
+                'Inactive device employee mappings cannot resolve punches.'
+            );
+        }
 
-    $resolved =
-        $resolver->resolveForMapping(
-            $attendanceDeviceUser
-        );
+        $resolved =
+            $resolver->resolveForMapping(
+                $attendanceDeviceUser
+            );
 
-    if ($resolved === 0) {
+        if ($resolved === 0) {
+            return back()->with(
+                'success',
+                'No unmapped punches were found for this device user.'
+            );
+        }
+
         return back()->with(
             'success',
-            'No unmapped punches were found for this device user.'
+            "{$resolved} unmapped punch" .
+            ($resolved === 1 ? '' : 'es') .
+            ' resolved successfully.'
         );
     }
-
-    return back()->with(
-        'success',
-        "{$resolved} unmapped punch" .
-        ($resolved === 1 ? '' : 'es') .
-        ' resolved successfully.'
-    );
-}
-
-
 }

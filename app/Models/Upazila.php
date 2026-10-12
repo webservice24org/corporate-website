@@ -48,7 +48,4 @@ class Upazila extends Model
             Warehouse::class
         );
     }
-
-
-
 }

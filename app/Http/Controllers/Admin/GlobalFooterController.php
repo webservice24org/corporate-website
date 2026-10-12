@@ -47,14 +47,11 @@ class GlobalFooterController extends Controller
                 'type' => 'footer',
             ],
             [
-                'variant' =>
-                    $validated['variant'],
+                'variant' => $validated['variant'],
 
-                'settings' =>
-                    $validated['settings'],
+                'settings' => $validated['settings'],
 
-                'is_active' =>
-                    $validated['is_active'],
+                'is_active' => $validated['is_active'],
             ]
         );
 

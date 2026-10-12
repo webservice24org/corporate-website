@@ -47,18 +47,14 @@ class GlobalFloatingContactController extends Controller
 
         GlobalSection::updateOrCreate(
             [
-                'type' =>
-                    'floating-contact',
+                'type' => 'floating-contact',
             ],
             [
-                'variant' =>
-                    $validated['variant'],
+                'variant' => $validated['variant'],
 
-                'settings' =>
-                    $validated['settings'],
+                'settings' => $validated['settings'],
 
-                'is_active' =>
-                    $validated['is_active'],
+                'is_active' => $validated['is_active'],
             ]
         );
 

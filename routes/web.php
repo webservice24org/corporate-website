@@ -1,51 +1,42 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
-
+use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
+use App\Http\Controllers\Admin\GlobalFloatingContactController;
 /*
 |--------------------------------------------------------------------------
 | Frontend Controllers
 |--------------------------------------------------------------------------
 */
 
-use App\Http\Controllers\ContactMessageController;
-use App\Http\Controllers\NewsletterSubscriberController;
-
-use App\Http\Controllers\Frontend\HomeController;
-use App\Http\Controllers\Frontend\PageController as FrontendPageController;
-use App\Http\Controllers\Frontend\DepotRegistrationController;
-use App\Http\Controllers\Frontend\DealerRegistrationController;
-
+use App\Http\Controllers\Admin\GlobalFooterController;
+use App\Http\Controllers\Admin\GlobalHeaderController;
+use App\Http\Controllers\Admin\MailSettingController;
+use App\Http\Controllers\Admin\NewsletterSubscriberController as AdminNewsletterSubscriberController;
+use App\Http\Controllers\Admin\PageBuilderController;
+use App\Http\Controllers\Admin\PageController;
 /*
 |--------------------------------------------------------------------------
 | Account Controllers
 |--------------------------------------------------------------------------
 */
 
-use App\Http\Controllers\ProfileController;
-
+use App\Http\Controllers\Admin\RoleController;
 /*
 |--------------------------------------------------------------------------
 | Admin Controllers
 |--------------------------------------------------------------------------
 */
 
-use App\Http\Controllers\Admin\PageController;
-use App\Http\Controllers\Admin\PageBuilderController;
-
-use App\Http\Controllers\Admin\ContactMessageController as AdminContactMessageController;
-use App\Http\Controllers\Admin\NewsletterSubscriberController as AdminNewsletterSubscriberController;
-
-use App\Http\Controllers\Admin\MailSettingController;
-
-use App\Http\Controllers\Admin\GlobalHeaderController;
-use App\Http\Controllers\Admin\GlobalFooterController;
-use App\Http\Controllers\Admin\GlobalFloatingContactController;
-
 use App\Http\Controllers\Admin\UserController;
-use App\Http\Controllers\Admin\RoleController;
-
+use App\Http\Controllers\ContactMessageController;
+use App\Http\Controllers\Frontend\DealerRegistrationController;
+use App\Http\Controllers\Frontend\DepotRegistrationController;
+use App\Http\Controllers\Frontend\HomeController;
+use App\Http\Controllers\Frontend\PageController as FrontendPageController;
+use App\Http\Controllers\NewsletterSubscriberController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
 
 /*
 |--------------------------------------------------------------------------
@@ -57,7 +48,6 @@ Route::get(
     '/',
     [HomeController::class, 'index']
 )->name('home');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -72,14 +62,12 @@ Route::post(
     ->middleware('throttle:5,1')
     ->name('contact.messages.store');
 
-
 Route::post(
     '/newsletter/subscribe',
     [NewsletterSubscriberController::class, 'store']
 )
     ->middleware('throttle:5,1')
     ->name('newsletter.subscribe');
-
 
 /*
 |--------------------------------------------------------------------------
@@ -88,7 +76,6 @@ Route::post(
 */
 
 require __DIR__.'/auth.php';
-
 
 /*
 |--------------------------------------------------------------------------
@@ -114,7 +101,6 @@ Route::middleware('auth')->group(function () {
     )->name('profile.destroy');
 
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -146,7 +132,6 @@ Route::prefix('admin/')
             )
             ->name('dashboard');
 
-
         /*
         |--------------------------------------------------------------------------
         | Users
@@ -162,7 +147,6 @@ Route::prefix('admin/')
             )
             ->name('users.index');
 
-
         Route::get(
             'users/create',
             [UserController::class, 'create']
@@ -171,7 +155,6 @@ Route::prefix('admin/')
                 'can:users.create'
             )
             ->name('users.create');
-
 
         Route::post(
             'users',
@@ -182,7 +165,6 @@ Route::prefix('admin/')
             )
             ->name('users.store');
 
-
         Route::get(
             'users/{user}/edit',
             [UserController::class, 'edit']
@@ -191,7 +173,6 @@ Route::prefix('admin/')
                 'can:users.edit'
             )
             ->name('users.edit');
-
 
         Route::put(
             'users/{user}',
@@ -202,7 +183,6 @@ Route::prefix('admin/')
             )
             ->name('users.update');
 
-
         Route::delete(
             'users/{user}',
             [UserController::class, 'destroy']
@@ -211,7 +191,6 @@ Route::prefix('admin/')
                 'can:users.delete'
             )
             ->name('users.destroy');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -228,7 +207,6 @@ Route::prefix('admin/')
             )
             ->name('roles.index');
 
-
         Route::get(
             'roles/create',
             [RoleController::class, 'create']
@@ -237,7 +215,6 @@ Route::prefix('admin/')
                 'can:roles.create'
             )
             ->name('roles.create');
-
 
         Route::post(
             'roles',
@@ -248,7 +225,6 @@ Route::prefix('admin/')
             )
             ->name('roles.store');
 
-
         Route::get(
             'roles/{role}/edit',
             [RoleController::class, 'edit']
@@ -257,7 +233,6 @@ Route::prefix('admin/')
                 'can:roles.edit'
             )
             ->name('roles.edit');
-
 
         Route::put(
             'roles/{role}',
@@ -268,7 +243,6 @@ Route::prefix('admin/')
             )
             ->name('roles.update');
 
-
         Route::delete(
             'roles/{role}',
             [RoleController::class, 'destroy']
@@ -277,7 +251,6 @@ Route::prefix('admin/')
                 'can:roles.delete'
             )
             ->name('roles.destroy');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -294,7 +267,6 @@ Route::prefix('admin/')
             )
             ->name('pages.index');
 
-
         Route::get(
             'pages/create',
             [PageController::class, 'create']
@@ -303,7 +275,6 @@ Route::prefix('admin/')
                 'can:pages.create'
             )
             ->name('pages.create');
-
 
         Route::post(
             'pages',
@@ -314,7 +285,6 @@ Route::prefix('admin/')
             )
             ->name('pages.store');
 
-
         Route::get(
             'pages/{page}/edit',
             [PageController::class, 'edit']
@@ -323,7 +293,6 @@ Route::prefix('admin/')
                 'can:pages.edit'
             )
             ->name('pages.edit');
-
 
         Route::put(
             'pages/{page}',
@@ -334,7 +303,6 @@ Route::prefix('admin/')
             )
             ->name('pages.update');
 
-
         Route::delete(
             'pages/{page}',
             [PageController::class, 'destroy']
@@ -343,7 +311,6 @@ Route::prefix('admin/')
                 'can:pages.delete'
             )
             ->name('pages.destroy');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -360,7 +327,6 @@ Route::prefix('admin/')
             )
             ->name('pages.builder');
 
-
         Route::post(
             'pages/{page}/sections',
             [PageBuilderController::class, 'storeSection']
@@ -369,7 +335,6 @@ Route::prefix('admin/')
                 'can:page-builder.edit'
             )
             ->name('pages.sections.store');
-
 
         Route::post(
             'pages/{page}/sections/reorder',
@@ -380,7 +345,6 @@ Route::prefix('admin/')
             )
             ->name('pages.sections.reorder');
 
-
         Route::put(
             'pages/{page}/sections/{section}',
             [PageBuilderController::class, 'updateSection']
@@ -389,7 +353,6 @@ Route::prefix('admin/')
                 'can:page-builder.edit'
             )
             ->name('pages.sections.update');
-
 
         Route::delete(
             'pages/{page}/sections/{section}',
@@ -400,7 +363,6 @@ Route::prefix('admin/')
             )
             ->name('pages.sections.destroy');
 
-
         Route::post(
             'pages/{page}/sections/{section}/duplicate',
             [PageBuilderController::class, 'duplicateSection']
@@ -409,7 +371,6 @@ Route::prefix('admin/')
                 'can:page-builder.edit'
             )
             ->name('pages.sections.duplicate');
-
 
         Route::post(
             'pages/{page}/sections/{section}/move-up',
@@ -420,7 +381,6 @@ Route::prefix('admin/')
             )
             ->name('pages.sections.move-up');
 
-
         Route::post(
             'pages/{page}/sections/{section}/move-down',
             [PageBuilderController::class, 'moveSectionDown']
@@ -429,7 +389,6 @@ Route::prefix('admin/')
                 'can:page-builder.edit'
             )
             ->name('pages.sections.move-down');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -446,7 +405,6 @@ Route::prefix('admin/')
             )
             ->name('page-builder.upload-image');
 
-
         /*
         |--------------------------------------------------------------------------
         | Contact Messages
@@ -462,7 +420,6 @@ Route::prefix('admin/')
             )
             ->name('contact-messages.index');
 
-
         Route::get(
             'contact-messages/{contactMessage}',
             [AdminContactMessageController::class, 'show']
@@ -471,7 +428,6 @@ Route::prefix('admin/')
                 'can:contact-messages.view'
             )
             ->name('contact-messages.show');
-
 
         Route::post(
             'contact-messages/{contactMessage}/reply',
@@ -482,7 +438,6 @@ Route::prefix('admin/')
             )
             ->name('contact-messages.reply');
 
-
         Route::patch(
             'contact-messages/{contactMessage}/archive',
             [AdminContactMessageController::class, 'archive']
@@ -492,7 +447,6 @@ Route::prefix('admin/')
             )
             ->name('contact-messages.archive');
 
-
         Route::delete(
             'contact-messages/{contactMessage}',
             [AdminContactMessageController::class, 'destroy']
@@ -501,7 +455,6 @@ Route::prefix('admin/')
                 'can:contact-messages.delete'
             )
             ->name('contact-messages.destroy');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -523,7 +476,6 @@ Route::prefix('admin/')
                 'newsletter-subscribers.index'
             );
 
-
         Route::patch(
             'newsletter-subscribers/{newsletterSubscriber}/unsubscribe',
             [
@@ -537,7 +489,6 @@ Route::prefix('admin/')
             ->name(
                 'newsletter-subscribers.unsubscribe'
             );
-
 
         Route::patch(
             'newsletter-subscribers/{newsletterSubscriber}/reactivate',
@@ -553,7 +504,6 @@ Route::prefix('admin/')
                 'newsletter-subscribers.reactivate'
             );
 
-
         Route::delete(
             'newsletter-subscribers/{newsletterSubscriber}',
             [
@@ -567,7 +517,6 @@ Route::prefix('admin/')
             ->name(
                 'newsletter-subscribers.destroy'
             );
-
 
         /*
         |--------------------------------------------------------------------------
@@ -584,7 +533,6 @@ Route::prefix('admin/')
             )
             ->name('mail-settings.edit');
 
-
         Route::put(
             'mail-settings',
             [MailSettingController::class, 'update']
@@ -594,7 +542,6 @@ Route::prefix('admin/')
             )
             ->name('mail-settings.update');
 
-
         Route::post(
             'mail-settings/test',
             [MailSettingController::class, 'test']
@@ -603,7 +550,6 @@ Route::prefix('admin/')
                 'can:mail-settings.test'
             )
             ->name('mail-settings.test');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -620,7 +566,6 @@ Route::prefix('admin/')
             )
             ->name('global.header.edit');
 
-
         Route::put(
             'global/header',
             [GlobalHeaderController::class, 'update']
@@ -629,7 +574,6 @@ Route::prefix('admin/')
                 'can:global-header.edit'
             )
             ->name('global.header.update');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -646,7 +590,6 @@ Route::prefix('admin/')
             )
             ->name('global.footer.edit');
 
-
         Route::put(
             'global/footer',
             [GlobalFooterController::class, 'update']
@@ -655,7 +598,6 @@ Route::prefix('admin/')
                 'can:global-footer.edit'
             )
             ->name('global.footer.update');
-
 
         /*
         |--------------------------------------------------------------------------
@@ -677,7 +619,6 @@ Route::prefix('admin/')
                 'global.floating-contact.edit'
             );
 
-
         Route::put(
             'global/floating-contact',
             [
@@ -694,7 +635,7 @@ Route::prefix('admin/')
 
     });
 
-  Route::get(
+Route::get(
     'depot-registration',
     [
         DepotRegistrationController::class,
@@ -712,8 +653,7 @@ Route::post(
     ]
 )->name(
     'frontend.depot-registration.store'
-);  
-
+);
 
 Route::get('/dealer-registration', [DealerRegistrationController::class, 'create'])
     ->name('frontend.dealer-registration.create');
@@ -732,7 +672,6 @@ Route::post('/dealer-registration', [DealerRegistrationController::class, 'store
 */
 
 require __DIR__.'/erp.php';
-
 
 /*
 |--------------------------------------------------------------------------

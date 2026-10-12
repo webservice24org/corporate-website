@@ -24,7 +24,7 @@ class OpportunityStageController extends Controller
                 ->get(),
             'companies' => Company::query()
                 ->orderBy('name')
-                ->get(['id','name']),
+                ->get(['id', 'name']),
         ]);
     }
 
@@ -79,21 +79,20 @@ class OpportunityStageController extends Controller
         ?OpportunityStage $stage = null
     ): array {
         return $request->validate([
-            'company_id' => ['required','integer','exists:companies,id'],
-            'name' => ['required','string','max:255'],
+            'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'name' => ['required', 'string', 'max:255'],
             'code' => [
-                'required','string','max:100',
-                Rule::unique('opportunity_stages','code')
-                    ->where(fn ($query) =>
-                        $query->where('company_id', $request->integer('company_id'))
+                'required', 'string', 'max:100',
+                Rule::unique('opportunity_stages', 'code')
+                    ->where(fn ($query) => $query->where('company_id', $request->integer('company_id'))
                     )
                     ->ignore($stage?->id),
             ],
-            'probability' => ['required','integer','min:0','max:100'],
-            'sort_order' => ['required','integer','min:0'],
-            'is_won' => ['required','boolean'],
-            'is_lost' => ['required','boolean'],
-            'is_active' => ['required','boolean'],
+            'probability' => ['required', 'integer', 'min:0', 'max:100'],
+            'sort_order' => ['required', 'integer', 'min:0'],
+            'is_won' => ['required', 'boolean'],
+            'is_lost' => ['required', 'boolean'],
+            'is_active' => ['required', 'boolean'],
         ]);
     }
 }

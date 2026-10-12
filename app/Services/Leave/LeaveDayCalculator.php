@@ -84,9 +84,7 @@ class LeaveDayCalculator
                 'active'
             )
             ->where(
-                function ($query) use (
-                    $employee
-                ) {
+                function ($query) use ($employee) {
                     $query->whereNull(
                         'branch_id'
                     );
@@ -125,9 +123,7 @@ class LeaveDayCalculator
                     $date->toDateString()
                 )
                 ->where(
-                    function ($query) use (
-                        $date
-                    ) {
+                    function ($query) use ($date) {
                         $query
                             ->whereNull(
                                 'effective_to'
@@ -153,7 +149,7 @@ class LeaveDayCalculator
         $workingDays =
             $assignment
                 ->shift
-                ->working_days;
+                ->getAttribute('working_days');
 
         if (empty($workingDays)) {
             return true;
@@ -174,12 +170,11 @@ class LeaveDayCalculator
         $normalized =
             collect($workingDays)
                 ->map(
-                    fn ($day) =>
-                        strtolower(
-                            trim(
-                                (string) $day
-                            )
+                    fn($day) => strtolower(
+                        trim(
+                            (string) $day
                         )
+                    )
                 );
 
         if (
@@ -204,7 +199,7 @@ class LeaveDayCalculator
 
         if (
             $normalized->contains(
-                (string)
+                (string) 
                 $date->dayOfWeekIso
             )
         ) {

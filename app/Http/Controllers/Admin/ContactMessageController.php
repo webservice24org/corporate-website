@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\ContactMessage;
 use App\Models\ContactReply;
 use App\Services\DynamicMailConfig;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
@@ -28,8 +28,7 @@ class ContactMessageController extends Controller
         $messages = ContactMessage::query()
             ->when(
                 $status,
-                fn ($query) =>
-                    $query->where('status', $status)
+                fn ($query) => $query->where('status', $status)
             )
             ->latest()
             ->paginate(20)
@@ -90,8 +89,7 @@ class ContactMessageController extends Controller
         return inertia(
             'Admin/ContactMessages/Show',
             [
-                'message' =>
-                    $contactMessage,
+                'message' => $contactMessage,
             ]
         );
     }
@@ -173,38 +171,29 @@ class ContactMessageController extends Controller
                 $validated
             ) {
                 ContactReply::create([
-                    'contact_message_id' =>
-                        $contactMessage->id,
+                    'contact_message_id' => $contactMessage->id,
 
-                    'user_id' =>
-                        $request->user()?->id,
+                    'user_id' => $request->user()?->id,
 
-                    'to_email' =>
-                        $contactMessage->email,
+                    'to_email' => $contactMessage->email,
 
-                    'subject' =>
-                        $validated['subject'],
+                    'subject' => $validated['subject'],
 
-                    'message' =>
-                        $validated['message'],
+                    'message' => $validated['message'],
 
-                    'sent_at' =>
-                        now(),
+                    'sent_at' => now(),
                 ]);
 
                 $contactMessage->update([
-                    'status' =>
-                        'replied',
+                    'status' => 'replied',
 
-                    'replied_at' =>
-                        now(),
+                    'replied_at' => now(),
 
                     /*
                     * Useful if somebody somehow replies
                     * before it has been marked read.
                     */
-                    'read_at' =>
-                        $contactMessage->read_at
+                    'read_at' => $contactMessage->read_at
                             ?? now(),
                 ]);
             });
@@ -233,5 +222,4 @@ class ContactMessageController extends Controller
             'Contact message deleted successfully.'
         );
     }
-
 }

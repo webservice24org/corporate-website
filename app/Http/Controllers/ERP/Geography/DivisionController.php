@@ -61,20 +61,18 @@ class DivisionController extends Controller
 
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        true
-                    )
+                fn ($query) => $query->where(
+                    'is_active',
+                    true
+                )
             )
 
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        false
-                    )
+                fn ($query) => $query->where(
+                    'is_active',
+                    false
+                )
             )
 
             ->orderBy('name')
@@ -116,7 +114,7 @@ class DivisionController extends Controller
                 'success',
                 'Division created successfully.'
             );
-            
+
     }
 
     public function edit(
@@ -162,8 +160,7 @@ class DivisionController extends Controller
                 ->exists()
         ) {
             return back()->withErrors([
-                'division' =>
-                    'This division cannot be deleted because it has districts assigned to it.',
+                'division' => 'This division cannot be deleted because it has districts assigned to it.',
             ]);
         }
 

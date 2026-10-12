@@ -4,6 +4,8 @@ namespace App\Services\ERP\CRM;
 
 use App\Models\Dealer;
 use App\Models\DealerApplication;
+use App\Models\Depot;
+use App\Models\Upazila;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -16,11 +18,7 @@ class DealerApplicationApprovalService
         array $data = []
     ): Dealer {
         return DB::transaction(
-            function () use (
-                $application,
-                $user,
-                $data
-            ) {
+            function () use ($application, $user, $data) {
                 $application =
                     DealerApplication::query()
                         ->with([
@@ -38,8 +36,7 @@ class DealerApplicationApprovalService
                     'approved'
                 ) {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'This application is already approved.',
+                        'application' => 'This application is already approved.',
                     ]);
                 }
 
@@ -48,30 +45,25 @@ class DealerApplicationApprovalService
                     'rejected'
                 ) {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'A rejected application cannot be approved.',
+                        'application' => 'A rejected application cannot be approved.',
                     ]);
                 }
 
-                if (
-                    !$application->depot ||
-                    !$application->depot->is_active
-                ) {
+                $depot = $application->depot;
+                if (!$depot instanceof Depot || !$depot->is_active) {
                     throw ValidationException::withMessages([
-                        'depot' =>
-                            'The selected Depot is not active.',
+                        'depot' => 'The selected Depot is not active.',
                     ]);
                 }
 
+                $upazila = $application->upazila;
                 if (
-                    !$application->upazila ||
-                    !$application->upazila->district ||
-                    $application->upazila->district_id !==
-                        $application->depot->district_id
+                    !$upazila instanceof Upazila ||
+                    !$upazila->district ||
+                    $upazila->district_id !== $depot->district_id
                 ) {
                     throw ValidationException::withMessages([
-                        'upazila' =>
-                            'Dealer Upazila does not belong to the Depot district.',
+                        'upazila' => 'Dealer Upazila does not belong to the Depot district.',
                     ]);
                 }
 
@@ -94,17 +86,13 @@ class DealerApplicationApprovalService
 
                     if (!$document) {
                         throw ValidationException::withMessages([
-                            'documents' =>
-                                "Required document '{$type}' is missing.",
+                            'documents' => "Required document '{$type}' is missing.",
                         ]);
                     }
 
-                    if (
-                        !$document->verified_at
-                    ) {
+                    if (!$document->getAttribute('verified_at')) {
                         throw ValidationException::withMessages([
-                            'documents' =>
-                                "Required document '{$type}' must be verified before approval.",
+                            'documents' => "Required document '{$type}' must be verified before approval.",
                         ]);
                     }
                 }
@@ -115,107 +103,76 @@ class DealerApplicationApprovalService
                  */
                 $dealer =
                     Dealer::create([
-                        'company_id' =>
-                            $application->company_id,
+                        'company_id' => $application->company_id,
 
-                        'depot_id' =>
-                            $application->depot_id,
+                        'depot_id' => $application->depot_id,
 
-                        'upazila_id' =>
-                            $application->upazila_id,
+                        'upazila_id' => $application->upazila_id,
 
-                        'dealer_code' =>
-                            null,
+                        'dealer_code' => null,
 
-                        'business_name' =>
-                            $application->business_name,
+                        'business_name' => $application->business_name,
 
-                        'proprietor_name' =>
-                            $application->proprietor_name,
+                        'proprietor_name' => $application->proprietor_name,
 
-                        'proprietor_photo' =>
-                            $application->proprietor_photo,
+                        'proprietor_photo' => $application->proprietor_photo,
 
-                        'phone' =>
-                            $application->phone,
+                        'phone' => $application->phone,
 
-                        'alternate_phone' =>
-                            $application->alternate_phone,
+                        'alternate_phone' => $application->alternate_phone,
 
-                        'email' =>
-                            $application->email,
+                        'email' => $application->email,
 
-                        'trade_license_number' =>
-                            $application->trade_license_number,
+                        'trade_license_number' => $application->trade_license_number,
 
-                        'nid_number' =>
-                            $application->nid_number,
+                        'nid_number' => $application->nid_number,
 
-                        'tin_number' =>
-                            $application->tin_number,
+                        'tin_number' => $application->tin_number,
 
-                        'vat_number' =>
-                            $application->vat_number,
+                        'vat_number' => $application->vat_number,
 
-                        'address' =>
-                            $application->business_address,
+                        'address' => $application->business_address,
 
-                        'postal_code' =>
-                            $application->postal_code,
+                        'postal_code' => $application->postal_code,
 
-                        'credit_limit' =>
-                            $data['credit_limit'] ??
+                        'credit_limit' => $data['credit_limit'] ??
                             $application->requested_credit_limit ??
                             0,
 
-                        'payment_terms_days' =>
-                            $data['payment_terms_days'] ??
+                        'payment_terms_days' => $data['payment_terms_days'] ??
                             0,
 
-                        'manager_user_id' =>
-                            $data['manager_user_id'] ??
+                        'manager_user_id' => $data['manager_user_id'] ??
                             null,
 
-                        'is_active' =>
-                            true,
+                        'is_active' => true,
 
-                        'notes' =>
-                            $data['admin_notes'] ??
+                        'notes' => $data['admin_notes'] ??
                             null,
                     ]);
 
                 $application->update([
-                    'dealer_id' =>
-                        $dealer->id,
+                    'dealer_id' => $dealer->id,
 
-                    'status' =>
-                        'approved',
+                    'status' => 'approved',
 
-                    'reviewed_by_user_id' =>
-                        $application->reviewed_by_user_id ??
+                    'reviewed_by_user_id' => $application->reviewed_by_user_id ??
                         $user->id,
 
-                    'reviewed_at' =>
-                        $application->reviewed_at ??
+                    'reviewed_at' => $application->reviewed_at ??
                         now(),
 
-                    'approved_by_user_id' =>
-                        $user->id,
+                    'approved_by_user_id' => $user->id,
 
-                    'approved_at' =>
-                        now(),
+                    'approved_at' => now(),
 
-                    'rejected_by_user_id' =>
-                        null,
+                    'rejected_by_user_id' => null,
 
-                    'rejected_at' =>
-                        null,
+                    'rejected_at' => null,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
 
-                    'admin_notes' =>
-                        $data['admin_notes'] ??
+                    'admin_notes' => $data['admin_notes'] ??
                         $application->admin_notes,
                 ]);
 
@@ -231,12 +188,7 @@ class DealerApplicationApprovalService
         ?string $notes = null
     ): DealerApplication {
         return DB::transaction(
-            function () use (
-                $application,
-                $user,
-                $reason,
-                $notes
-            ) {
+            function () use ($application, $user, $reason, $notes) {
                 $application =
                     DealerApplication::query()
                         ->lockForUpdate()
@@ -249,34 +201,26 @@ class DealerApplicationApprovalService
                     'approved'
                 ) {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'An approved application cannot be rejected.',
+                        'application' => 'An approved application cannot be rejected.',
                     ]);
                 }
 
                 $application->update([
-                    'status' =>
-                        'rejected',
+                    'status' => 'rejected',
 
-                    'reviewed_by_user_id' =>
-                        $application->reviewed_by_user_id ??
+                    'reviewed_by_user_id' => $application->reviewed_by_user_id ??
                         $user->id,
 
-                    'reviewed_at' =>
-                        $application->reviewed_at ??
+                    'reviewed_at' => $application->reviewed_at ??
                         now(),
 
-                    'rejected_by_user_id' =>
-                        $user->id,
+                    'rejected_by_user_id' => $user->id,
 
-                    'rejected_at' =>
-                        now(),
+                    'rejected_at' => now(),
 
-                    'rejection_reason' =>
-                        $reason,
+                    'rejection_reason' => $reason,
 
-                    'admin_notes' =>
-                        $notes,
+                    'admin_notes' => $notes,
                 ]);
 
                 return $application;

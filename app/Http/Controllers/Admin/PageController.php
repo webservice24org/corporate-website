@@ -49,7 +49,6 @@ class PageController extends Controller
         );
     }
 
-
     /**
      * Show the form for creating a new resource.
      */
@@ -59,7 +58,6 @@ class PageController extends Controller
             'Admin/Pages/Create'
         );
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -144,7 +142,6 @@ class PageController extends Controller
             ],
         ]);
 
-
         /*
          * Generate slug.
          */
@@ -168,12 +165,11 @@ class PageController extends Controller
         ) {
             $slug =
                 $baseSlug
-                . '-'
-                . $counter;
+                .'-'
+                .$counter;
 
             $counter++;
         }
-
 
         /*
          * Upload featured image.
@@ -196,55 +192,42 @@ class PageController extends Controller
                     );
         }
 
-
         /*
          * Prepare page data.
          */
         $pageData = [
-            'title' =>
-                $validated['title'],
+            'title' => $validated['title'],
 
-            'slug' =>
-                $slug,
+            'slug' => $slug,
 
-            'description' =>
-                $validated['description']
+            'description' => $validated['description']
                 ?? null,
 
-            'featured_image' =>
-                $featuredImage,
+            'featured_image' => $featuredImage,
 
-            'layout' =>
-                $validated['layout'],
+            'layout' => $validated['layout'],
 
-            'status' =>
-                $validated['status'],
+            'status' => $validated['status'],
 
-            'template' =>
-                $validated['template'],
+            'template' => $validated['template'],
 
-            'is_home' =>
-                !empty(
-                    $validated['is_home']
-                ),
+            'is_home' => ! empty(
+                $validated['is_home']
+            ),
 
-            'meta_title' =>
-                $validated['meta_title']
+            'meta_title' => $validated['meta_title']
                 ?? null,
 
-            'meta_description' =>
-                $validated[
+            'meta_description' => $validated[
                     'meta_description'
                 ]
                 ?? null,
 
-            'published_at' =>
-                $validated['status']
+            'published_at' => $validated['status']
                     === 'published'
                         ? now()
                         : null,
         ];
-
 
         /*
          * Save page.
@@ -257,7 +240,7 @@ class PageController extends Controller
                     $pageData
                 ) {
                     if (
-                        !empty(
+                        ! empty(
                             $pageData[
                                 'is_home'
                             ]
@@ -265,8 +248,7 @@ class PageController extends Controller
                     ) {
                         Page::query()
                             ->update([
-                                'is_home' =>
-                                    false,
+                                'is_home' => false,
                             ]);
                     }
 
@@ -291,7 +273,6 @@ class PageController extends Controller
             throw $e;
         }
 
-
         return redirect()
             ->route(
                 'admin.pages.index'
@@ -301,7 +282,6 @@ class PageController extends Controller
                 'Page created successfully.'
             );
     }
-
 
     /**
      * Show the form for editing the specified resource.
@@ -316,7 +296,6 @@ class PageController extends Controller
             ]
         );
     }
-
 
     /**
      * Update the specified resource in storage.
@@ -411,7 +390,6 @@ class PageController extends Controller
             ],
         ]);
 
-
         /*
          * Generate / normalize slug.
          */
@@ -446,12 +424,11 @@ class PageController extends Controller
         ) {
             $slug =
                 $baseSlug
-                . '-'
-                . $counter;
+                .'-'
+                .$counter;
 
             $counter++;
         }
-
 
         /*
          * Remember current image.
@@ -467,12 +444,11 @@ class PageController extends Controller
         $featuredImage =
             $oldFeaturedImage;
 
-
         /*
          * Explicit image removal.
          */
         if (
-            !empty(
+            ! empty(
                 $validated[
                     'remove_featured_image'
                 ]
@@ -480,7 +456,6 @@ class PageController extends Controller
         ) {
             $featuredImage = null;
         }
-
 
         /*
          * New image takes priority.
@@ -504,50 +479,38 @@ class PageController extends Controller
                 $newFeaturedImage;
         }
 
-
         /*
          * Prepare update data.
          */
         $updateData = [
-            'title' =>
-                $validated['title'],
+            'title' => $validated['title'],
 
-            'slug' =>
-                $slug,
+            'slug' => $slug,
 
-            'description' =>
-                $validated['description']
+            'description' => $validated['description']
                 ?? null,
 
-            'featured_image' =>
-                $featuredImage,
+            'featured_image' => $featuredImage,
 
-            'layout' =>
-                $validated['layout'],
+            'layout' => $validated['layout'],
 
-            'status' =>
-                $validated['status'],
+            'status' => $validated['status'],
 
-            'template' =>
-                $validated['template'],
+            'template' => $validated['template'],
 
-            'is_home' =>
-                !empty(
-                    $validated['is_home']
-                ),
+            'is_home' => ! empty(
+                $validated['is_home']
+            ),
 
-            'meta_title' =>
-                $validated['meta_title']
+            'meta_title' => $validated['meta_title']
                 ?? null,
 
-            'meta_description' =>
-                $validated[
+            'meta_description' => $validated[
                     'meta_description'
                 ]
                 ?? null,
 
-            'published_at' =>
-                $validated['status']
+            'published_at' => $validated['status']
                     === 'published'
                         ? (
                             $page
@@ -557,7 +520,6 @@ class PageController extends Controller
                         : null,
         ];
 
-
         try {
             DB::transaction(
                 function () use (
@@ -565,7 +527,7 @@ class PageController extends Controller
                     $updateData
                 ) {
                     if (
-                        !empty(
+                        ! empty(
                             $updateData[
                                 'is_home'
                             ]
@@ -578,8 +540,7 @@ class PageController extends Controller
                                 $page->id
                             )
                             ->update([
-                                'is_home' =>
-                                    false,
+                                'is_home' => false,
                             ]);
                     }
 
@@ -606,7 +567,6 @@ class PageController extends Controller
             throw $e;
         }
 
-
         /*
          * Delete old image only after
          * successful database update.
@@ -623,7 +583,6 @@ class PageController extends Controller
             );
         }
 
-
         return redirect()
             ->route(
                 'admin.pages.index'
@@ -633,7 +592,6 @@ class PageController extends Controller
                 'Page updated successfully.'
             );
     }
-
 
     /**
      * Remove the specified resource from storage.
@@ -650,7 +608,6 @@ class PageController extends Controller
 
         $page->delete();
 
-
         /*
          * Clean up page image.
          */
@@ -661,7 +618,6 @@ class PageController extends Controller
                 $featuredImage
             );
         }
-
 
         return redirect()
             ->route(

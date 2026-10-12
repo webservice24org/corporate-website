@@ -39,6 +39,4 @@ class District extends Model
             Warehouse::class
         );
     }
-
-
 }

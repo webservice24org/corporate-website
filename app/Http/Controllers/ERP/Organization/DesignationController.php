@@ -18,25 +18,21 @@ class DesignationController extends Controller
         Request $request
     ): Response {
         $filters = [
-            'search' =>
-                $request
-                    ->string('search')
-                    ->toString(),
+            'search' => $request
+                ->string('search')
+                ->toString(),
 
-            'company_id' =>
-                $request->input(
-                    'company_id'
-                ),
+            'company_id' => $request->input(
+                'company_id'
+            ),
 
-            'department_id' =>
-                $request->input(
-                    'department_id'
-                ),
+            'department_id' => $request->input(
+                'department_id'
+            ),
 
-            'status' =>
-                $request->input(
-                    'status'
-                ),
+            'status' => $request->input(
+                'status'
+            ),
         ];
 
         $designations =
@@ -85,11 +81,10 @@ class DesignationController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters[
@@ -98,22 +93,20 @@ class DesignationController extends Controller
                     fn (
                         $query,
                         $departmentId
-                    ) =>
-                        $query->where(
-                            'department_id',
-                            $departmentId
-                        )
+                    ) => $query->where(
+                        'department_id',
+                        $departmentId
+                    )
                 )
                 ->when(
                     $filters['status'],
                     fn (
                         $query,
                         $status
-                    ) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    ) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->orderBy(
                     'sort_order'
@@ -148,17 +141,13 @@ class DesignationController extends Controller
         return Inertia::render(
             'ERP/Organization/Designations/Index',
             [
-                'designations' =>
-                    $designations,
+                'designations' => $designations,
 
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'departments' =>
-                    $departments,
+                'departments' => $departments,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -193,11 +182,9 @@ class DesignationController extends Controller
         return Inertia::render(
             'ERP/Organization/Designations/Create',
             [
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'departments' =>
-                    $departments,
+                'departments' => $departments,
             ]
         );
     }
@@ -217,13 +204,11 @@ class DesignationController extends Controller
                 $validated['code']
             ),
 
-            'department_id' =>
-                $validated[
+            'department_id' => $validated[
                     'department_id'
                 ] ?? null,
 
-            'sort_order' =>
-                $validated[
+            'sort_order' => $validated[
                     'sort_order'
                 ] ?? 0,
         ]);
@@ -312,14 +297,11 @@ class DesignationController extends Controller
         return Inertia::render(
             'ERP/Organization/Designations/Edit',
             [
-                'designation' =>
-                    $designation,
+                'designation' => $designation,
 
-                'companies' =>
-                    $companies,
+                'companies' => $companies,
 
-                'departments' =>
-                    $departments,
+                'departments' => $departments,
             ]
         );
     }
@@ -341,13 +323,11 @@ class DesignationController extends Controller
                 $validated['code']
             ),
 
-            'department_id' =>
-                $validated[
+            'department_id' => $validated[
                     'department_id'
                 ] ?? null,
 
-            'sort_order' =>
-                $validated[
+            'sort_order' => $validated[
                     'sort_order'
                 ] ?? 0,
         ]);
@@ -408,11 +388,10 @@ class DesignationController extends Controller
                     'departments',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -432,11 +411,10 @@ class DesignationController extends Controller
                     'code'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn ($query) => $query->where(
+                            'company_id',
+                            $companyId
+                        )
                     )
                     ->ignore(
                         $designation?->id

@@ -44,17 +44,13 @@ class AttendanceDevice extends Model
     protected function casts(): array
     {
         return [
-            'port' =>
-                'integer',
+            'port' => 'integer',
 
-            'connection_config' =>
-                'encrypted:array',
+            'connection_config' => 'encrypted:array',
 
-            'last_seen_at' =>
-                'datetime',
+            'last_seen_at' => 'datetime',
 
-            'last_sync_at' =>
-                'datetime',
+            'last_sync_at' => 'datetime',
         ];
     }
 
@@ -96,8 +92,4 @@ class AttendanceDevice extends Model
             'device_id'
         );
     }
-
-
-
-
 }

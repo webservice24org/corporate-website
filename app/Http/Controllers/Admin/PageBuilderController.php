@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\Page;
 use App\Models\PageSection;
 use Illuminate\Http\Request;
-use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,8 +14,7 @@ class PageBuilderController extends Controller
     public function edit(Page $page): Response
     {
         $page->load([
-            'sections' => fn ($query) =>
-                $query->orderBy('sort_order'),
+            'sections' => fn($query) => $query->orderBy('sort_order'),
         ]);
 
         return Inertia::render('Admin/Pages/Builder', [
@@ -25,42 +23,46 @@ class PageBuilderController extends Controller
     }
 
     public function storeSection(Request $request, Page $page)
-{
-    $validated = $request->validate([
-        'type' => [
-            'required',
-            'string',
-        ],
+    {
+        $validated = $request->validate([
+            'type' => [
+                'required',
+                'string',
+            ],
 
-        'variant' => [
-            'required',
-            'string',
-            'max:100',
-        ],
+            'variant' => [
+                'required',
+                'string',
+                'max:100',
+            ],
 
-        'settings' => [
-            'required',
-            'array',
-        ],
-    ]);
+            'settings' => [
+                'required',
+                'array',
+            ],
+        ]);
 
-    $nextOrder =
-        ($page->sections()->max('sort_order') ?? 0) + 1;
+        $nextOrder =
+            ($page->sections()->max('sort_order') ?? 0) + 1;
 
-    $section = $page->sections()->create([
-        'type' => $validated['type'],
-        'name' => ucfirst($validated['type']),
-        'variant' => $validated['variant'],
-        'settings' => $validated['settings'],
-        'sort_order' => $nextOrder,
-        'is_active' => true,
-    ]);
+        $section = $page->sections()->create([
+            'type' => $validated['type'],
+            'name' => ucfirst($validated['type']),
+            'variant' => $validated['variant'],
+            'settings' => $validated['settings'],
+            'sort_order' => $nextOrder,
+            'is_active' => true,
+        ]);
 
-    return back()->with(
-        'success',
-        "{$section->name} section inserted successfully.",
-    );
-}
+        if (!$section instanceof PageSection) {
+            throw new \LogicException('Expected a PageSection after creation.');
+        }
+
+        return back()->with(
+            'success',
+            "{$section->name} section inserted successfully.",
+        );
+    }
 
     public function updateSection(
         Request $request,
@@ -163,7 +165,7 @@ class PageBuilderController extends Controller
             ->orderByDesc('sort_order')
             ->first();
 
-        if (! $previous) {
+        if (!$previous instanceof PageSection) {
             return back();
         }
 
@@ -201,7 +203,7 @@ class PageBuilderController extends Controller
             ->orderBy('sort_order')
             ->first();
 
-        if (! $next) {
+        if (!$next instanceof PageSection) {
             return back();
         }
 
@@ -251,106 +253,77 @@ class PageBuilderController extends Controller
     }
 
     public function reorderSections(
-    Request $request,
-    Page $page,
-) {
-    $validated = $request->validate([
-        'section_ids' => [
-            'required',
-            'array',
-        ],
-
-        'section_ids.*' => [
-            'required',
-            'integer',
-            'distinct',
-        ],
-    ]);
-
-    $sectionIds = collect(
-        $validated['section_ids'],
-    )->map(fn ($id) => (int) $id);
-
-    $pageSectionIds = $page->sections()
-        ->pluck('id');
-
-    /*
-     * Make sure the request contains exactly
-     * the sections belonging to this page.
-     */
-    abort_unless(
-        $sectionIds->count() ===
-            $pageSectionIds->count() &&
-        $sectionIds->sort()->values()->all() ===
-            $pageSectionIds->sort()->values()->all(),
-        422,
-    );
-
-    foreach (
-        $sectionIds->values() as $index => $sectionId
+        Request $request,
+        Page $page,
     ) {
-        PageSection::where('id', $sectionId)
-            ->where('page_id', $page->id)
-            ->update([
-                'sort_order' => $index + 1,
-            ]);
+        $validated = $request->validate([
+            'section_ids' => [
+                'required',
+                'array',
+            ],
+
+            'section_ids.*' => [
+                'required',
+                'integer',
+                'distinct',
+            ],
+        ]);
+
+        $sectionIds = collect(
+            $validated['section_ids'],
+        )->map(fn($id) => (int) $id);
+
+        $pageSectionIds = $page->sections()
+            ->pluck('id');
+
+        /*
+         * Make sure the request contains exactly
+         * the sections belonging to this page.
+         */
+        abort_unless(
+            $sectionIds->count() ===
+            $pageSectionIds->count() &&
+            $sectionIds->sort()->values()->all() ===
+            $pageSectionIds->sort()->values()->all(),
+            422,
+        );
+
+        foreach (
+            $sectionIds->values() as $index => $sectionId
+        ) {
+            PageSection::where('id', $sectionId)
+                ->where('page_id', $page->id)
+                ->update([
+                    'sort_order' => $index + 1,
+                ]);
+        }
+
+        return back()->with(
+            'success',
+            'Section order updated.',
+        );
     }
 
-    return back()->with(
-        'success',
-        'Section order updated.',
-    );
-}
-
-public function uploadImage(Request $request)
-{
-    $validated = $request->validate([
-        'image' => [
-            'required',
-            'image',
-            'mimes:jpg,jpeg,png,webp',
-            'max:5120',
-        ],
-    ]);
-
-    $path = $validated['image']->store(
-        'page-builder',
-        'public',
-    );
-
-    return response()->json([
-        'url' => asset('storage/' . $path),
-        'path' => $path,
-    ]);
-}
-
-    private function defaultSettings(string $type): array
+    public function uploadImage(Request $request)
     {
-        return match ($type) {
-            'hero' => [
-                'eyebrow' => '',
-                'title' => 'Hero title',
-                'description' => '',
-                'button_text' => '',
-                'button_url' => '',
-                'background_image' => '',
+        $validated = $request->validate([
+            'image' => [
+                'required',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:5120',
             ],
+        ]);
 
-            'text' => [
-                'title' => 'Section title',
-                'content' => '',
-                'alignment' => 'left',
-            ],
+        $path = $validated['image']->store(
+            'page-builder',
+            'public',
+        );
 
-            'cta' => [
-                'title' => 'Ready to get started?',
-                'description' => '',
-                'button_text' => 'Contact Us',
-                'button_url' => '/contact',
-            ],
-
-            default => [],
-        };
+        return response()->json([
+            'url' => asset('storage/' . $path),
+            'path' => $path,
+        ]);
     }
 
     private function normalizeSortOrder(Page $page): void
@@ -358,10 +331,11 @@ public function uploadImage(Request $request)
         $page->sections()
             ->orderBy('sort_order')
             ->get()
-            ->each(function (
-                PageSection $section,
-                int $index,
-            ) {
+            ->each(function ($section, int $index): void {
+                if (!$section instanceof PageSection) {
+                    throw new \LogicException('Expected a PageSection when normalizing order.');
+                }
+
                 $section->update([
                     'sort_order' => $index + 1,
                 ]);

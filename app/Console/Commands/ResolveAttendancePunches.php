@@ -32,8 +32,8 @@ class ResolveAttendancePunches extends Command
         }
 
         $this->info(
-            "{$resolved} punch" .
-            ($resolved === 1 ? '' : 'es') .
+            "{$resolved} punch".
+            ($resolved === 1 ? '' : 'es').
             ' resolved successfully.'
         );
 

@@ -6,14 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Company;
 use App\Models\District;
 use App\Models\Division;
+use App\Models\InventoryBalance;
+use App\Models\StockMovement;
 use App\Models\Upazila;
 use App\Models\Warehouse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use App\Models\InventoryBalance;
-use App\Models\StockMovement;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -127,65 +127,58 @@ class WarehouseController extends Controller
 
             ->when(
                 $filters['company_id'] ?? null,
-                fn ($query, $companyId) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn($query, $companyId) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             )
 
             ->when(
                 $filters['type'] ?? null,
-                fn ($query, $type) =>
-                    $query->where(
-                        'type',
-                        $type
-                    )
+                fn($query, $type) => $query->where(
+                    'type',
+                    $type
+                )
             )
 
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        true
-                    )
+                fn($query) => $query->where(
+                    'is_active',
+                    true
+                )
             )
 
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        false
-                    )
+                fn($query) => $query->where(
+                    'is_active',
+                    false
+                )
             )
 
             ->when(
                 $filters['division_id'] ?? null,
-                fn ($query, $divisionId) =>
-                    $query->where(
-                        'division_id',
-                        $divisionId
-                    )
+                fn($query, $divisionId) => $query->where(
+                    'division_id',
+                    $divisionId
+                )
             )
 
             ->when(
                 $filters['district_id'] ?? null,
-                fn ($query, $districtId) =>
-                    $query->where(
-                        'district_id',
-                        $districtId
-                    )
+                fn($query, $districtId) => $query->where(
+                    'district_id',
+                    $districtId
+                )
             )
 
             ->when(
                 $filters['upazila_id'] ?? null,
-                fn ($query, $upazilaId) =>
-                    $query->where(
-                        'upazila_id',
-                        $upazilaId
-                    )
+                fn($query, $upazilaId) => $query->where(
+                    'upazila_id',
+                    $upazilaId
+                )
             )
 
             ->orderBy('company_id')
@@ -211,8 +204,7 @@ class WarehouseController extends Controller
 
                 'upazilas' => $this->upazilas(),
 
-                'warehouseTypes' =>
-                    $this->warehouseTypes(),
+                'warehouseTypes' => $this->warehouseTypes(),
 
                 'filters' => $filters,
             ]
@@ -256,11 +248,11 @@ class WarehouseController extends Controller
         ]);
 
         /*
-        * Current inventory balances for this warehouse.
-        *
-        * InventoryBalance = current state
-        * StockMovement    = append-only history
-        */
+         * Current inventory balances for this warehouse.
+         *
+         * InventoryBalance = current state
+         * StockMovement    = append-only history
+         */
         $balanceQuery = InventoryBalance::query()
             ->where('warehouse_id', $warehouse->id);
 
@@ -425,11 +417,10 @@ class WarehouseController extends Controller
                     'code'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn($query) => $query->where(
+                            'company_id',
+                            $companyId
+                        )
                     )
                     ->ignore(
                         $warehouse?->id
@@ -511,8 +502,7 @@ class WarehouseController extends Controller
             !$divisionId
         ) {
             throw ValidationException::withMessages([
-                'division_id' =>
-                    'Please select a division for the selected district.',
+                'division_id' => 'Please select a division for the selected district.',
             ]);
         }
 
@@ -521,15 +511,11 @@ class WarehouseController extends Controller
             !$districtId
         ) {
             throw ValidationException::withMessages([
-                'district_id' =>
-                    'Please select a district for the selected upazila.',
+                'district_id' => 'Please select a district for the selected upazila.',
             ]);
         }
 
-        if (
-            $districtId &&
-            $divisionId
-        ) {
+        if ($districtId) {
             $districtBelongsToDivision =
                 District::query()
                     ->whereKey($districtId)
@@ -543,16 +529,12 @@ class WarehouseController extends Controller
                 !$districtBelongsToDivision
             ) {
                 throw ValidationException::withMessages([
-                    'district_id' =>
-                        'The selected district does not belong to the selected division.',
+                    'district_id' => 'The selected district does not belong to the selected division.',
                 ]);
             }
         }
 
-        if (
-            $upazilaId &&
-            $districtId
-        ) {
+        if ($upazilaId) {
             $upazilaBelongsToDistrict =
                 Upazila::query()
                     ->whereKey($upazilaId)
@@ -566,8 +548,7 @@ class WarehouseController extends Controller
                 !$upazilaBelongsToDistrict
             ) {
                 throw ValidationException::withMessages([
-                    'upazila_id' =>
-                        'The selected upazila does not belong to the selected district.',
+                    'upazila_id' => 'The selected upazila does not belong to the selected district.',
                 ]);
             }
         }
@@ -589,8 +570,7 @@ class WarehouseController extends Controller
 
             'upazilas' => $this->upazilas(),
 
-            'warehouseTypes' =>
-                $this->warehouseTypes(),
+            'warehouseTypes' => $this->warehouseTypes(),
         ];
     }
 

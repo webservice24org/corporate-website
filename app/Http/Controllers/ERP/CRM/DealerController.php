@@ -47,13 +47,11 @@ class DealerController extends Controller
             )
             ->when(
                 $filters['depot_id'] ?? null,
-                fn ($query, $depotId) =>
-                    $query->where('depot_id', $depotId)
+                fn($query, $depotId) => $query->where('depot_id', $depotId)
             )
             ->when(
                 $filters['upazila_id'] ?? null,
-                fn ($query, $upazilaId) =>
-                    $query->where('upazila_id', $upazilaId)
+                fn($query, $upazilaId) => $query->where('upazila_id', $upazilaId)
             )
             ->latest()
             ->paginate(20)
@@ -74,14 +72,13 @@ class DealerController extends Controller
             'depot.district.division:id,name,name_bn',
             'upazila:id,district_id,name,name_bn',
             'manager:id,name,email',
-            'applications' => fn ($query) => $query->latest(),
-            'currentDocuments' => fn ($query) =>
-                $query
-                    ->with([
-                        'verifier:id,name',
-                        'uploader:id,name',
-                    ])
-                    ->orderBy('document_type'),
+            'applications' => fn($query) => $query->latest(),
+            'currentDocuments' => fn($query) => $query
+                ->with([
+                    'verifier:id,name',
+                    'uploader:id,name',
+                ])
+                ->orderBy('document_type'),
         ]);
 
         return Inertia::render('ERP/CRM/Dealers/Show', [
@@ -99,13 +96,12 @@ class DealerController extends Controller
             'depot.district.division:id,name,name_bn',
             'upazila:id,district_id,name,name_bn',
             'manager:id,name,email',
-            'currentDocuments' => fn ($query) =>
-                $query
-                    ->with([
-                        'verifier:id,name',
-                        'uploader:id,name',
-                    ])
-                    ->orderBy('document_type'),
+            'currentDocuments' => fn($query) => $query
+                ->with([
+                    'verifier:id,name',
+                    'uploader:id,name',
+                ])
+                ->orderBy('document_type'),
         ]);
 
         $depots = Depot::query()
@@ -177,7 +173,7 @@ class DealerController extends Controller
                 'required',
                 'integer',
                 Rule::exists('depots', 'id')->where(
-                    fn ($query) => $query->whereNull('deleted_at')
+                    fn($query) => $query->whereNull('deleted_at')
                 ),
             ],
 
@@ -305,12 +301,11 @@ class DealerController extends Controller
 
         if (
             $upazila->district_id !==
-                $depot->district_id
+            $depot->district_id
         ) {
             return back()
                 ->withErrors([
-                    'upazila_id' =>
-                        'The selected Upazila does not belong to the selected Depot district.',
+                    'upazila_id' => 'The selected Upazila does not belong to the selected Depot district.',
                 ])
                 ->withInput();
         }
@@ -362,50 +357,43 @@ class DealerController extends Controller
         app(
             MasterProfileActivityLogger::class
         )->recordProfileUpdate(
-            subject:
-                $dealer,
+                subject: $dealer,
 
-            actorId:
-                $request->user()?->id,
+                actorId: $request->user()?->id,
 
-            before:
-                $before,
+                before: $before,
 
-            after:
-                $dealer->getAttributes(),
+                after: $dealer->getAttributes(),
 
-            fields: [
-                'company_id',
-                'depot_id',
-                'upazila_id',
-                'business_name',
-                'proprietor_name',
-                'proprietor_photo',
-                'phone',
-                'alternate_phone',
-                'email',
-                'trade_license_number',
-                'nid_number',
-                'tin_number',
-                'vat_number',
-                'address',
-                'postal_code',
-                'credit_limit',
-                'payment_terms_days',
-                'manager_user_id',
-                'is_active',
-                'notes',
-            ],
+                fields: [
+                    'company_id',
+                    'depot_id',
+                    'upazila_id',
+                    'business_name',
+                    'proprietor_name',
+                    'proprietor_photo',
+                    'phone',
+                    'alternate_phone',
+                    'email',
+                    'trade_license_number',
+                    'nid_number',
+                    'tin_number',
+                    'vat_number',
+                    'address',
+                    'postal_code',
+                    'credit_limit',
+                    'payment_terms_days',
+                    'manager_user_id',
+                    'is_active',
+                    'notes',
+                ],
 
-            source:
-                'admin',
+                source: 'admin',
 
-            request:
-                $request,
+                request: $request,
 
-            description:
-                'Dealer master profile updated by administrator.'
-        );
+                description: 'Dealer master profile updated by administrator.'
+            );
 
         return redirect()
             ->route(
@@ -422,7 +410,7 @@ class DealerController extends Controller
         Dealer $dealer
     ): StreamedResponse {
         abort_unless(
-            $dealer->proprietor_photo,
+            $dealer->proprietor_photo !== null && $dealer->proprietor_photo !== '',
             404
         );
 

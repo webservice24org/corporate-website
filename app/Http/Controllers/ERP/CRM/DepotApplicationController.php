@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\DepotApplication;
 use App\Models\DepotApplicationDocument;
 use App\Services\ERP\CRM\DepotApplicationApprovalService;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -13,8 +14,6 @@ use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\StreamedResponse;
-use Illuminate\Filesystem\FilesystemAdapter;
-
 
 class DepotApplicationController extends Controller
 {
@@ -52,11 +51,10 @@ class DepotApplicationController extends Controller
                 ->when(
                     $filters['status']
                     ?? null,
-                    fn ($query, $status) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    fn ($query, $status) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
 
                 ->when(
@@ -105,11 +103,9 @@ class DepotApplicationController extends Controller
         return Inertia::render(
             'ERP/CRM/DepotApplications/Index',
             [
-                'applications' =>
-                    $applications,
+                'applications' => $applications,
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -131,8 +127,7 @@ class DepotApplicationController extends Controller
         return Inertia::render(
             'ERP/CRM/DepotApplications/Show',
             [
-                'application' =>
-                    $depotApplication,
+                'application' => $depotApplication,
             ]
         );
     }
@@ -146,20 +141,16 @@ class DepotApplicationController extends Controller
             'pending'
         ) {
             return back()->withErrors([
-                'application' =>
-                    'Only pending applications can be marked under review.',
+                'application' => 'Only pending applications can be marked under review.',
             ]);
         }
 
         $depotApplication->update([
-            'status' =>
-                'under_review',
+            'status' => 'under_review',
 
-            'reviewed_by_user_id' =>
-                $request->user()->id,
+            'reviewed_by_user_id' => $request->user()->id,
 
-            'reviewed_at' =>
-                now(),
+            'reviewed_at' => now(),
         ]);
 
         return back()->with(
@@ -293,11 +284,9 @@ class DepotApplicationController extends Controller
         );
 
         $document->update([
-            'verified_by_user_id' =>
-                $request->user()->id,
+            'verified_by_user_id' => $request->user()->id,
 
-            'verified_at' =>
-                now(),
+            'verified_at' => now(),
         ]);
 
         return back()->with(

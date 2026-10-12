@@ -26,13 +26,12 @@ class DepotAdminEditController extends Controller
             'division:id,name',
             'district:id,division_id,name',
             'manager:id,name,email',
-            'currentDocuments' => fn ($query) =>
-                $query
-                    ->with([
-                        'verifier:id,name',
-                        'uploader:id,name',
-                    ])
-                    ->orderBy('document_type'),
+            'currentDocuments' => fn($query) => $query
+                ->with([
+                    'verifier:id,name',
+                    'uploader:id,name',
+                ])
+                ->orderBy('document_type'),
         ]);
 
         return Inertia::render(
@@ -217,8 +216,7 @@ class DepotAdminEditController extends Controller
         if (!$districtBelongsToDivision) {
             return back()
                 ->withErrors([
-                    'district_id' =>
-                        'The selected district does not belong to the selected division.',
+                    'district_id' => 'The selected district does not belong to the selected division.',
                 ])
                 ->withInput();
         }
@@ -265,50 +263,43 @@ class DepotAdminEditController extends Controller
         app(
             MasterProfileActivityLogger::class
         )->recordProfileUpdate(
-            subject:
-                $depot,
+                subject: $depot,
 
-            actorId:
-                $request->user()?->id,
+                actorId: $request->user()?->id,
 
-            before:
-                $before,
+                before: $before,
 
-            after:
-                $depot->getAttributes(),
+                after: $depot->getAttributes(),
 
-            fields: [
-                'company_id',
-                'division_id',
-                'district_id',
-                'name',
-                'proprietor_name',
-                'proprietor_photo',
-                'phone',
-                'alternate_phone',
-                'email',
-                'trade_license_number',
-                'nid_number',
-                'tin_number',
-                'vat_number',
-                'address',
-                'postal_code',
-                'credit_limit',
-                'payment_terms_days',
-                'manager_user_id',
-                'is_active',
-                'notes',
-            ],
+                fields: [
+                    'company_id',
+                    'division_id',
+                    'district_id',
+                    'name',
+                    'proprietor_name',
+                    'proprietor_photo',
+                    'phone',
+                    'alternate_phone',
+                    'email',
+                    'trade_license_number',
+                    'nid_number',
+                    'tin_number',
+                    'vat_number',
+                    'address',
+                    'postal_code',
+                    'credit_limit',
+                    'payment_terms_days',
+                    'manager_user_id',
+                    'is_active',
+                    'notes',
+                ],
 
-            source:
-                'admin',
+                source: 'admin',
 
-            request:
-                $request,
+                request: $request,
 
-            description:
-                'Depot master profile updated by administrator.'
-        );
+                description: 'Depot master profile updated by administrator.'
+            );
 
         return redirect()
             ->route(
@@ -325,7 +316,7 @@ class DepotAdminEditController extends Controller
         Depot $depot
     ): StreamedResponse {
         abort_unless(
-            $depot->proprietor_photo,
+            $depot->proprietor_photo !== null && $depot->proprietor_photo !== '',
             404
         );
 

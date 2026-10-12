@@ -12,10 +12,10 @@ use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Illuminate\Support\Facades\Storage;
 
 class EmployeeController extends Controller
 {
@@ -23,35 +23,29 @@ class EmployeeController extends Controller
         Request $request
     ): Response {
         $filters = [
-            'search' =>
-                $request
-                    ->string('search')
-                    ->toString(),
+            'search' => $request
+                ->string('search')
+                ->toString(),
 
-            'company_id' =>
-                $request->input(
-                    'company_id'
-                ),
+            'company_id' => $request->input(
+                'company_id'
+            ),
 
-            'branch_id' =>
-                $request->input(
-                    'branch_id'
-                ),
+            'branch_id' => $request->input(
+                'branch_id'
+            ),
 
-            'department_id' =>
-                $request->input(
-                    'department_id'
-                ),
+            'department_id' => $request->input(
+                'department_id'
+            ),
 
-            'designation_id' =>
-                $request->input(
-                    'designation_id'
-                ),
+            'designation_id' => $request->input(
+                'designation_id'
+            ),
 
-            'employment_status' =>
-                $request->input(
-                    'employment_status'
-                ),
+            'employment_status' => $request->input(
+                'employment_status'
+            ),
         ];
 
         $employees =
@@ -124,55 +118,50 @@ class EmployeeController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters['branch_id'],
                     fn (
                         $query,
                         $branchId
-                    ) =>
-                        $query->where(
-                            'branch_id',
-                            $branchId
-                        )
+                    ) => $query->where(
+                        'branch_id',
+                        $branchId
+                    )
                 )
                 ->when(
                     $filters['department_id'],
                     fn (
                         $query,
                         $departmentId
-                    ) =>
-                        $query->where(
-                            'department_id',
-                            $departmentId
-                        )
+                    ) => $query->where(
+                        'department_id',
+                        $departmentId
+                    )
                 )
                 ->when(
                     $filters['designation_id'],
                     fn (
                         $query,
                         $designationId
-                    ) =>
-                        $query->where(
-                            'designation_id',
-                            $designationId
-                        )
+                    ) => $query->where(
+                        'designation_id',
+                        $designationId
+                    )
                 )
                 ->when(
                     $filters['employment_status'],
                     fn (
                         $query,
                         $status
-                    ) =>
-                        $query->where(
-                            'employment_status',
-                            $status
-                        )
+                    ) => $query->where(
+                        'employment_status',
+                        $status
+                    )
                 )
                 ->latest('id')
                 ->paginate(15)
@@ -181,23 +170,17 @@ class EmployeeController extends Controller
         return Inertia::render(
             'ERP/HRM/Employees/Index',
             [
-                'employees' =>
-                    $employees,
+                'employees' => $employees,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'branches' =>
-                    $this->branches(),
+                'branches' => $this->branches(),
 
-                'departments' =>
-                    $this->departments(),
+                'departments' => $this->departments(),
 
-                'designations' =>
-                    $this->designations(),
+                'designations' => $this->designations(),
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -207,28 +190,23 @@ class EmployeeController extends Controller
         return Inertia::render(
             'ERP/HRM/Employees/Create',
             [
-                'companies' =>
-                    $this->companies(
-                        activeOnly: true
-                    ),
+                'companies' => $this->companies(
+                    activeOnly: true
+                ),
 
-                'branches' =>
-                    $this->branches(
-                        activeOnly: true
-                    ),
+                'branches' => $this->branches(
+                    activeOnly: true
+                ),
 
-                'departments' =>
-                    $this->departments(
-                        activeOnly: true
-                    ),
+                'departments' => $this->departments(
+                    activeOnly: true
+                ),
 
-                'designations' =>
-                    $this->designations(
-                        activeOnly: true
-                    ),
+                'designations' => $this->designations(
+                    activeOnly: true
+                ),
 
-                'users' =>
-                    $this->availableUsers(),
+                'users' => $this->availableUsers(),
             ]
         );
     }
@@ -265,31 +243,25 @@ class EmployeeController extends Controller
                 Employee::create([
                     ...$validated,
 
-                    'user_id' =>
-                        $validated['user_id']
+                    'user_id' => $validated['user_id']
                             ?? null,
 
-                    'branch_id' =>
-                        $validated['branch_id']
+                    'branch_id' => $validated['branch_id']
                             ?? null,
 
-                    'department_id' =>
-                        $validated['department_id']
+                    'department_id' => $validated['department_id']
                             ?? null,
 
-                    'designation_id' =>
-                        $validated['designation_id']
+                    'designation_id' => $validated['designation_id']
                             ?? null,
 
-                    'employee_number' =>
-                        strtoupper(
-                            $validated[
-                                'employee_number'
-                            ]
-                        ),
+                    'employee_number' => strtoupper(
+                        $validated[
+                            'employee_number'
+                        ]
+                    ),
 
-                    'photo' =>
-                        $photoPath,
+                    'photo' => $photoPath,
                 ]);
             }
         );
@@ -316,45 +288,35 @@ class EmployeeController extends Controller
         return Inertia::render(
             'ERP/HRM/Employees/Edit',
             [
-                'employee' =>
-                    $employee,
+                'employee' => $employee,
 
-                'companies' =>
-                    $this->companies(
-                        activeOnly: true,
-                        currentId:
-                            $employee
-                                ->company_id
-                    ),
+                'companies' => $this->companies(
+                    activeOnly: true,
+                    currentId: $employee
+                        ->company_id
+                ),
 
-                'branches' =>
-                    $this->branches(
-                        activeOnly: true,
-                        currentId:
-                            $employee
-                                ->branch_id
-                    ),
+                'branches' => $this->branches(
+                    activeOnly: true,
+                    currentId: $employee
+                        ->branch_id
+                ),
 
-                'departments' =>
-                    $this->departments(
-                        activeOnly: true,
-                        currentId:
-                            $employee
-                                ->department_id
-                    ),
+                'departments' => $this->departments(
+                    activeOnly: true,
+                    currentId: $employee
+                        ->department_id
+                ),
 
-                'designations' =>
-                    $this->designations(
-                        activeOnly: true,
-                        currentId:
-                            $employee
-                                ->designation_id
-                    ),
+                'designations' => $this->designations(
+                    activeOnly: true,
+                    currentId: $employee
+                        ->designation_id
+                ),
 
-                'users' =>
-                    $this->availableUsers(
-                        $employee
-                    ),
+                'users' => $this->availableUsers(
+                    $employee
+                ),
             ]
         );
     }
@@ -410,31 +372,25 @@ class EmployeeController extends Controller
                 $employee->update([
                     ...$validated,
 
-                    'user_id' =>
-                        $validated['user_id']
+                    'user_id' => $validated['user_id']
                             ?? null,
 
-                    'branch_id' =>
-                        $validated['branch_id']
+                    'branch_id' => $validated['branch_id']
                             ?? null,
 
-                    'department_id' =>
-                        $validated['department_id']
+                    'department_id' => $validated['department_id']
                             ?? null,
 
-                    'designation_id' =>
-                        $validated['designation_id']
+                    'designation_id' => $validated['designation_id']
                             ?? null,
 
-                    'employee_number' =>
-                        strtoupper(
-                            $validated[
-                                'employee_number'
-                            ]
-                        ),
+                    'employee_number' => strtoupper(
+                        $validated[
+                            'employee_number'
+                        ]
+                    ),
 
-                    'photo' =>
-                        $photoPath,
+                    'photo' => $photoPath,
                 ]);
             }
         );
@@ -447,7 +403,7 @@ class EmployeeController extends Controller
         );
     }
 
-   public function show(
+    public function show(
         Employee $employee
     ): Response {
         $employee->load([
@@ -461,31 +417,28 @@ class EmployeeController extends Controller
 
             'designation:id,company_id,department_id,name,code',
 
-            'documents' => fn ($query) =>
-                $query
-                    ->latest('id'),
+            'documents' => fn ($query) => $query
+                ->latest('id'),
 
-            'employmentHistories' => fn ($query) =>
-                $query
-                    ->with([
-                        'company:id,name,code',
-                        'branch:id,name,code',
-                        'department:id,name,code',
-                        'designation:id,name,code',
-                    ])
-                    ->orderByDesc('start_date')
-                    ->orderByDesc('id'),
+            'employmentHistories' => fn ($query) => $query
+                ->with([
+                    'company:id,name,code',
+                    'branch:id,name,code',
+                    'department:id,name,code',
+                    'designation:id,name,code',
+                ])
+                ->orderByDesc('start_date')
+                ->orderByDesc('id'),
         ]);
 
         return Inertia::render(
             'ERP/HRM/Employees/Show',
             [
-                'employee' =>
-                    $employee,
+                'employee' => $employee,
             ]
         );
     }
-   
+
     public function destroy(
         Employee $employee
     ): RedirectResponse {
@@ -573,11 +526,10 @@ class EmployeeController extends Controller
                     'branches',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -589,11 +541,10 @@ class EmployeeController extends Controller
                     'departments',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 

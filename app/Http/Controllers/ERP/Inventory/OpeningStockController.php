@@ -6,13 +6,18 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ERP\Inventory\OpeningStockRequest;
 use App\Models\Company;
 use App\Models\OpeningStock;
+use App\Models\OpeningStockItem;
 use App\Models\Product;
 use App\Models\ProductVariant;
+use App\Models\StockMovement;
 use App\Models\Warehouse;
+use App\Services\Inventory\InventoryService;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -175,14 +180,11 @@ class OpeningStockController extends Controller
                     'per_page' => $perPage,
                 ],
 
-                'companies' =>
-                    $this->companyOptions(),
+                'companies' => $this->companyOptions(),
 
-                'warehouses' =>
-                    $this->warehouseOptions(),
+                'warehouses' => $this->warehouseOptions(),
 
-                'statuses' =>
-                    OpeningStock::statuses(),
+                'statuses' => OpeningStock::statuses(),
             ]
         );
     }
@@ -206,26 +208,19 @@ class OpeningStockController extends Controller
             function () use ($data) {
                 $openingStock =
                     OpeningStock::create([
-                        'company_id' =>
-                            $data['company_id'],
+                        'company_id' => $data['company_id'],
 
-                        'warehouse_id' =>
-                            $data['warehouse_id'],
+                        'warehouse_id' => $data['warehouse_id'],
 
-                        'document_number' =>
-                            $this->nextDocumentNumber(),
+                        'document_number' => $this->nextDocumentNumber(),
 
-                        'document_date' =>
-                            $data['document_date'],
+                        'document_date' => $data['document_date'],
 
-                        'status' =>
-                            OpeningStock::STATUS_DRAFT,
+                        'status' => OpeningStock::STATUS_DRAFT,
 
-                        'notes' =>
-                            $data['notes'] ?? null,
+                        'notes' => $data['notes'] ?? null,
 
-                        'created_by' =>
-                            auth()->id(),
+                        'created_by' => auth()->id(),
 
                         'total_items' => 0,
 
@@ -270,8 +265,7 @@ class OpeningStockController extends Controller
 
             'poster:id,name',
 
-            'items' => fn($query) =>
-                $query->orderBy('id'),
+            'items' => fn($query) => $query->orderBy('id'),
 
             'items.product:id,company_id,name,sku',
 
@@ -281,8 +275,7 @@ class OpeningStockController extends Controller
         return Inertia::render(
             'ERP/Inventory/OpeningStocks/Show',
             [
-                'openingStock' =>
-                    $openingStock,
+                'openingStock' => $openingStock,
             ]
         );
     }
@@ -295,8 +288,7 @@ class OpeningStockController extends Controller
         );
 
         $openingStock->load([
-            'items' => fn($query) =>
-                $query->orderBy('id'),
+            'items' => fn($query) => $query->orderBy('id'),
 
             'items.product:id,company_id,name,sku',
 
@@ -306,8 +298,7 @@ class OpeningStockController extends Controller
         return Inertia::render(
             'ERP/Inventory/OpeningStocks/Edit',
             [
-                'openingStock' =>
-                    $openingStock,
+                'openingStock' => $openingStock,
 
                 ...$this->formOptions(),
             ]
@@ -351,17 +342,13 @@ class OpeningStockController extends Controller
                 );
 
                 $locked->update([
-                    'company_id' =>
-                        $data['company_id'],
+                    'company_id' => $data['company_id'],
 
-                    'warehouse_id' =>
-                        $data['warehouse_id'],
+                    'warehouse_id' => $data['warehouse_id'],
 
-                    'document_date' =>
-                        $data['document_date'],
+                    'document_date' => $data['document_date'],
 
-                    'notes' =>
-                        $data['notes'] ?? null,
+                    'notes' => $data['notes'] ?? null,
                 ]);
 
                 $this->replaceItems(
@@ -471,8 +458,7 @@ class OpeningStockController extends Controller
 
         if (!$valid) {
             throw ValidationException::withMessages([
-                'warehouse_id' =>
-                    'The selected warehouse does not belong to the selected company.',
+                'warehouse_id' => 'The selected warehouse does not belong to the selected company.',
             ]);
         }
     }
@@ -484,7 +470,7 @@ class OpeningStockController extends Controller
      * - variant belongs to product
      * - duplicate product/variant combinations
      *
-     * @param array<int, array<string, mixed>> $items
+     * @param  array<int, array<string, mixed>>  $items
      */
     private function validateItems(
         int $companyId,
@@ -519,8 +505,7 @@ class OpeningStockController extends Controller
 
             if (!$productValid) {
                 throw ValidationException::withMessages([
-                    "items.{$index}.product_id" =>
-                        'The selected product does not belong to the selected company.',
+                    "items.{$index}.product_id" => 'The selected product does not belong to the selected company.',
                 ]);
             }
 
@@ -542,8 +527,7 @@ class OpeningStockController extends Controller
 
                 if (!$variantValid) {
                     throw ValidationException::withMessages([
-                        "items.{$index}.product_variant_id" =>
-                            'The selected variant does not belong to the selected product.',
+                        "items.{$index}.product_variant_id" => 'The selected variant does not belong to the selected product.',
                     ]);
                 }
             }
@@ -564,8 +548,7 @@ class OpeningStockController extends Controller
 
             if (isset($seen[$duplicateKey])) {
                 throw ValidationException::withMessages([
-                    "items.{$index}.product_id" =>
-                        'The same product and variant cannot appear more than once.',
+                    "items.{$index}.product_id" => 'The same product and variant cannot appear more than once.',
                 ]);
             }
 
@@ -579,7 +562,7 @@ class OpeningStockController extends Controller
      * The request is never trusted for total_cost.
      * It is calculated here on the backend.
      *
-     * @param array<int, array<string, mixed>> $items
+     * @param  array<int, array<string, mixed>>  $items
      */
     private function replaceItems(
         OpeningStock $openingStock,
@@ -618,20 +601,15 @@ class OpeningStockController extends Controller
             $openingStock
                 ->items()
                 ->create([
-                    'product_id' =>
-                        (int) $item['product_id'],
+                    'product_id' => (int) $item['product_id'],
 
-                    'product_variant_id' =>
-                        $variantId,
+                    'product_variant_id' => $variantId,
 
-                    'quantity' =>
-                        $quantity,
+                    'quantity' => $quantity,
 
-                    'unit_cost' =>
-                        $unitCost,
+                    'unit_cost' => $unitCost,
 
-                    'total_cost' =>
-                        $totalCost,
+                    'total_cost' => $totalCost,
                 ]);
         }
     }
@@ -644,6 +622,7 @@ class OpeningStockController extends Controller
     private function refreshTotals(
         OpeningStock $openingStock
     ): void {
+        /** @var \stdClass|null $totals */
         $totals = $openingStock
             ->items()
             ->selectRaw(
@@ -653,19 +632,13 @@ class OpeningStockController extends Controller
                 COALESCE(SUM(total_cost), 0) as total_value
                 '
             )
+            ->toBase()
             ->first();
 
         $openingStock->update([
-            'total_items' =>
-                (int) (
-                    $totals?->total_items ?? 0
-                ),
-
-            'total_quantity' =>
-                $totals?->total_quantity ?? 0,
-
-            'total_value' =>
-                $totals?->total_value ?? 0,
+            'total_items' => $totals !== null ? (int) $totals->total_items : 0,
+            'total_quantity' => $totals !== null ? ($totals->total_quantity ?? 0) : 0,
+            'total_value' => $totals !== null ? ($totals->total_value ?? 0) : 0,
         ]);
     }
 
@@ -741,11 +714,9 @@ class OpeningStockController extends Controller
     private function formOptions(): array
     {
         return [
-            'companies' =>
-                $this->companyOptions(),
+            'companies' => $this->companyOptions(),
 
-            'warehouses' =>
-                $this->warehouseOptions(),
+            'warehouses' => $this->warehouseOptions(),
 
             /*
              * company_id is intentionally included.
@@ -756,28 +727,25 @@ class OpeningStockController extends Controller
              *   ↓
              * Available Products
              */
-            'products' =>
-                Product::query()
-                    ->with([
-                        'variants' =>
-                            fn($query) =>
-                                $query
-                                    ->select([
-                                        'id',
-                                        'product_id',
-                                        'name',
-                                        'sku',
-                                    ])
-                                    ->orderBy('name'),
-                    ])
-                    ->select([
-                        'id',
-                        'company_id',
-                        'name',
-                        'sku',
-                    ])
-                    ->orderBy('name')
-                    ->get(),
+            'products' => Product::query()
+                ->with([
+                    'variants' => fn($query) => $query
+                        ->select([
+                            'id',
+                            'product_id',
+                            'name',
+                            'sku',
+                        ])
+                        ->orderBy('name'),
+                ])
+                ->select([
+                    'id',
+                    'company_id',
+                    'name',
+                    'sku',
+                ])
+                ->orderBy('name')
+                ->get(),
         ];
     }
 
@@ -813,5 +781,166 @@ class OpeningStockController extends Controller
             ])
             ->orderBy('name')
             ->get();
+    }
+
+    public function post(
+        OpeningStock $openingStock,
+        InventoryService $inventoryService
+    ): RedirectResponse {
+        DB::transaction(function () use ($openingStock, $inventoryService): void {
+            $document = OpeningStock::query()
+                ->whereKey($openingStock->getKey())
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            Gate::authorize('erp.opening-stocks.post');
+
+            $user = auth()->user();
+            abort_unless(
+                $user && (
+                    $user->hasRole('super-admin') ||
+                    $user->employee()
+                        ->where('company_id', $document->company_id)
+                        ->exists()
+                ),
+                403,
+                'You are not authorized to post opening stock for this company.'
+            );
+
+            if (!$document->canBePosted()) {
+                throw ValidationException::withMessages([
+                    'status' => 'Only draft opening stock documents can be posted.',
+                ]);
+            }
+
+            $document->load([
+                'warehouse',
+                'items.product',
+                'items.variant',
+            ]);
+
+            /** @var Warehouse|null $warehouse */
+            $warehouse = $document->warehouse;
+
+            if (
+                !$warehouse ||
+                (int) $warehouse->company_id !==
+                (int) $document->company_id
+            ) {
+                throw ValidationException::withMessages([
+                    'warehouse_id' => 'The warehouse does not belong to the document company.',
+                ]);
+            }
+
+            if (!$warehouse->is_active) {
+                throw ValidationException::withMessages([
+                    'warehouse_id' => 'Cannot post opening stock to an inactive warehouse.',
+                ]);
+            }
+
+            /** @var EloquentCollection<int, OpeningStockItem> $items */
+            $items = $document->items;
+
+            if ($items->isEmpty()) {
+                throw ValidationException::withMessages([
+                    'items' => 'Add at least one stock item before posting.',
+                ]);
+            }
+
+            $seen = [];
+
+            foreach ($items as $index => $item) {
+                /** @var Product|null $product */
+                $product = $item->product;
+                /** @var ProductVariant|null $variant */
+                $variant = $item->variant;
+
+                if (
+                    !$product ||
+                    (int) $product->company_id !==
+                    (int) $document->company_id
+                ) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_id" => 'The product does not belong to the document company.',
+                    ]);
+                }
+
+                if (
+                    ($item->product_variant_id !== null && !$variant) ||
+                    ($variant && (int) $variant->product_id !== (int) $product->getKey()) ||
+                    ($product->has_variants && !$variant) ||
+                    (!$product->has_variants && $variant)
+                ) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_variant_id" => 'Select an existing variant belonging to this product when variants are required; products without variants must not have one.',
+                    ]);
+                }
+
+                $key = $item->product_id . ':' .
+                    ($item->product_variant_id ?? 0);
+
+                if (isset($seen[$key])) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.product_id" => 'Duplicate product and variant combination.',
+                    ]);
+                }
+
+                $seen[$key] = true;
+
+                if (
+                    bccomp(
+                        (string) $item->quantity,
+                        '0.0000',
+                        4
+                    ) <= 0
+                ) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.quantity" => 'Quantity must be greater than zero.',
+                    ]);
+                }
+
+                if (
+                    bccomp(
+                        (string) $item->unit_cost,
+                        '0.0000',
+                        4
+                    ) < 0
+                ) {
+                    throw ValidationException::withMessages([
+                        "items.{$index}.unit_cost" => 'Unit cost cannot be negative.',
+                    ]);
+                }
+
+                $inventoryService->stockIn(
+                    warehouse: $warehouse,
+                    product: $product,
+                    quantity: (string) $item->quantity,
+                    movementType: StockMovement::TYPE_OPENING_STOCK,
+                    unitCost: (string) $item->unit_cost,
+                    variant: $variant,
+                    referenceType: OpeningStock::class,
+                    referenceId: (int) $document->getKey(),
+                    referenceNumber: $document->document_number,
+                    occurredAt: now(),
+                    createdBy: auth()->id(),
+                    notes: "Opening stock {$document->document_number}",
+                );
+            }
+
+            $document->status = OpeningStock::STATUS_POSTED;
+            $document->posted_by = auth()->id();
+            $document->posted_at = now();
+            $document->save();
+        }, 5);
+
+        return redirect()
+            ->route(
+                'erp.inventory.opening-stocks.show',
+                $openingStock
+            )
+            ->with(
+                'success',
+                'Opening stock posted successfully.'
+            );
     }
 }

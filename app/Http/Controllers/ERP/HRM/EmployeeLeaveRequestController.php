@@ -7,18 +7,17 @@ use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmployeeLeaveRequest;
 use App\Models\LeaveType;
+use App\Services\Leave\LeaveAttendanceReconciler;
 use App\Services\Leave\LeaveBalanceService;
 use App\Services\Leave\LeaveDayCalculator;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use App\Services\Leave\LeaveAttendanceReconciler;
 
 class EmployeeLeaveRequestController extends Controller
 {
@@ -36,39 +35,31 @@ class EmployeeLeaveRequestController extends Controller
                 ])
                 ->when(
                     $request->company_id,
-                    fn ($query, $companyId) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn($query, $companyId) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $request->leave_type_id,
-                    fn ($query, $typeId) =>
-                        $query->where(
-                            'leave_type_id',
-                            $typeId
-                        )
+                    fn($query, $typeId) => $query->where(
+                        'leave_type_id',
+                        $typeId
+                    )
                 )
                 ->when(
                     $request->status,
-                    fn ($query, $status) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    fn($query, $status) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->when(
                     $request->search,
-                    function (
-                        $query,
-                        $search
-                    ) {
+                    function ($query, $search) {
                         $query->whereHas(
                             'employee',
-                            function ($employeeQuery) use (
-                                $search
-                            ) {
+                            function ($employeeQuery) use ($search) {
                                 $employeeQuery
                                     ->where(
                                         'employee_number',
@@ -98,39 +89,35 @@ class EmployeeLeaveRequestController extends Controller
         return Inertia::render(
             'ERP/HRM/Leave/Requests/Index',
             [
-                'leaveRequests' =>
-                    $requests,
+                'leaveRequests' => $requests,
 
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
-
-                'leaveTypes' =>
-                    LeaveType::query()
-                        ->active()
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                            'code',
-                        ]),
-
-                'filters' =>
-                    $request->only([
-                        'search',
-                        'company_id',
-                        'leave_type_id',
+                'companies' => Company::query()
+                    ->where(
                         'status',
+                        'active'
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
                     ]),
+
+                'leaveTypes' => LeaveType::query()
+                    ->active()
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                        'code',
+                    ]),
+
+                'filters' => $request->only([
+                    'search',
+                    'company_id',
+                    'leave_type_id',
+                    'status',
+                ]),
             ]
         );
     }
@@ -140,27 +127,25 @@ class EmployeeLeaveRequestController extends Controller
         return Inertia::render(
             'ERP/HRM/Leave/Requests/Create',
             [
-                'employees' =>
-                    Employee::query()
-                        ->where(
-                            'employment_status',
-                            'active'
-                        )
-                        ->orderBy('first_name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'employee_number',
-                            'first_name',
-                            'middle_name',
-                            'last_name',
-                        ]),
+                'employees' => Employee::query()
+                    ->where(
+                        'employment_status',
+                        'active'
+                    )
+                    ->orderBy('first_name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'employee_number',
+                        'first_name',
+                        'middle_name',
+                        'last_name',
+                    ]),
 
-                'leaveTypes' =>
-                    LeaveType::query()
-                        ->active()
-                        ->orderBy('name')
-                        ->get(),
+                'leaveTypes' => LeaveType::query()
+                    ->active()
+                    ->orderBy('name')
+                    ->get(),
             ]
         );
     }
@@ -175,17 +160,16 @@ class EmployeeLeaveRequestController extends Controller
                 $request
             );
 
-            if (
-                $data['duration_type']
-                    === 'half_day' &&
-                $data['start_date']
-                    !== $data['end_date']
-            ) {
-                throw ValidationException::withMessages([
-                    'end_date' =>
-                        'Half-day leave must start and end on the same date.',
-                ]);
-            }
+        if (
+            $data['duration_type']
+            === 'half_day' &&
+            $data['start_date']
+            !== $data['end_date']
+        ) {
+            throw ValidationException::withMessages([
+                'end_date' => 'Half-day leave must start and end on the same date.',
+            ]);
+        }
 
         $employee =
             Employee::query()
@@ -211,12 +195,11 @@ class EmployeeLeaveRequestController extends Controller
 
         if (
             $data['duration_type']
-                === 'half_day' &&
+            === 'half_day' &&
             !$leaveType->allow_half_day
         ) {
             throw ValidationException::withMessages([
-                'duration_type' =>
-                    'This leave type does not allow half-day leave.',
+                'duration_type' => 'This leave type does not allow half-day leave.',
             ]);
         }
 
@@ -237,8 +220,7 @@ class EmployeeLeaveRequestController extends Controller
 
         if ($days <= 0) {
             throw ValidationException::withMessages([
-                'start_date' =>
-                    'The selected dates contain no chargeable leave days.',
+                'start_date' => 'The selected dates contain no chargeable leave days.',
             ]);
         }
 
@@ -260,8 +242,7 @@ class EmployeeLeaveRequestController extends Controller
             $days
         ) {
             throw ValidationException::withMessages([
-                'leave_type_id' =>
-                    "Insufficient leave balance. Available: {$balance->available_days} day(s).",
+                'leave_type_id' => "Insufficient leave balance. Available: {$balance->available_days} day(s).",
             ]);
         }
 
@@ -273,8 +254,7 @@ class EmployeeLeaveRequestController extends Controller
             )
         ) {
             throw ValidationException::withMessages([
-                'attachment' =>
-                    'An attachment is required for this leave type.',
+                'attachment' => 'An attachment is required for this leave type.',
             ]);
         }
 
@@ -295,29 +275,17 @@ class EmployeeLeaveRequestController extends Controller
         }
 
         DB::transaction(
-            function () use (
-                $data,
-                $employee,
-                $days,
-                $attachment,
-                $balanceService,
-                $leaveType,
-                $year
-            ): void {
+            function () use ($data, $employee, $days, $attachment, $balanceService, $leaveType, $year): void {
                 EmployeeLeaveRequest::create([
                     ...$data,
 
-                    'company_id' =>
-                        $employee->company_id,
+                    'company_id' => $employee->company_id,
 
-                    'total_days' =>
-                        $days,
+                    'total_days' => $days,
 
-                    'attachment' =>
-                        $attachment,
+                    'attachment' => $attachment,
 
-                    'status' =>
-                        'pending',
+                    'status' => 'pending',
                 ]);
 
                 $balanceService
@@ -356,8 +324,7 @@ class EmployeeLeaveRequestController extends Controller
         return Inertia::render(
             'ERP/HRM/Leave/Requests/Show',
             [
-                'leaveRequest' =>
-                    $leaveRequest,
+                'leaveRequest' => $leaveRequest,
             ]
         );
     }
@@ -369,7 +336,7 @@ class EmployeeLeaveRequestController extends Controller
     ): RedirectResponse {
         if (
             $leaveRequest->status
-                !== 'pending'
+            !== 'pending'
         ) {
             return back()->with(
                 'error',
@@ -383,28 +350,19 @@ class EmployeeLeaveRequestController extends Controller
         ]);
 
         DB::transaction(
-            function () use (
-                $leaveRequest,
-                $balanceService
-            ): void {
+            function () use ($leaveRequest, $balanceService): void {
                 $leaveRequest->update([
-                    'status' =>
-                        'approved',
+                    'status' => 'approved',
 
-                    'approved_by' =>
-                        auth()->id(),
+                    'approved_by' => auth()->id(),
 
-                    'approved_at' =>
-                        now(),
+                    'approved_at' => now(),
 
-                    'rejected_by' =>
-                        null,
+                    'rejected_by' => null,
 
-                    'rejected_at' =>
-                        null,
+                    'rejected_at' => null,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
                 ]);
 
                 $year =
@@ -415,23 +373,19 @@ class EmployeeLeaveRequestController extends Controller
 
                 $balanceService
                     ->recalculate(
-                        $leaveRequest
-                            ->employee,
-
-                        $leaveRequest
-                            ->leaveType,
-
+                        $this->requiredEmployee($leaveRequest),
+                        $this->requiredLeaveType($leaveRequest),
                         $year
                     );
             }
         );
 
         $attendanceReconciler
-        ->reconcile(
-            $leaveRequest->fresh([
-                'leaveType',
-            ])
-        );
+            ->reconcile(
+                $leaveRequest->fresh([
+                    'leaveType',
+                ])
+            );
 
         return back()->with(
             'success',
@@ -455,7 +409,7 @@ class EmployeeLeaveRequestController extends Controller
 
         if (
             $leaveRequest->status
-                !== 'pending'
+            !== 'pending'
         ) {
             return back()->with(
                 'error',
@@ -469,25 +423,17 @@ class EmployeeLeaveRequestController extends Controller
         ]);
 
         DB::transaction(
-            function () use (
-                $leaveRequest,
-                $data,
-                $balanceService
-            ): void {
+            function () use ($leaveRequest, $data, $balanceService): void {
                 $leaveRequest->update([
-                    'status' =>
-                        'rejected',
+                    'status' => 'rejected',
 
-                    'rejected_by' =>
-                        auth()->id(),
+                    'rejected_by' => auth()->id(),
 
-                    'rejected_at' =>
-                        now(),
+                    'rejected_at' => now(),
 
-                    'rejection_reason' =>
-                        $data[
-                            'rejection_reason'
-                        ],
+                    'rejection_reason' => $data[
+                        'rejection_reason'
+                    ],
                 ]);
 
                 $year =
@@ -498,12 +444,8 @@ class EmployeeLeaveRequestController extends Controller
 
                 $balanceService
                     ->recalculate(
-                        $leaveRequest
-                            ->employee,
-
-                        $leaveRequest
-                            ->leaveType,
-
+                        $this->requiredEmployee($leaveRequest),
+                        $this->requiredLeaveType($leaveRequest),
                         $year
                     );
             }
@@ -513,6 +455,24 @@ class EmployeeLeaveRequestController extends Controller
             'success',
             'Leave request rejected.'
         );
+    }
+
+    private function requiredEmployee(EmployeeLeaveRequest $leaveRequest): Employee
+    {
+        $employee = $leaveRequest->employee;
+
+        abort_unless($employee instanceof Employee, 404, 'Employee not found.');
+
+        return $employee;
+    }
+
+    private function requiredLeaveType(EmployeeLeaveRequest $leaveRequest): LeaveType
+    {
+        $leaveType = $leaveRequest->leaveType;
+
+        abort_unless($leaveType instanceof LeaveType, 404, 'Leave type not found.');
+
+        return $leaveType;
     }
 
     private function ensureNoOverlap(
@@ -547,8 +507,7 @@ class EmployeeLeaveRequestController extends Controller
 
         if ($exists) {
             throw ValidationException::withMessages([
-                'start_date' =>
-                    'This employee already has a pending or approved leave request overlapping these dates.',
+                'start_date' => 'This employee already has a pending or approved leave request overlapping these dates.',
             ]);
         }
     }
@@ -589,7 +548,7 @@ class EmployeeLeaveRequestController extends Controller
             'half_day_period' => [
                 Rule::requiredIf(
                     $request->duration_type
-                        === 'half_day'
+                    === 'half_day'
                 ),
 
                 'nullable',
@@ -656,25 +615,17 @@ class EmployeeLeaveRequestController extends Controller
             'approved';
 
         DB::transaction(
-            function () use (
-                $leaveRequest,
-                $data,
-                $balanceService
-            ): void {
+            function () use ($leaveRequest, $data, $balanceService): void {
                 $leaveRequest->update([
-                    'status' =>
-                        'cancelled',
+                    'status' => 'cancelled',
 
-                    'cancelled_at' =>
-                        now(),
+                    'cancelled_at' => now(),
 
-                    'cancelled_by' =>
-                        auth()->id(),
+                    'cancelled_by' => auth()->id(),
 
-                    'cancellation_reason' =>
-                        $data[
-                            'cancellation_reason'
-                        ],
+                    'cancellation_reason' => $data[
+                        'cancellation_reason'
+                    ],
                 ]);
 
                 $year =
@@ -685,12 +636,8 @@ class EmployeeLeaveRequestController extends Controller
 
                 $balanceService
                     ->recalculate(
-                        $leaveRequest
-                            ->employee,
-
-                        $leaveRequest
-                            ->leaveType,
-
+                        $this->requiredEmployee($leaveRequest),
+                        $this->requiredLeaveType($leaveRequest),
                         $year
                     );
             }
@@ -715,13 +662,8 @@ class EmployeeLeaveRequestController extends Controller
         return back()->with(
             'success',
             $wasApproved
-                ? 'Approved leave cancelled. Leave balance and attendance were reconciled.'
-                : 'Pending leave request cancelled successfully.'
+            ? 'Approved leave cancelled. Leave balance and attendance were reconciled.'
+            : 'Pending leave request cancelled successfully.'
         );
     }
-
-
-
-
-
 }

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
-
 class Company extends Model
 {
     protected $fillable = [
@@ -43,6 +42,7 @@ class Company extends Model
             'active'
         );
     }
+
     public function branches(): HasMany
     {
         return $this->hasMany(
@@ -98,6 +98,7 @@ class Company extends Model
             SalaryComponent::class
         );
     }
+
     public function employeeSalaryStructures(): HasMany
     {
         return $this->hasMany(
@@ -207,6 +208,4 @@ class Company extends Model
             OpeningStock::class
         );
     }
-
-
 }

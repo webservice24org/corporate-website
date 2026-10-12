@@ -103,6 +103,4 @@ class Dealer extends Model
         return $this->hasMany(DealerDocument::class)
             ->where('is_current', true);
     }
-
-
 }

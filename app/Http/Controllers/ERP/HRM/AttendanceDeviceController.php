@@ -123,49 +123,41 @@ class AttendanceDeviceController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Devices/Index',
             [
-                'devices' =>
-                    $query
-                        ->orderBy('company_id')
-                        ->orderBy('name')
-                        ->paginate(15)
-                        ->withQueryString(),
+                'devices' => $query
+                    ->orderBy('company_id')
+                    ->orderBy('name')
+                    ->paginate(15)
+                    ->withQueryString(),
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'branches' =>
-                    $this->branches(),
+                'branches' => $this->branches(),
 
                 'filters' => [
-                    'search' =>
-                        $request->input(
-                            'search',
-                            ''
-                        ),
+                    'search' => $request->input(
+                        'search',
+                        ''
+                    ),
 
-                    'company_id' =>
-                        $request->input(
-                            'company_id',
-                            ''
-                        ),
+                    'company_id' => $request->input(
+                        'company_id',
+                        ''
+                    ),
 
-                    'branch_id' =>
-                        $request->input(
-                            'branch_id',
-                            ''
-                        ),
+                    'branch_id' => $request->input(
+                        'branch_id',
+                        ''
+                    ),
 
-                    'provider' =>
-                        $request->input(
-                            'provider',
-                            ''
-                        ),
+                    'provider' => $request->input(
+                        'provider',
+                        ''
+                    ),
 
-                    'status' =>
-                        $request->input(
-                            'status',
-                            ''
-                        ),
+                    'status' => $request->input(
+                        'status',
+                        ''
+                    ),
                 ],
             ]
         );
@@ -176,11 +168,9 @@ class AttendanceDeviceController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Devices/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'branches' =>
-                    $this->branches(),
+                'branches' => $this->branches(),
             ]
         );
     }
@@ -221,63 +211,46 @@ class AttendanceDeviceController extends Controller
             'ERP/HRM/Attendance/Devices/Edit',
             [
                 'device' => [
-                    'id' =>
-                        $attendanceDevice->id,
+                    'id' => $attendanceDevice->id,
 
-                    'company_id' =>
-                        $attendanceDevice->company_id,
+                    'company_id' => $attendanceDevice->company_id,
 
-                    'branch_id' =>
-                        $attendanceDevice->branch_id,
+                    'branch_id' => $attendanceDevice->branch_id,
 
-                    'name' =>
-                        $attendanceDevice->name,
+                    'name' => $attendanceDevice->name,
 
-                    'code' =>
-                        $attendanceDevice->code,
+                    'code' => $attendanceDevice->code,
 
-                    'provider' =>
-                        $attendanceDevice->provider,
+                    'provider' => $attendanceDevice->provider,
 
-                    'model' =>
-                        $attendanceDevice->model,
+                    'model' => $attendanceDevice->model,
 
-                    'serial_number' =>
-                        $attendanceDevice->serial_number,
+                    'serial_number' => $attendanceDevice->serial_number,
 
-                    'integration_mode' =>
-                        $attendanceDevice->integration_mode,
+                    'integration_mode' => $attendanceDevice->integration_mode,
 
-                    'ip_address' =>
-                        $attendanceDevice->ip_address,
+                    'ip_address' => $attendanceDevice->ip_address,
 
-                    'port' =>
-                        $attendanceDevice->port,
+                    'port' => $attendanceDevice->port,
 
-                    'base_url' =>
-                        $attendanceDevice->base_url,
+                    'base_url' => $attendanceDevice->base_url,
 
-                    'timezone' =>
-                        $attendanceDevice->timezone,
+                    'timezone' => $attendanceDevice->timezone,
 
-                    'status' =>
-                        $attendanceDevice->status,
+                    'status' => $attendanceDevice->status,
 
-                    'notes' =>
-                        $attendanceDevice->notes,
+                    'notes' => $attendanceDevice->notes,
                 ],
 
-                'companies' =>
-                    $this->companies(
-                        $attendanceDevice
-                            ->company_id
-                    ),
+                'companies' => $this->companies(
+                    $attendanceDevice
+                        ->company_id
+                ),
 
-                'branches' =>
-                    $this->branches(
-                        $attendanceDevice
-                            ->branch_id
-                    ),
+                'branches' => $this->branches(
+                    $attendanceDevice
+                        ->branch_id
+                ),
             ]
         );
     }
@@ -351,11 +324,10 @@ class AttendanceDeviceController extends Controller
                 'attendance_devices',
                 'code'
             )->where(
-                fn ($query) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn ($query) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             );
 
         if ($device) {
@@ -496,10 +468,9 @@ class AttendanceDeviceController extends Controller
                 )
                 ->exists();
 
-        if (!$valid) {
+        if (! $valid) {
             throw ValidationException::withMessages([
-                'branch_id' =>
-                    'The selected branch does not belong to the selected company.',
+                'branch_id' => 'The selected branch does not belong to the selected company.',
             ]);
         }
     }

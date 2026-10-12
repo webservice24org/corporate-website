@@ -34,140 +34,126 @@ class AttendanceReportController extends Controller
         return Inertia::render(
             'ERP/Reports/Attendance/Index',
             [
-                'records' =>
-                    $records,
+                'records' => $records,
 
-                'summary' =>
-                    $reportService
-                        ->summary(
-                            $filters
-                        ),
+                'summary' => $reportService
+                    ->summary(
+                        $filters
+                    ),
 
-                'statusSummary' =>
-                    $reportService
-                        ->statusSummary(
-                            $filters
-                        ),
+                'statusSummary' => $reportService
+                    ->statusSummary(
+                        $filters
+                    ),
 
-                'employeeSummary' =>
-                    $reportService
-                        ->employeeSummary(
-                            $filters
-                        ),
+                'employeeSummary' => $reportService
+                    ->employeeSummary(
+                        $filters
+                    ),
 
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-                'branches' =>
-                    Branch::query()
-                        ->when(
-                            $filters[
-                                'company_id'
-                            ] ?? null,
-                            fn (
-                                $query,
+                'branches' => Branch::query()
+                    ->when(
+                        $filters[
+                            'company_id'
+                        ] ?? null,
+                        fn(
+                        $query,
+                        $companyId
+                    ) => $query->where(
+                                'company_id',
                                 $companyId
-                            ) =>
-                                $query->where(
-                                    'company_id',
-                                    $companyId
-                                )
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                        ]),
+                            )
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                    ]),
 
-                'departments' =>
-                    Department::query()
-                        ->when(
-                            $filters[
-                                'company_id'
-                            ] ?? null,
-                            fn (
-                                $query,
+                'departments' => Department::query()
+                    ->when(
+                        $filters[
+                            'company_id'
+                        ] ?? null,
+                        fn(
+                        $query,
+                        $companyId
+                    ) => $query->where(
+                                'company_id',
                                 $companyId
-                            ) =>
-                                $query->where(
-                                    'company_id',
-                                    $companyId
-                                )
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                        ]),
+                            )
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                    ]),
 
-                'employees' =>
-                    Employee::query()
-                        ->when(
-                            $filters[
-                                'company_id'
-                            ] ?? null,
-                            fn (
-                                $query,
+                'employees' => Employee::query()
+                    ->when(
+                        $filters[
+                            'company_id'
+                        ] ?? null,
+                        fn(
+                        $query,
+                        $companyId
+                    ) => $query->where(
+                                'company_id',
                                 $companyId
-                            ) =>
-                                $query->where(
-                                    'company_id',
-                                    $companyId
-                                )
-                        )
-                        ->when(
-                            $filters[
-                                'branch_id'
-                            ] ?? null,
-                            fn (
-                                $query,
+                            )
+                    )
+                    ->when(
+                        $filters[
+                            'branch_id'
+                        ] ?? null,
+                        fn(
+                        $query,
+                        $branchId
+                    ) => $query->where(
+                                'branch_id',
                                 $branchId
-                            ) =>
-                                $query->where(
-                                    'branch_id',
-                                    $branchId
-                                )
-                        )
-                        ->when(
-                            $filters[
-                                'department_id'
-                            ] ?? null,
-                            fn (
-                                $query,
+                            )
+                    )
+                    ->when(
+                        $filters[
+                            'department_id'
+                        ] ?? null,
+                        fn(
+                        $query,
+                        $departmentId
+                    ) => $query->where(
+                                'department_id',
                                 $departmentId
-                            ) =>
-                                $query->where(
-                                    'department_id',
-                                    $departmentId
-                                )
-                        )
-                        ->orderBy(
-                            'employee_number'
-                        )
-                        ->get([
-                            'id',
-                            'company_id',
-                            'branch_id',
-                            'department_id',
-                            'employee_number',
-                            'first_name',
-                            'middle_name',
-                            'last_name',
-                        ]),
+                            )
+                    )
+                    ->orderBy(
+                        'employee_number'
+                    )
+                    ->get([
+                        'id',
+                        'company_id',
+                        'branch_id',
+                        'department_id',
+                        'employee_number',
+                        'first_name',
+                        'middle_name',
+                        'last_name',
+                    ]),
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -190,10 +176,7 @@ class AttendanceReportController extends Controller
             );
 
         return response()->streamDownload(
-            function () use (
-                $filters,
-                $reportService
-            ): void {
+            function () use ($filters, $reportService): void {
                 $handle =
                     fopen(
                         'php://output',
@@ -243,88 +226,37 @@ class AttendanceReportController extends Controller
                     )
                     ->chunkById(
                         500,
-                        function (
-                            $records
-                        ) use (
-                            $handle
-                        ): void {
+                        function ($records) use ($handle): void {
                             foreach (
-                                $records
-                                as $record
+                                $records as $record
                             ) {
-                                $employee =
-                                    $record
-                                        ->employee;
+                                $employee = data_get($record, 'employee');
 
-                                $employeeName =
-                                    collect([
-                                        $employee
-                                            ?->first_name,
-
-                                        $employee
-                                            ?->middle_name,
-
-                                        $employee
-                                            ?->last_name,
-                                    ])
-                                        ->filter()
-                                        ->implode(
-                                            ' '
-                                        );
+                                $employeeName = collect([
+                                    data_get($employee, 'first_name'),
+                                    data_get($employee, 'middle_name'),
+                                    data_get($employee, 'last_name'),
+                                ])->filter()->implode(' ');
 
                                 fputcsv(
                                     $handle,
                                     [
-                                        $record
-                                            ->attendance_date,
-
-                                        $employee
-                                            ?->employee_number,
-
+                                        data_get($record, 'attendance_date'),
+                                        data_get($employee, 'employee_number'),
                                         $employeeName,
-
-                                        $employee
-                                            ?->company
-                                            ?->name,
-
-                                        $employee
-                                            ?->branch
-                                            ?->name,
-
-                                        $employee
-                                            ?->department
-                                            ?->name,
-
-                                        $record
-                                            ->shift
-                                            ?->name,
-
-                                        $record
-                                            ->attendance_status,
-
-                                        $record
-                                            ->check_in_at,
-
-                                        $record
-                                            ->check_out_at,
-
-                                        $record
-                                            ->worked_minutes,
-
-                                        $record
-                                            ->late_minutes,
-
-                                        $record
-                                            ->early_leave_minutes,
-
-                                        $record
-                                            ->overtime_minutes,
-
-                                        $record
-                                            ->punch_count,
-
-                                        $record
-                                            ->source,
+                                        data_get($employee, 'company.name'),
+                                        data_get($employee, 'branch.name'),
+                                        data_get($employee, 'department.name'),
+                                        data_get($record, 'shift.name'),
+                                        data_get($record, 'attendance_status'),
+                                        data_get($record, 'check_in_at'),
+                                        data_get($record, 'check_out_at'),
+                                        data_get($record, 'worked_minutes'),
+                                        data_get($record, 'late_minutes'),
+                                        data_get($record, 'early_leave_minutes'),
+                                        data_get($record, 'overtime_minutes'),
+                                        data_get($record, 'punch_count'),
+                                        data_get($record, 'source'),
                                     ]
                                 );
                             }
@@ -335,8 +267,7 @@ class AttendanceReportController extends Controller
             },
             $filename,
             [
-                'Content-Type' =>
-                    'text/csv; charset=UTF-8',
+                'Content-Type' => 'text/csv; charset=UTF-8',
             ]
         );
     }
@@ -404,56 +335,47 @@ class AttendanceReportController extends Controller
             ]);
 
         return [
-            'date_from' =>
-                $validated[
+            'date_from' => $validated[
+                'date_from'
+            ]
+                ?? $defaults[
                     'date_from'
-                ]
-                    ?? $defaults[
-                        'date_from'
-                    ],
+                ],
 
-            'date_to' =>
-                $validated[
+            'date_to' => $validated[
+                'date_to'
+            ]
+                ?? $defaults[
                     'date_to'
-                ]
-                    ?? $defaults[
-                        'date_to'
-                    ],
+                ],
 
-            'company_id' =>
-                $validated[
-                    'company_id'
-                ] ?? null,
+            'company_id' => $validated[
+                'company_id'
+            ] ?? null,
 
-            'branch_id' =>
-                $validated[
-                    'branch_id'
-                ] ?? null,
+            'branch_id' => $validated[
+                'branch_id'
+            ] ?? null,
 
-            'department_id' =>
-                $validated[
-                    'department_id'
-                ] ?? null,
+            'department_id' => $validated[
+                'department_id'
+            ] ?? null,
 
-            'employee_id' =>
-                $validated[
-                    'employee_id'
-                ] ?? null,
+            'employee_id' => $validated[
+                'employee_id'
+            ] ?? null,
 
-            'attendance_status' =>
-                $validated[
-                    'attendance_status'
-                ] ?? null,
+            'attendance_status' => $validated[
+                'attendance_status'
+            ] ?? null,
 
-            'exception_type' =>
-                $validated[
-                    'exception_type'
-                ] ?? 'all',
+            'exception_type' => $validated[
+                'exception_type'
+            ] ?? 'all',
 
-            'view' =>
-                $validated[
-                    'view'
-                ] ?? 'daily',
+            'view' => $validated[
+                'view'
+            ] ?? 'daily',
         ];
     }
 }

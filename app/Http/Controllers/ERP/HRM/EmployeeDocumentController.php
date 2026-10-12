@@ -20,10 +20,9 @@ class EmployeeDocumentController extends Controller
         return Inertia::render(
             'ERP/HRM/Employees/Documents/Create',
             [
-                'employee' =>
-                    $this->employeeData(
-                        $employee
-                    ),
+                'employee' => $this->employeeData(
+                    $employee
+                ),
             ]
         );
     }
@@ -49,57 +48,44 @@ class EmployeeDocumentController extends Controller
             );
 
         EmployeeDocument::create([
-            'employee_id' =>
-                $employee->id,
+            'employee_id' => $employee->id,
 
-            'uploaded_by' =>
-                $request
-                    ->user()
-                    ?->id,
+            'uploaded_by' => $request
+                ->user()
+                ?->id,
 
-            'document_type' =>
-                $validated[
+            'document_type' => $validated[
                     'document_type'
                 ],
 
-            'title' =>
-                $validated['title'],
+            'title' => $validated['title'],
 
-            'document_number' =>
-                $validated[
+            'document_number' => $validated[
                     'document_number'
                 ] ?? null,
 
-            'issue_date' =>
-                $validated[
+            'issue_date' => $validated[
                     'issue_date'
                 ] ?? null,
 
-            'expiry_date' =>
-                $validated[
+            'expiry_date' => $validated[
                     'expiry_date'
                 ] ?? null,
 
-            'file_path' =>
-                $path,
+            'file_path' => $path,
 
-            'original_name' =>
-                $file
-                    ->getClientOriginalName(),
+            'original_name' => $file
+                ->getClientOriginalName(),
 
-            'mime_type' =>
-                $file
-                    ->getMimeType(),
+            'mime_type' => $file
+                ->getMimeType(),
 
-            'file_size' =>
-                $file->getSize(),
+            'file_size' => $file->getSize(),
 
-            'notes' =>
-                $validated['notes']
+            'notes' => $validated['notes']
                     ?? null,
 
-            'status' =>
-                $validated['status'],
+            'status' => $validated['status'],
         ]);
 
         return to_route(
@@ -123,13 +109,11 @@ class EmployeeDocumentController extends Controller
         return Inertia::render(
             'ERP/HRM/Employees/Documents/Edit',
             [
-                'employee' =>
-                    $this->employeeData(
-                        $employee
-                    ),
+                'employee' => $this->employeeData(
+                    $employee
+                ),
 
-                'document' =>
-                    $document,
+                'document' => $document,
             ]
         );
     }
@@ -151,35 +135,28 @@ class EmployeeDocumentController extends Controller
             );
 
         $data = [
-            'document_type' =>
-                $validated[
+            'document_type' => $validated[
                     'document_type'
                 ],
 
-            'title' =>
-                $validated['title'],
+            'title' => $validated['title'],
 
-            'document_number' =>
-                $validated[
+            'document_number' => $validated[
                     'document_number'
                 ] ?? null,
 
-            'issue_date' =>
-                $validated[
+            'issue_date' => $validated[
                     'issue_date'
                 ] ?? null,
 
-            'expiry_date' =>
-                $validated[
+            'expiry_date' => $validated[
                     'expiry_date'
                 ] ?? null,
 
-            'notes' =>
-                $validated['notes']
+            'notes' => $validated['notes']
                     ?? null,
 
-            'status' =>
-                $validated['status'],
+            'status' => $validated['status'],
         ];
 
         if (
@@ -205,19 +182,15 @@ class EmployeeDocumentController extends Controller
             $data = [
                 ...$data,
 
-                'file_path' =>
-                    $newPath,
+                'file_path' => $newPath,
 
-                'original_name' =>
-                    $file
-                        ->getClientOriginalName(),
+                'original_name' => $file
+                    ->getClientOriginalName(),
 
-                'mime_type' =>
-                    $file
-                        ->getMimeType(),
+                'mime_type' => $file
+                    ->getMimeType(),
 
-                'file_size' =>
-                    $file->getSize(),
+                'file_size' => $file->getSize(),
             ];
 
             $document->update(

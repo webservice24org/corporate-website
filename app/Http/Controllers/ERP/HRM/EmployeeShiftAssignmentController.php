@@ -51,11 +51,10 @@ class EmployeeShiftAssignmentController extends Controller
 
             $query->whereHas(
                 'employee',
-                fn (Builder $employeeQuery) =>
-                    $employeeQuery->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn(Builder $employeeQuery) => $employeeQuery->where(
+                    'company_id',
+                    $companyId
+                )
             );
         }
 
@@ -112,13 +111,9 @@ class EmployeeShiftAssignmentController extends Controller
 
             $query->whereHas(
                 'employee',
-                function (
-                    Builder $employeeQuery
-                ) use ($search) {
+                function (Builder $employeeQuery) use ($search) {
                     $employeeQuery->where(
-                        function (
-                            Builder $builder
-                        ) use ($search) {
+                        function (Builder $builder) use ($search) {
                             $builder
                                 ->where(
                                     'employee_number',
@@ -149,56 +144,47 @@ class EmployeeShiftAssignmentController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/EmployeeShifts/Index',
             [
-                'assignments' =>
-                    $query
-                        ->orderByDesc(
-                            'effective_from'
-                        )
-                        ->orderByDesc(
-                            'id'
-                        )
-                        ->paginate(15)
-                        ->withQueryString(),
+                'assignments' => $query
+                    ->orderByDesc(
+                        'effective_from'
+                    )
+                    ->orderByDesc(
+                        'id'
+                    )
+                    ->paginate(15)
+                    ->withQueryString(),
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'employees' =>
-                    $this->employees(),
+                'employees' => $this->employees(),
 
-                'shifts' =>
-                    $this->shifts(),
+                'shifts' => $this->shifts(),
 
                 'filters' => [
-                    'search' =>
-                        $request->input(
-                            'search',
-                            ''
-                        ),
+                    'search' => $request->input(
+                        'search',
+                        ''
+                    ),
 
-                    'company_id' =>
-                        $request->input(
-                            'company_id',
-                            ''
-                        ),
+                    'company_id' => $request->input(
+                        'company_id',
+                        ''
+                    ),
 
-                    'employee_id' =>
-                        $request->input(
-                            'employee_id',
-                            ''
-                        ),
+                    'employee_id' => $request->input(
+                        'employee_id',
+                        ''
+                    ),
 
-                    'shift_id' =>
-                        $request->input(
-                            'shift_id',
-                            ''
-                        ),
+                    'shift_id' => $request->input(
+                        'shift_id',
+                        ''
+                    ),
 
-                    'status' =>
-                        $request->input(
-                            'status',
-                            ''
-                        ),
+                    'status' => $request->input(
+                        'status',
+                        ''
+                    ),
                 ],
             ]
         );
@@ -210,23 +196,19 @@ class EmployeeShiftAssignmentController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/EmployeeShifts/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'employees' =>
-                    $this->employees(),
+                'employees' => $this->employees(),
 
-                'shifts' =>
-                    $this->shifts(),
+                'shifts' => $this->shifts(),
 
-                'selectedEmployeeId' =>
-                    $request->filled(
+                'selectedEmployeeId' => $request->filled(
+                    'employee_id'
+                )
+                    ? $request->integer(
                         'employee_id'
                     )
-                        ? $request->integer(
-                            'employee_id'
-                        )
-                        : null,
+                    : null,
             ]
         );
     }
@@ -263,40 +245,29 @@ class EmployeeShiftAssignmentController extends Controller
             'active'
         ) {
             $this->ensureNoOverlap(
-                employeeId:
-                    $employee->id,
+                employeeId: $employee->id,
 
-                effectiveFrom:
-                    $validated[
-                        'effective_from'
-                    ],
+                effectiveFrom: $validated[
+                    'effective_from'
+                ],
 
-                effectiveTo:
-                    $validated[
-                        'effective_to'
-                    ] ?? null,
+                effectiveTo: $validated[
+                    'effective_to'
+                ] ?? null,
             );
         }
 
         DB::transaction(
-            function () use (
-                $request,
-                $employee,
-                $shift,
-                $validated
-            ) {
+            function () use ($request, $employee, $shift, $validated) {
                 EmployeeShiftAssignment::create([
                     ...$validated,
 
-                    'employee_id' =>
-                        $employee->id,
+                    'employee_id' => $employee->id,
 
-                    'shift_id' =>
-                        $shift->id,
+                    'shift_id' => $shift->id,
 
-                    'assigned_by' =>
-                        $request
-                            ->user()
+                    'assigned_by' => $request
+                        ->user()
                             ?->id,
                 ]);
             }
@@ -305,9 +276,9 @@ class EmployeeShiftAssignmentController extends Controller
         return to_route(
             'erp.employee-shifts.index'
         )->with(
-            'success',
-            'Employee shift assigned successfully.'
-        );
+                'success',
+                'Employee shift assigned successfully.'
+            );
     }
 
     public function edit(
@@ -318,30 +289,28 @@ class EmployeeShiftAssignmentController extends Controller
             'shift:id,company_id,name,code,start_time,end_time',
         ]);
 
+        $employee = $employeeShift->employee;
+
+        abort_unless($employee instanceof Employee, 404);
+
         return Inertia::render(
             'ERP/HRM/Attendance/EmployeeShifts/Edit',
             [
-                'assignment' =>
-                    $employeeShift,
+                'assignment' => $employeeShift,
 
-                'companies' =>
-                    $this->companies(
-                        $employeeShift
-                            ->employee
-                            ->company_id
-                    ),
+                'companies' => $this->companies(
+                    $employee->company_id
+                ),
 
-                'employees' =>
-                    $this->employees(
-                        $employeeShift
-                            ->employee_id
-                    ),
+                'employees' => $this->employees(
+                    $employeeShift
+                        ->employee_id
+                ),
 
-                'shifts' =>
-                    $this->shifts(
-                        $employeeShift
-                            ->shift_id
-                    ),
+                'shifts' => $this->shifts(
+                    $employeeShift
+                        ->shift_id
+                ),
             ]
         );
     }
@@ -379,40 +348,34 @@ class EmployeeShiftAssignmentController extends Controller
             'active'
         ) {
             $this->ensureNoOverlap(
-                employeeId:
-                    $employee->id,
+                employeeId: $employee->id,
 
-                effectiveFrom:
-                    $validated[
-                        'effective_from'
-                    ],
+                effectiveFrom: $validated[
+                    'effective_from'
+                ],
 
-                effectiveTo:
-                    $validated[
-                        'effective_to'
-                    ] ?? null,
+                effectiveTo: $validated[
+                    'effective_to'
+                ] ?? null,
 
-                ignoreId:
-                    $employeeShift->id,
+                ignoreId: $employeeShift->id,
             );
         }
 
         $employeeShift->update([
             ...$validated,
 
-            'employee_id' =>
-                $employee->id,
+            'employee_id' => $employee->id,
 
-            'shift_id' =>
-                $shift->id,
+            'shift_id' => $shift->id,
         ]);
 
         return to_route(
             'erp.employee-shifts.index'
         )->with(
-            'success',
-            'Employee shift assignment updated successfully.'
-        );
+                'success',
+                'Employee shift assignment updated successfully.'
+            );
     }
 
     public function destroy(
@@ -423,9 +386,9 @@ class EmployeeShiftAssignmentController extends Controller
         return to_route(
             'erp.employee-shifts.index'
         )->with(
-            'success',
-            'Employee shift assignment deleted successfully.'
-        );
+                'success',
+                'Employee shift assignment deleted successfully.'
+            );
     }
 
     private function validateAssignment(
@@ -480,8 +443,7 @@ class EmployeeShiftAssignmentController extends Controller
             $shift->company_id
         ) {
             throw ValidationException::withMessages([
-                'shift_id' =>
-                    'The selected shift does not belong to the employee company.',
+                'shift_id' => 'The selected shift does not belong to the employee company.',
             ]);
         }
     }
@@ -504,19 +466,14 @@ class EmployeeShiftAssignmentController extends Controller
                 )
                 ->when(
                     $ignoreId,
-                    fn (Builder $query) =>
-                        $query->where(
-                            'id',
-                            '!=',
-                            $ignoreId
-                        )
+                    fn(Builder $query) => $query->where(
+                        'id',
+                        '!=',
+                        $ignoreId
+                    )
                 )
                 ->where(
-                    function (
-                        Builder $query
-                    ) use (
-                        $effectiveFrom
-                    ) {
+                    function (Builder $query) use ($effectiveFrom) {
                         $query
                             ->whereNull(
                                 'effective_to'
@@ -541,8 +498,7 @@ class EmployeeShiftAssignmentController extends Controller
             $query->exists()
         ) {
             throw ValidationException::withMessages([
-                'effective_from' =>
-                    'This employee already has an active shift assignment that overlaps the selected date range.',
+                'effective_from' => 'This employee already has an active shift assignment that overlaps the selected date range.',
             ]);
         }
     }
@@ -552,11 +508,7 @@ class EmployeeShiftAssignmentController extends Controller
     ) {
         return Company::query()
             ->where(
-                function (
-                    Builder $query
-                ) use (
-                    $includeCompanyId
-                ) {
+                function (Builder $query) use ($includeCompanyId) {
                     $query->where(
                         'status',
                         'active'
@@ -596,11 +548,7 @@ class EmployeeShiftAssignmentController extends Controller
                 'designation:id,name,code',
             ])
             ->where(
-                function (
-                    Builder $query
-                ) use (
-                    $includeEmployeeId
-                ) {
+                function (Builder $query) use ($includeEmployeeId) {
                     $query->whereIn(
                         'employment_status',
                         [
@@ -644,11 +592,7 @@ class EmployeeShiftAssignmentController extends Controller
     ) {
         return AttendanceShift::query()
             ->where(
-                function (
-                    Builder $query
-                ) use (
-                    $includeShiftId
-                ) {
+                function (Builder $query) use ($includeShiftId) {
                     $query->where(
                         'status',
                         'active'

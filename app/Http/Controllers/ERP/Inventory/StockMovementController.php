@@ -51,7 +51,7 @@ class StockMovementController extends Controller
             'movement_type' => [
                 'nullable',
                 'string',
-                'in:' . implode(
+                'in:'.implode(
                     ',',
                     StockMovement::movementTypes()
                 ),
@@ -59,7 +59,7 @@ class StockMovementController extends Controller
 
             'direction' => [
                 'nullable',
-                'in:' . implode(
+                'in:'.implode(
                     ',',
                     StockMovement::directions()
                 ),
@@ -194,12 +194,11 @@ class StockMovementController extends Controller
                         )
                         ->orWhereHas(
                             'creator',
-                            fn (Builder $creatorQuery) =>
-                                $creatorQuery->where(
-                                    'name',
-                                    'like',
-                                    "%{$search}%"
-                                )
+                            fn (Builder $creatorQuery) => $creatorQuery->where(
+                                'name',
+                                'like',
+                                "%{$search}%"
+                            )
                         );
                 }
             );
@@ -208,84 +207,74 @@ class StockMovementController extends Controller
         $query
             ->when(
                 $companyId,
-                fn (Builder $query) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn (Builder $query) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             )
 
             ->when(
                 $warehouseId,
-                fn (Builder $query) =>
-                    $query->where(
-                        'warehouse_id',
-                        $warehouseId
-                    )
+                fn (Builder $query) => $query->where(
+                    'warehouse_id',
+                    $warehouseId
+                )
             )
 
             ->when(
                 $categoryId,
-                fn (Builder $query) =>
-                    $query->whereHas(
-                        'product',
-                        fn (Builder $productQuery) =>
-                            $productQuery->where(
-                                'product_category_id',
-                                $categoryId
-                            )
+                fn (Builder $query) => $query->whereHas(
+                    'product',
+                    fn (Builder $productQuery) => $productQuery->where(
+                        'product_category_id',
+                        $categoryId
                     )
+                )
             )
 
             ->when(
                 $brandId,
-                fn (Builder $query) =>
-                    $query->whereHas(
-                        'product',
-                        fn (Builder $productQuery) =>
-                            $productQuery->where(
-                                'brand_id',
-                                $brandId
-                            )
+                fn (Builder $query) => $query->whereHas(
+                    'product',
+                    fn (Builder $productQuery) => $productQuery->where(
+                        'brand_id',
+                        $brandId
                     )
+                )
             )
 
             ->when(
                 $movementType,
-                fn (Builder $query) =>
-                    $query->where(
-                        'movement_type',
-                        $movementType
-                    )
+                fn (Builder $query) => $query->where(
+                    'movement_type',
+                    $movementType
+                )
             )
 
             ->when(
                 $direction,
-                fn (Builder $query) =>
-                    $query->where(
-                        'direction',
-                        $direction
-                    )
+                fn (Builder $query) => $query->where(
+                    'direction',
+                    $direction
+                )
             )
 
             ->when(
                 $dateFrom,
-                fn (Builder $query) =>
-                    $query->whereDate(
-                        'occurred_at',
-                        '>=',
-                        $dateFrom
-                    )
+                fn (Builder $query) => $query->whereDate(
+                    'occurred_at',
+                    '>=',
+                    $dateFrom
+                )
             )
 
             ->when(
                 $dateTo,
-                fn (Builder $query) =>
-                    $query->whereDate(
-                        'occurred_at',
-                        '<=',
-                        $dateTo
-                    )
+                fn (Builder $query) => $query->whereDate(
+                    'occurred_at',
+                    '<=',
+                    $dateTo
+                )
             );
 
         /*
@@ -311,104 +300,86 @@ class StockMovementController extends Controller
         return Inertia::render(
             'ERP/Inventory/StockMovements/Index',
             [
-                'movements' =>
-                    $movements,
+                'movements' => $movements,
 
-                'summary' =>
-                    $summary,
+                'summary' => $summary,
 
                 'filters' => [
-                    'search' =>
-                        $search,
+                    'search' => $search,
 
-                    'company_id' =>
-                        $companyId
+                    'company_id' => $companyId
                             ? (string) $companyId
                             : '',
 
-                    'warehouse_id' =>
-                        $warehouseId
+                    'warehouse_id' => $warehouseId
                             ? (string) $warehouseId
                             : '',
 
-                    'category_id' =>
-                        $categoryId
+                    'category_id' => $categoryId
                             ? (string) $categoryId
                             : '',
 
-                    'brand_id' =>
-                        $brandId
+                    'brand_id' => $brandId
                             ? (string) $brandId
                             : '',
 
-                    'movement_type' =>
-                        $movementType ?? '',
+                    'movement_type' => $movementType ?? '',
 
-                    'direction' =>
-                        $direction ?? '',
+                    'direction' => $direction ?? '',
 
-                    'date_from' =>
-                        $dateFrom ?? '',
+                    'date_from' => $dateFrom ?? '',
 
-                    'date_to' =>
-                        $dateTo ?? '',
+                    'date_to' => $dateTo ?? '',
 
-                    'per_page' =>
-                        (string) $perPage,
+                    'per_page' => (string) $perPage,
                 ],
 
-                'companies' =>
-                    Company::query()
-                        ->select(
-                            'id',
-                            'name'
-                        )
-                        ->orderBy('name')
-                        ->get(),
-
-                'warehouses' =>
-                    Warehouse::query()
-                        ->select(
-                            'id',
-                            'company_id',
-                            'code',
-                            'name'
-                        )
-                        ->orderBy('name')
-                        ->get(),
-
-                'categories' =>
-                    ProductCategory::query()
-                        ->select(
-                            'id',
-                            'name'
-                        )
-                        ->orderBy('name')
-                        ->get(),
-
-                'brands' =>
-                    Brand::query()
-                        ->select(
-                            'id',
-                            'name'
-                        )
-                        ->orderBy('name')
-                        ->get(),
-
-                'movementTypes' =>
-                    collect(
-                        StockMovement::movementTypes()
+                'companies' => Company::query()
+                    ->select(
+                        'id',
+                        'name'
                     )
-                        ->map(
-                            fn (string $type) => [
-                                'value' => $type,
-                                'label' =>
-                                    $this->movementTypeLabel(
-                                        $type
-                                    ),
-                            ]
-                        )
-                        ->values(),
+                    ->orderBy('name')
+                    ->get(),
+
+                'warehouses' => Warehouse::query()
+                    ->select(
+                        'id',
+                        'company_id',
+                        'code',
+                        'name'
+                    )
+                    ->orderBy('name')
+                    ->get(),
+
+                'categories' => ProductCategory::query()
+                    ->select(
+                        'id',
+                        'name'
+                    )
+                    ->orderBy('name')
+                    ->get(),
+
+                'brands' => Brand::query()
+                    ->select(
+                        'id',
+                        'name'
+                    )
+                    ->orderBy('name')
+                    ->get(),
+
+                'movementTypes' => collect(
+                    StockMovement::movementTypes()
+                )
+                    ->map(
+                        fn (string $type) => [
+                            'value' => $type,
+                            'label' => $this->movementTypeLabel(
+                                $type
+                            ),
+                        ]
+                    )
+                    ->values(),
             ]
         );
     }
@@ -452,20 +423,15 @@ class StockMovementController extends Controller
                 ->sum('total_cost');
 
         return [
-            'total_movements' =>
-                $totalMovements,
+            'total_movements' => $totalMovements,
 
-            'quantity_in' =>
-                (string) $quantityIn,
+            'quantity_in' => (string) $quantityIn,
 
-            'quantity_out' =>
-                (string) $quantityOut,
+            'quantity_out' => (string) $quantityOut,
 
-            'value_in' =>
-                (string) $valueIn,
+            'value_in' => (string) $valueIn,
 
-            'value_out' =>
-                (string) $valueOut,
+            'value_out' => (string) $valueOut,
         ];
     }
 
@@ -473,41 +439,31 @@ class StockMovementController extends Controller
         string $type
     ): string {
         return match ($type) {
-            StockMovement::TYPE_OPENING_STOCK =>
-                'Opening Stock',
+            StockMovement::TYPE_OPENING_STOCK => 'Opening Stock',
 
-            StockMovement::TYPE_PURCHASE_RECEIPT =>
-                'Purchase Receipt',
+            StockMovement::TYPE_PURCHASE_RECEIPT => 'Purchase Receipt',
 
-            StockMovement::TYPE_SALE =>
-                'Sale',
+            StockMovement::TYPE_SALE => 'Sale',
 
-            StockMovement::TYPE_SALE_RETURN =>
-                'Sale Return',
+            StockMovement::TYPE_SALE_RETURN => 'Sale Return',
 
-            StockMovement::TYPE_PURCHASE_RETURN =>
-                'Purchase Return',
+            StockMovement::TYPE_PURCHASE_RETURN => 'Purchase Return',
 
-            StockMovement::TYPE_ADJUSTMENT_IN =>
-                'Adjustment In',
+            StockMovement::TYPE_ADJUSTMENT_IN => 'Adjustment In',
 
-            StockMovement::TYPE_ADJUSTMENT_OUT =>
-                'Adjustment Out',
+            StockMovement::TYPE_ADJUSTMENT_OUT => 'Adjustment Out',
 
-            StockMovement::TYPE_TRANSFER_IN =>
-                'Transfer In',
+            StockMovement::TYPE_TRANSFER_IN => 'Transfer In',
 
-            StockMovement::TYPE_TRANSFER_OUT =>
-                'Transfer Out',
+            StockMovement::TYPE_TRANSFER_OUT => 'Transfer Out',
 
-            default =>
-                ucwords(
-                    str_replace(
-                        '_',
-                        ' ',
-                        $type
-                    )
-                ),
+            default => ucwords(
+                str_replace(
+                    '_',
+                    ' ',
+                    $type
+                )
+            ),
         };
     }
 }

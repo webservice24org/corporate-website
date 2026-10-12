@@ -23,48 +23,38 @@ class NotificationController extends Controller
 
         $notifications->through(
             fn ($notification) => [
-                'id' =>
-                    $notification->id,
+                'id' => $notification->id,
 
-                'type' =>
-                    $notification->data['type']
+                'type' => $notification->data['type']
                     ?? 'notification',
 
-                'title' =>
-                    $notification->data['title']
+                'title' => $notification->data['title']
                     ?? 'Notification',
 
-                'message' =>
-                    $notification->data['message']
+                'message' => $notification->data['message']
                     ?? null,
 
-                'url' =>
-                    $notification->data['url']
+                'url' => $notification->data['url']
                     ?? null,
 
-                'lead_id' =>
-                    $notification->data['lead_id']
+                'lead_id' => $notification->data['lead_id']
                     ?? null,
 
-                'lead_number' =>
-                    $notification->data['lead_number']
+                'lead_number' => $notification->data['lead_number']
                     ?? null,
 
-                'read_at' =>
-                    $notification->read_at
-                        ?->toISOString(),
+                'read_at' => $notification->read_at
+                    ?->toISOString(),
 
-                'created_at' =>
-                    $notification->created_at
-                        ?->toISOString(),
+                'created_at' => $notification->created_at
+                    ?->toISOString(),
             ]
         );
 
         return Inertia::render(
             'ERP/Notifications/Index',
             [
-                'notifications' =>
-                    $notifications,
+                'notifications' => $notifications,
             ]
         );
     }
@@ -81,7 +71,7 @@ class NotificationController extends Controller
             )
             ->firstOrFail();
 
-        if (!$item->read_at) {
+        if (! $item->read_at) {
             $item->markAsRead();
         }
 

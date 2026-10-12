@@ -163,83 +163,73 @@ class AttendanceRawPunchController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/RawPunches/Index',
             [
-                'punches' =>
-                    $query
-                        ->orderByDesc(
-                            'punched_at'
-                        )
-                        ->orderByDesc(
-                            'id'
-                        )
-                        ->paginate(25)
-                        ->withQueryString(),
+                'punches' => $query
+                    ->orderByDesc(
+                        'punched_at'
+                    )
+                    ->orderByDesc(
+                        'id'
+                    )
+                    ->paginate(25)
+                    ->withQueryString(),
 
-                'companies' =>
-                    Company::query()
-                        ->orderByDesc(
-                            'is_default'
-                        )
-                        ->orderBy(
-                            'name'
-                        )
-                        ->get([
-                            'id',
-                            'name',
-                            'code',
-                        ]),
+                'companies' => Company::query()
+                    ->orderByDesc(
+                        'is_default'
+                    )
+                    ->orderBy(
+                        'name'
+                    )
+                    ->get([
+                        'id',
+                        'name',
+                        'code',
+                    ]),
 
-                'devices' =>
-                    AttendanceDevice::query()
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                            'code',
-                        ]),
+                'devices' => AttendanceDevice::query()
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                        'code',
+                    ]),
 
                 'filters' => [
-                    'search' =>
-                        $request->input(
-                            'search',
-                            ''
-                        ),
+                    'search' => $request->input(
+                        'search',
+                        ''
+                    ),
 
-                    'company_id' =>
-                        $request->input(
-                            'company_id',
-                            ''
-                        ),
+                    'company_id' => $request->input(
+                        'company_id',
+                        ''
+                    ),
 
-                    'device_id' =>
-                        $request->input(
-                            'device_id',
-                            ''
-                        ),
+                    'device_id' => $request->input(
+                        'device_id',
+                        ''
+                    ),
 
-                    'processing_status' =>
-                        $request->input(
-                            'processing_status',
-                            ''
-                        ),
+                    'processing_status' => $request->input(
+                        'processing_status',
+                        ''
+                    ),
 
-                    'source' =>
-                        $request->input(
-                            'source',
-                            ''
-                        ),
+                    'source' => $request->input(
+                        'source',
+                        ''
+                    ),
 
-                    'date_from' =>
-                        $request->input(
-                            'date_from',
-                            ''
-                        ),
+                    'date_from' => $request->input(
+                        'date_from',
+                        ''
+                    ),
 
-                    'date_to' =>
-                        $request->input(
-                            'date_to',
-                            ''
-                        ),
+                    'date_to' => $request->input(
+                        'date_to',
+                        ''
+                    ),
                 ],
             ]
         );
@@ -267,8 +257,7 @@ class AttendanceRawPunchController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/RawPunches/Show',
             [
-                'punch' =>
-                    $attendanceRawPunch,
+                'punch' => $attendanceRawPunch,
             ]
         );
     }

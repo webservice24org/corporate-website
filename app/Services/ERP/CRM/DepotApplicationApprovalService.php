@@ -16,11 +16,7 @@ class DepotApplicationApprovalService
         array $data = []
     ): Depot {
         return DB::transaction(
-            function () use (
-                $application,
-                $user,
-                $data
-            ) {
+            function () use ($application, $user, $data) {
                 $application =
                     DepotApplication::query()
                         ->lockForUpdate()
@@ -32,16 +28,13 @@ class DepotApplicationApprovalService
                     $application->status ===
                     'approved'
                 ) {
-                    if (
-                        $application->depot
-                    ) {
-                        return $application
-                            ->depot;
+                    $existingDepot = $application->depot;
+                    if ($existingDepot instanceof Depot) {
+                        return $existingDepot;
                     }
 
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'This application has already been approved.',
+                        'application' => 'This application has already been approved.',
                     ]);
                 }
 
@@ -50,132 +43,100 @@ class DepotApplicationApprovalService
                     'rejected'
                 ) {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'A rejected application cannot be approved directly.',
+                        'application' => 'A rejected application cannot be approved directly.',
                     ]);
                 }
 
                 $depot =
                     Depot::create([
-                        'company_id' =>
-                            $application
-                                ->company_id,
+                        'company_id' => $application
+                            ->company_id,
 
-                        'division_id' =>
-                            $application
-                                ->division_id,
+                        'division_id' => $application
+                            ->division_id,
 
-                        'district_id' =>
-                            $application
-                                ->district_id,
+                        'district_id' => $application
+                            ->district_id,
 
                         /*
                          * Leave code null until
                          * DocumentSequence exists.
                          */
-                        'depot_code' =>
-                            null,
+                        'depot_code' => null,
 
-                        'name' =>
-                            $application
-                                ->business_name,
+                        'name' => $application
+                            ->business_name,
 
-                        'proprietor_name' =>
-                            $application
-                                ->proprietor_name,
+                        'proprietor_name' => $application
+                            ->proprietor_name,
 
-                        'proprietor_photo' =>
-                            $application
-                                ->proprietor_photo,
+                        'proprietor_photo' => $application
+                            ->proprietor_photo,
 
-                        'phone' =>
-                            $application
-                                ->phone,
+                        'phone' => $application
+                            ->phone,
 
-                        'alternate_phone' =>
-                            $application
-                                ->alternate_phone,
+                        'alternate_phone' => $application
+                            ->alternate_phone,
 
-                        'email' =>
-                            $application
-                                ->email,
+                        'email' => $application
+                            ->email,
 
-                        'trade_license_number' =>
-                            $application
-                                ->trade_license_number,
+                        'trade_license_number' => $application
+                            ->trade_license_number,
 
-                        'nid_number' =>
-                            $application
-                                ->nid_number,
+                        'nid_number' => $application
+                            ->nid_number,
 
-                        'tin_number' =>
-                            $application
-                                ->tin_number,
+                        'tin_number' => $application
+                            ->tin_number,
 
-                        'vat_number' =>
-                            $application
-                                ->vat_number,
+                        'vat_number' => $application
+                            ->vat_number,
 
-                        'address' =>
-                            $application
-                                ->business_address,
+                        'address' => $application
+                            ->business_address,
 
-                        'postal_code' =>
-                            $application
-                                ->postal_code,
+                        'postal_code' => $application
+                            ->postal_code,
 
-                        'credit_limit' =>
-                            $data['credit_limit']
+                        'credit_limit' => $data['credit_limit']
                             ?? $application
                                 ->requested_credit_limit
                             ?? 0,
 
-                        'payment_terms_days' =>
-                            $data['payment_terms_days']
+                        'payment_terms_days' => $data['payment_terms_days']
                             ?? 0,
 
-                        'manager_user_id' =>
-                            $data['manager_user_id']
+                        'manager_user_id' => $data['manager_user_id']
                             ?? null,
 
-                        'is_active' =>
-                            true,
+                        'is_active' => true,
 
-                        'notes' =>
-                            $data['notes']
+                        'notes' => $data['notes']
                             ?? null,
                     ]);
 
                 $application->update([
-                    'depot_id' =>
-                        $depot->id,
+                    'depot_id' => $depot->id,
 
-                    'status' =>
-                        'approved',
+                    'status' => 'approved',
 
-                    'reviewed_by_user_id' =>
-                        $user->id,
+                    'reviewed_by_user_id' => $user->id,
 
-                    'reviewed_at' =>
-                        now(),
+                    'reviewed_at' => now(),
 
-                    'approved_by_user_id' =>
-                        $user->id,
+                    'approved_by_user_id' => $user->id,
 
-                    'approved_at' =>
-                        now(),
+                    'approved_at' => now(),
 
-                    'rejected_by_user_id' =>
-                        null,
+                    'rejected_by_user_id' => null,
 
-                    'rejected_at' =>
-                        null,
+                    'rejected_at' => null,
 
-                    'rejection_reason' =>
-                        null,
+                    'rejection_reason' => null,
 
-                    'admin_notes' =>
-                        $data['admin_notes']
+                    'admin_notes' => $data['admin_notes']
                         ?? $application
                             ->admin_notes,
                 ]);
@@ -192,12 +153,7 @@ class DepotApplicationApprovalService
         ?string $notes = null
     ): void {
         DB::transaction(
-            function () use (
-                $application,
-                $user,
-                $reason,
-                $notes
-            ) {
+            function () use ($application, $user, $reason, $notes) {
                 $application =
                     DepotApplication::query()
                         ->lockForUpdate()
@@ -210,32 +166,24 @@ class DepotApplicationApprovalService
                     'approved'
                 ) {
                     throw ValidationException::withMessages([
-                        'application' =>
-                            'An approved application cannot be rejected.',
+                        'application' => 'An approved application cannot be rejected.',
                     ]);
                 }
 
                 $application->update([
-                    'status' =>
-                        'rejected',
+                    'status' => 'rejected',
 
-                    'reviewed_by_user_id' =>
-                        $user->id,
+                    'reviewed_by_user_id' => $user->id,
 
-                    'reviewed_at' =>
-                        now(),
+                    'reviewed_at' => now(),
 
-                    'rejected_by_user_id' =>
-                        $user->id,
+                    'rejected_by_user_id' => $user->id,
 
-                    'rejected_at' =>
-                        now(),
+                    'rejected_at' => now(),
 
-                    'rejection_reason' =>
-                        $reason,
+                    'rejection_reason' => $reason,
 
-                    'admin_notes' =>
-                        $notes,
+                    'admin_notes' => $notes,
                 ]);
             }
         );

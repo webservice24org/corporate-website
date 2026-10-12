@@ -61,11 +61,10 @@ class PayrollPeriodController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters[
@@ -74,11 +73,10 @@ class PayrollPeriodController extends Controller
                     fn (
                         $query,
                         $status
-                    ) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    ) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->when(
                     $filters[
@@ -87,11 +85,10 @@ class PayrollPeriodController extends Controller
                     fn (
                         $query,
                         $year
-                    ) =>
-                        $query->whereYear(
-                            'start_date',
-                            $year
-                        )
+                    ) => $query->whereYear(
+                        'start_date',
+                        $year
+                    )
                 )
                 ->when(
                     $filters[
@@ -134,14 +131,11 @@ class PayrollPeriodController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/Periods/Index',
             [
-                'periods' =>
-                    $periods,
+                'periods' => $periods,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -157,14 +151,11 @@ class PayrollPeriodController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/Periods/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'payrollSettings' =>
-                    $this->payrollSettings(),
+                'payrollSettings' => $this->payrollSettings(),
 
-                'selectedCompanyId' =>
-                    $companyId,
+                'selectedCompanyId' => $companyId,
             ]
         );
     }
@@ -206,14 +197,11 @@ class PayrollPeriodController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/Periods/Edit',
             [
-                'payrollPeriod' =>
-                    $payrollPeriod,
+                'payrollPeriod' => $payrollPeriod,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'payrollSettings' =>
-                    $this->payrollSettings(),
+                'payrollSettings' => $this->payrollSettings(),
             ]
         );
     }
@@ -227,8 +215,7 @@ class PayrollPeriodController extends Controller
                 ->is_locked
         ) {
             throw ValidationException::withMessages([
-                'period' =>
-                    'This payroll period is locked and cannot be edited.',
+                'period' => 'This payroll period is locked and cannot be edited.',
             ]);
         }
 
@@ -238,8 +225,7 @@ class PayrollPeriodController extends Controller
             'processing'
         ) {
             throw ValidationException::withMessages([
-                'period' =>
-                    'A payroll period currently being processed cannot be edited.',
+                'period' => 'A payroll period currently being processed cannot be edited.',
             ]);
         }
 
@@ -280,8 +266,7 @@ class PayrollPeriodController extends Controller
                 ->is_locked
         ) {
             throw ValidationException::withMessages([
-                'period' =>
-                    'A locked payroll period cannot be deleted.',
+                'period' => 'A locked payroll period cannot be deleted.',
             ]);
         }
 
@@ -291,8 +276,7 @@ class PayrollPeriodController extends Controller
             'draft'
         ) {
             throw ValidationException::withMessages([
-                'period' =>
-                    'Only draft payroll periods can be deleted.',
+                'period' => 'Only draft payroll periods can be deleted.',
             ]);
         }
 
@@ -367,50 +351,42 @@ class PayrollPeriodController extends Controller
         array $data
     ): array {
         return [
-            'company_id' =>
-                $data[
+            'company_id' => $data[
                     'company_id'
                 ],
 
-            'name' =>
+            'name' => trim(
+                $data[
+                    'name'
+                ]
+            ),
+
+            'code' => strtoupper(
                 trim(
                     $data[
-                        'name'
+                        'code'
                     ]
-                ),
+                )
+            ),
 
-            'code' =>
-                strtoupper(
-                    trim(
-                        $data[
-                            'code'
-                        ]
-                    )
-                ),
-
-            'start_date' =>
-                $data[
+            'start_date' => $data[
                     'start_date'
                 ],
 
-            'end_date' =>
-                $data[
+            'end_date' => $data[
                     'end_date'
                 ],
 
-            'payment_date' =>
-                $data[
+            'payment_date' => $data[
                     'payment_date'
                 ]
                 ?? null,
 
-            'status' =>
-                $data[
+            'status' => $data[
                     'status'
                 ],
 
-            'notes' =>
-                $data[
+            'notes' => $data[
                     'notes'
                 ]
                 ?? null,
@@ -433,12 +409,11 @@ class PayrollPeriodController extends Controller
                     $ignoreId,
                     fn (
                         $query
-                    ) =>
-                        $query->where(
-                            'id',
-                            '!=',
-                            $ignoreId
-                        )
+                    ) => $query->where(
+                        'id',
+                        '!=',
+                        $ignoreId
+                    )
                 )
                 ->where(
                     'start_date',
@@ -454,8 +429,7 @@ class PayrollPeriodController extends Controller
 
         if ($overlap) {
             throw ValidationException::withMessages([
-                'start_date' =>
-                    'This company already has a payroll period overlapping the selected date range.',
+                'start_date' => 'This company already has a payroll period overlapping the selected date range.',
             ]);
         }
     }

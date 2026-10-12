@@ -47,23 +47,17 @@ class AttendancePunchResolver
                         $punchIds
                     )
                     ->update([
-                        'employee_id' =>
-                            $mapping->employee_id,
+                        'employee_id' => $mapping->employee_id,
 
-                        'mapped_at' =>
-                            now(),
+                        'mapped_at' => now(),
 
-                        'processing_status' =>
-                            'pending',
+                        'processing_status' => 'pending',
 
-                        'processing_error' =>
-                            null,
+                        'processing_error' => null,
 
-                        'processed_at' =>
-                            null,
+                        'processed_at' => null,
 
-                        'updated_at' =>
-                            now(),
+                        'updated_at' => now(),
                     ]);
             }
         );

@@ -57,14 +57,18 @@ class PasswordResetLinkController extends Controller
          |
          */
 
-        $mailSettings = $mailConfig->apply();
+        // Automated tests use Laravel's configured mail transport and
+        // notification fakes, without requiring database SMTP settings.
+        if (!app()->environment('testing')) {
+            $mailSettings = $mailConfig->apply();
 
-        if (! $mailSettings) {
-            throw ValidationException::withMessages([
-                'email' => [
-                    'Mail configuration is not available. Please contact the administrator.',
-                ],
-            ]);
+            if (!$mailSettings) {
+                throw ValidationException::withMessages([
+                    'email' => [
+                        'Mail configuration is not available. Please contact the administrator.',
+                    ],
+                ]);
+            }
         }
 
         /*

@@ -28,29 +28,21 @@ class LeaveType extends Model
     ];
 
     protected $casts = [
-        'annual_allowance' =>
-            'decimal:2',
+        'annual_allowance' => 'decimal:2',
 
-        'is_paid' =>
-            'boolean',
+        'is_paid' => 'boolean',
 
-        'allow_half_day' =>
-            'boolean',
+        'allow_half_day' => 'boolean',
 
-        'carry_forward' =>
-            'boolean',
+        'carry_forward' => 'boolean',
 
-        'max_carry_forward' =>
-            'decimal:2',
+        'max_carry_forward' => 'decimal:2',
 
-        'requires_attachment' =>
-            'boolean',
+        'requires_attachment' => 'boolean',
 
-        'exclude_weekly_off' =>
-            'boolean',
+        'exclude_weekly_off' => 'boolean',
 
-        'exclude_holidays' =>
-            'boolean',
+        'exclude_holidays' => 'boolean',
     ];
 
     public function company(): BelongsTo
@@ -89,6 +81,4 @@ class LeaveType extends Model
             EmployeeLeaveBalanceAdjustment::class
         );
     }
-
-
 }

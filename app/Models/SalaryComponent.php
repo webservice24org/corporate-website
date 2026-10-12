@@ -29,26 +29,19 @@ class SalaryComponent extends Model
     protected function casts(): array
     {
         return [
-            'default_amount' =>
-                'decimal:2',
+            'default_amount' => 'decimal:2',
 
-            'default_percentage' =>
-                'decimal:4',
+            'default_percentage' => 'decimal:4',
 
-            'is_taxable' =>
-                'boolean',
+            'is_taxable' => 'boolean',
 
-            'affects_gross_salary' =>
-                'boolean',
+            'affects_gross_salary' => 'boolean',
 
-            'is_recurring' =>
-                'boolean',
+            'is_recurring' => 'boolean',
 
-            'status' =>
-                'boolean',
+            'status' => 'boolean',
 
-            'sort_order' =>
-                'integer',
+            'sort_order' => 'integer',
         ];
     }
 
@@ -101,15 +94,11 @@ class SalaryComponent extends Model
             'deduction'
         );
     }
+
     public function salaryStructureItems(): HasMany
     {
         return $this->hasMany(
             EmployeeSalaryStructureItem::class
         );
     }
-
-
-
-
-
 }

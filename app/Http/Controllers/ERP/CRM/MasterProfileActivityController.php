@@ -21,20 +21,15 @@ class MasterProfileActivityController extends Controller
         ]);
 
         return $this->renderHistory(
-            subject:
-                $depot,
+            subject: $depot,
 
-            type:
-                'Depot',
+            type: 'Depot',
 
-            name:
-                $depot->name,
+            name: $depot->name,
 
-            code:
-                $depot->depot_code,
+            code: $depot->depot_code,
 
-            backUrl:
-                "/erp/crm/depots/{$depot->id}"
+            backUrl: "/erp/crm/depots/{$depot->id}"
         );
     }
 
@@ -48,20 +43,15 @@ class MasterProfileActivityController extends Controller
         ]);
 
         return $this->renderHistory(
-            subject:
-                $dealer,
+            subject: $dealer,
 
-            type:
-                'Dealer',
+            type: 'Dealer',
 
-            name:
-                $dealer->business_name,
+            name: $dealer->business_name,
 
-            code:
-                $dealer->dealer_code,
+            code: $dealer->dealer_code,
 
-            backUrl:
-                "/erp/crm/dealers/{$dealer->id}"
+            backUrl: "/erp/crm/dealers/{$dealer->id}"
         );
     }
 
@@ -92,24 +82,18 @@ class MasterProfileActivityController extends Controller
             'ERP/CRM/Activity/Index',
             [
                 'subject' => [
-                    'type' =>
-                        $type,
+                    'type' => $type,
 
-                    'id' =>
-                        $subject->getKey(),
+                    'id' => $subject->getKey(),
 
-                    'name' =>
-                        $name,
+                    'name' => $name,
 
-                    'code' =>
-                        $code,
+                    'code' => $code,
 
-                    'back_url' =>
-                        $backUrl,
+                    'back_url' => $backUrl,
                 ],
 
-                'activities' =>
-                    $activities,
+                'activities' => $activities,
             ]
         );
     }

@@ -21,11 +21,9 @@ class EmployeeLeaveBalanceAdjustment extends Model
     ];
 
     protected $casts = [
-        'year' =>
-            'integer',
+        'year' => 'integer',
 
-        'days' =>
-            'decimal:2',
+        'days' => 'decimal:2',
     ];
 
     public function employee(): BelongsTo

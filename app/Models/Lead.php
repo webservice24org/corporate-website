@@ -5,10 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
-
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Lead extends Model
 {
@@ -47,15 +46,12 @@ class Lead extends Model
         return [
             'expected_value' => 'decimal:2',
 
-            'next_follow_up_at' =>
-                'datetime',
+            'next_follow_up_at' => 'datetime',
 
-            'follow_up_notification_sent_at' =>
-                'datetime',
+            'follow_up_notification_sent_at' => 'datetime',
 
-            'is_active' =>
-                'boolean',
-            
+            'is_active' => 'boolean',
+
             'converted_at' => 'datetime',
         ];
     }
@@ -134,7 +130,6 @@ class Lead extends Model
         );
     }
 
-
     public function convertedTarget(): MorphTo
     {
         return $this->morphTo('converted_to', 'converted_to_type', 'converted_to_id');
@@ -144,6 +139,4 @@ class Lead extends Model
     {
         return $this->belongsTo(User::class, 'converted_by');
     }
-
-
 }

@@ -28,8 +28,7 @@ class AttendanceDeviceUser extends Model
     protected function casts(): array
     {
         return [
-            'last_synced_at' =>
-                'datetime',
+            'last_synced_at' => 'datetime',
         ];
     }
 
@@ -84,5 +83,4 @@ class AttendanceDeviceUser extends Model
                 'unmapped'
             );
     }
-
 }

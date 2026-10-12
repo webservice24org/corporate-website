@@ -45,7 +45,7 @@ class CrmAnalyticsController extends Controller
                 : null;
 
         $from =
-            !empty(
+            ! empty(
                 $filters['from']
             )
                 ? Carbon::parse(
@@ -56,7 +56,7 @@ class CrmAnalyticsController extends Controller
                     ->startOfDay();
 
         $to =
-            !empty(
+            ! empty(
                 $filters['to']
             )
                 ? Carbon::parse(
@@ -72,11 +72,10 @@ class CrmAnalyticsController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 );
 
         $leadPeriod =
@@ -150,11 +149,10 @@ class CrmAnalyticsController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 );
 
         $openOpportunityBase =
@@ -163,16 +161,15 @@ class CrmAnalyticsController extends Controller
                     'stage',
                     fn (
                         $query
-                    ) =>
-                        $query
-                            ->where(
-                                'is_won',
-                                false
-                            )
-                            ->where(
-                                'is_lost',
-                                false
-                            )
+                    ) => $query
+                        ->where(
+                            'is_won',
+                            false
+                        )
+                        ->where(
+                            'is_lost',
+                            false
+                        )
                 )
                 ->where(
                     'is_active',
@@ -206,11 +203,10 @@ class CrmAnalyticsController extends Controller
                     'stage',
                     fn (
                         $query
-                    ) =>
-                        $query->where(
-                            'is_won',
-                            true
-                        )
+                    ) => $query->where(
+                        'is_won',
+                        true
+                    )
                 )
                 ->whereBetween(
                     'won_at',
@@ -237,11 +233,10 @@ class CrmAnalyticsController extends Controller
                     'stage',
                     fn (
                         $query
-                    ) =>
-                        $query->where(
-                            'is_lost',
-                            true
-                        )
+                    ) => $query->where(
+                        'is_lost',
+                        true
+                    )
                 )
                 ->whereBetween(
                     'lost_at',
@@ -262,11 +257,10 @@ class CrmAnalyticsController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->where(
                     'is_active',
@@ -311,29 +305,21 @@ class CrmAnalyticsController extends Controller
                         }
 
                         return [
-                            'id' =>
-                                $stage->id,
+                            'id' => $stage->id,
 
-                            'company_id' =>
-                                $stage->company_id,
+                            'company_id' => $stage->company_id,
 
-                            'name' =>
-                                $stage->name,
+                            'name' => $stage->name,
 
-                            'probability' =>
-                                $stage->probability,
+                            'probability' => $stage->probability,
 
-                            'is_won' =>
-                                $stage->is_won,
+                            'is_won' => $stage->is_won,
 
-                            'is_lost' =>
-                                $stage->is_lost,
+                            'is_lost' => $stage->is_lost,
 
-                            'count' =>
-                                $query->count(),
+                            'count' => $query->count(),
 
-                            'value' =>
-                                (float)
+                            'value' => (float)
                                     $query->sum(
                                         'expected_value'
                                     ),
@@ -369,11 +355,10 @@ class CrmAnalyticsController extends Controller
                                     fn (
                                         $query,
                                         $companyId
-                                    ) =>
-                                        $query->where(
-                                            'company_id',
-                                            $companyId
-                                        )
+                                    ) => $query->where(
+                                        'company_id',
+                                        $companyId
+                                    )
                                 );
 
                         $open =
@@ -382,16 +367,15 @@ class CrmAnalyticsController extends Controller
                                     'stage',
                                     fn (
                                         $query
-                                    ) =>
-                                        $query
-                                            ->where(
-                                                'is_won',
-                                                false
-                                            )
-                                            ->where(
-                                                'is_lost',
-                                                false
-                                            )
+                                    ) => $query
+                                        ->where(
+                                            'is_won',
+                                            false
+                                        )
+                                        ->where(
+                                            'is_lost',
+                                            false
+                                        )
                                 )
                                 ->where(
                                     'is_active',
@@ -404,11 +388,10 @@ class CrmAnalyticsController extends Controller
                                     'stage',
                                     fn (
                                         $query
-                                    ) =>
-                                        $query->where(
-                                            'is_won',
-                                            true
-                                        )
+                                    ) => $query->where(
+                                        'is_won',
+                                        true
+                                    )
                                 )
                                 ->whereBetween(
                                     'won_at',
@@ -424,11 +407,10 @@ class CrmAnalyticsController extends Controller
                                     'stage',
                                     fn (
                                         $query
-                                    ) =>
-                                        $query->where(
-                                            'is_lost',
-                                            true
-                                        )
+                                    ) => $query->where(
+                                        'is_lost',
+                                        true
+                                    )
                                 )
                                 ->whereBetween(
                                     'lost_at',
@@ -439,48 +421,39 @@ class CrmAnalyticsController extends Controller
                                 );
 
                         return [
-                            'id' =>
-                                $user->id,
+                            'id' => $user->id,
 
-                            'name' =>
-                                $user->name,
+                            'name' => $user->name,
 
-                            'email' =>
-                                $user->email,
+                            'email' => $user->email,
 
-                            'open_count' =>
-                                (clone $open)
-                                    ->count(),
+                            'open_count' => (clone $open)
+                                ->count(),
 
-                            'open_value' =>
-                                (float)
+                            'open_value' => (float)
                                     (clone $open)
                                         ->sum(
                                             'expected_value'
                                         ),
 
-                            'won_count' =>
-                                (clone $won)
-                                    ->count(),
+                            'won_count' => (clone $won)
+                                ->count(),
 
-                            'won_value' =>
-                                (float)
+                            'won_value' => (float)
                                     (clone $won)
                                         ->sum(
                                             'expected_value'
                                         ),
 
-                            'lost_count' =>
-                                (clone $lost)
-                                    ->count(),
+                            'lost_count' => (clone $lost)
+                                ->count(),
                         ];
                     }
                 )
                 ->filter(
                     fn (
                         array $row
-                    ) =>
-                        $row['open_count'] >
+                    ) => $row['open_count'] >
                             0 ||
                         $row['won_count'] >
                             0 ||
@@ -519,70 +492,53 @@ class CrmAnalyticsController extends Controller
             'ERP/CRM/Analytics/Index',
             [
                 'metrics' => [
-                    'new_leads' =>
-                        $newLeads,
+                    'new_leads' => $newLeads,
 
-                    'qualified_leads' =>
-                        $qualifiedLeads,
+                    'qualified_leads' => $qualifiedLeads,
 
-                    'converted_leads' =>
-                        $convertedLeads,
+                    'converted_leads' => $convertedLeads,
 
-                    'conversion_rate' =>
-                        $conversionRate,
+                    'conversion_rate' => $conversionRate,
 
-                    'open_pipeline_count' =>
-                        $openPipelineCount,
+                    'open_pipeline_count' => $openPipelineCount,
 
-                    'open_pipeline_value' =>
-                        $openPipelineValue,
+                    'open_pipeline_value' => $openPipelineValue,
 
-                    'weighted_pipeline_value' =>
-                        $weightedPipelineValue,
+                    'weighted_pipeline_value' => $weightedPipelineValue,
 
-                    'won_count' =>
-                        $wonCount,
+                    'won_count' => $wonCount,
 
-                    'won_value' =>
-                        $wonValue,
+                    'won_value' => $wonValue,
 
-                    'lost_count' =>
-                        $lostCount,
+                    'lost_count' => $lostCount,
                 ],
 
-                'stageFunnel' =>
-                    $stageFunnel,
+                'stageFunnel' => $stageFunnel,
 
-                'salespersonPerformance' =>
-                    $salespersonPerformance,
+                'salespersonPerformance' => $salespersonPerformance,
 
-                'upcomingCloses' =>
-                    $upcomingCloses,
+                'upcomingCloses' => $upcomingCloses,
 
-                'companies' =>
-                    Company::query()
-                        ->orderBy(
-                            'name'
-                        )
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->orderBy(
+                        'name'
+                    )
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
                 'filters' => [
-                    'company_id' =>
-                        $companyId
+                    'company_id' => $companyId
                             ? (string)
                                 $companyId
                             : '',
 
-                    'from' =>
-                        $from
-                            ->toDateString(),
+                    'from' => $from
+                        ->toDateString(),
 
-                    'to' =>
-                        $to
-                            ->toDateString(),
+                    'to' => $to
+                        ->toDateString(),
                 ],
             ]
         );

@@ -40,7 +40,7 @@ export default function ERPLayout({
         page.props.auth?.user;
 
     return (
-        <div className="min-h-screen bg-slate-100">
+        <div className="erp-light-theme min-h-screen bg-slate-100 text-slate-900">
             <FlashMessages />
 
             <div className="flex min-h-screen">

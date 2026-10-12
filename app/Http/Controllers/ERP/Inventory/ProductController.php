@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
+use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -37,24 +38,24 @@ class ProductController extends Controller
             ->withCount('variants')
             ->when(
                 $filters['company_id'] ?? null,
-                fn ($query, $value) => $query->where('company_id', $value)
+                fn($query, $value) => $query->where('company_id', $value)
             )
             ->when(
                 $filters['product_type'] ?? null,
-                fn ($query, $value) => $query->where('product_type', $value)
+                fn($query, $value) => $query->where('product_type', $value)
             )
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) => $query->where('is_active', true)
+                fn($query) => $query->where('is_active', true)
             )
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) => $query->where('is_active', false)
+                fn($query) => $query->where('is_active', false)
             )
             ->when(
                 $filters['search'] ?? null,
-                fn ($query, $search) => $query->where(
-                    fn ($nested) => $nested
+                fn($query, $search) => $query->where(
+                    fn($nested) => $nested
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('product_code', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
@@ -187,7 +188,7 @@ class ProductController extends Controller
                 'string',
                 'max:80',
                 Rule::unique('products', 'product_code')
-                    ->where(fn ($query) => $query->where('company_id', $companyId))
+                    ->where(fn($query) => $query->where('company_id', $companyId))
                     ->ignore($product?->id),
             ],
             'sku' => [
@@ -195,7 +196,7 @@ class ProductController extends Controller
                 'string',
                 'max:100',
                 Rule::unique('products', 'sku')
-                    ->where(fn ($query) => $query->where('company_id', $companyId))
+                    ->where(fn($query) => $query->where('company_id', $companyId))
                     ->ignore($product?->id),
             ],
             'barcode' => [
@@ -203,7 +204,7 @@ class ProductController extends Controller
                 'string',
                 'max:100',
                 Rule::unique('products', 'barcode')
-                    ->where(fn ($query) => $query->where('company_id', $companyId))
+                    ->where(fn($query) => $query->where('company_id', $companyId))
                     ->ignore($product?->id),
             ],
             'featured_image' => ['nullable', 'image', 'max:5120'],
@@ -257,7 +258,7 @@ class ProductController extends Controller
         array $data,
         ?Product $product = null
     ): array {
-        $existingGallery = $product?->gallery_images ?? [];
+        $existingGallery = $product !== null ? ($product->gallery_images ?? []) : [];
         $removeGallery = $data['remove_gallery_images'] ?? [];
 
         unset(
@@ -329,6 +330,7 @@ class ProductController extends Controller
     {
         if (!$product->has_variants) {
             $product->variants()->delete();
+
             return;
         }
 
@@ -345,6 +347,7 @@ class ProductController extends Controller
                 'is_active' => $row['is_active'],
             ];
 
+            /** @var ProductVariant $variant */
             if (!empty($row['id'])) {
                 $variant = $product->variants()
                     ->whereKey($row['id'])
@@ -355,7 +358,7 @@ class ProductController extends Controller
                 $variant = $product->variants()->create($payload);
             }
 
-            $keep[] = $variant->id;
+            $keep[] = $variant->getKey();
         }
 
         $product->variants()

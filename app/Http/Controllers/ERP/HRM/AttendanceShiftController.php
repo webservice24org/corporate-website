@@ -82,38 +82,33 @@ class AttendanceShiftController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Shifts/Index',
             [
-                'shifts' =>
-                    $query
-                        ->orderBy(
-                            'company_id'
-                        )
-                        ->orderBy(
-                            'start_time'
-                        )
-                        ->paginate(15)
-                        ->withQueryString(),
+                'shifts' => $query
+                    ->orderBy(
+                        'company_id'
+                    )
+                    ->orderBy(
+                        'start_time'
+                    )
+                    ->paginate(15)
+                    ->withQueryString(),
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
                 'filters' => [
-                    'search' =>
-                        $request->input(
-                            'search',
-                            ''
-                        ),
+                    'search' => $request->input(
+                        'search',
+                        ''
+                    ),
 
-                    'company_id' =>
-                        $request->input(
-                            'company_id',
-                            ''
-                        ),
+                    'company_id' => $request->input(
+                        'company_id',
+                        ''
+                    ),
 
-                    'status' =>
-                        $request->input(
-                            'status',
-                            ''
-                        ),
+                    'status' => $request->input(
+                        'status',
+                        ''
+                    ),
                 ],
             ]
         );
@@ -124,8 +119,7 @@ class AttendanceShiftController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Shifts/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
             ]
         );
     }
@@ -164,13 +158,11 @@ class AttendanceShiftController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Shifts/Edit',
             [
-                'shift' =>
-                    $shift,
+                'shift' => $shift,
 
-                'companies' =>
-                    $this->companies(
-                        $shift->company_id
-                    ),
+                'companies' => $this->companies(
+                    $shift->company_id
+                ),
             ]
         );
     }
@@ -205,7 +197,6 @@ class AttendanceShiftController extends Controller
         );
     }
 
-    
     public function destroy(
         AttendanceShift $shift
     ): RedirectResponse {
@@ -244,11 +235,10 @@ class AttendanceShiftController extends Controller
                 'attendance_shifts',
                 'code'
             )->where(
-                fn ($query) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn ($query) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             );
 
         if ($shift) {

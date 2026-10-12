@@ -119,35 +119,27 @@ class AttendancePunchIngestor
 
         $ingestionKey =
             $this->makeIngestionKey(
-                deviceId:
-                    $device->id,
+                deviceId: $device->id,
 
-                source:
-                    $source,
+                source: $source,
 
-                externalUserId:
-                    $externalUserId,
+                externalUserId: $externalUserId,
 
-                punchedAtUtc:
-                    $punchedAtUtc,
+                punchedAtUtc: $punchedAtUtc,
 
-                sourceRecordId:
-                    $sourceRecordId,
+                sourceRecordId: $sourceRecordId,
 
-                punchState:
-                    Arr::get(
-                        $metadata,
-                        'punch_state'
-                    ),
+                punchState: Arr::get(
+                    $metadata,
+                    'punch_state'
+                ),
 
-                verificationMethod:
-                    Arr::get(
-                        $metadata,
-                        'verification_method'
-                    ),
+                verificationMethod: Arr::get(
+                    $metadata,
+                    'verification_method'
+                ),
 
-                rawPayload:
-                    $rawPayload
+                rawPayload: $rawPayload
             );
 
         $existing =
@@ -163,71 +155,53 @@ class AttendancePunchIngestor
         }
 
         return AttendanceRawPunch::create([
-            'company_id' =>
-                $device->company_id,
+            'company_id' => $device->company_id,
 
-            'device_id' =>
-                $device->id,
+            'device_id' => $device->id,
 
-            'employee_id' =>
-                $mapping?->employee_id,
+            'employee_id' => $mapping?->employee_id,
 
-            'external_user_id' =>
-                $externalUserId,
+            'external_user_id' => $externalUserId,
 
-            'device_punched_at' =>
-                $devicePunchedAt,
+            'device_punched_at' => $devicePunchedAt,
 
-            'punched_at' =>
-                CarbonImmutable::instance(
-                    $punchedAtUtc
-                )->utc(),
+            'punched_at' => CarbonImmutable::instance(
+                $punchedAtUtc
+            )->utc(),
 
-            'source_timezone' =>
-                $timezone,
+            'source_timezone' => $timezone,
 
-            'punch_state' =>
-                Arr::get(
-                    $metadata,
-                    'punch_state'
-                ),
+            'punch_state' => Arr::get(
+                $metadata,
+                'punch_state'
+            ),
 
-            'verification_method' =>
-                Arr::get(
-                    $metadata,
-                    'verification_method'
-                ),
+            'verification_method' => Arr::get(
+                $metadata,
+                'verification_method'
+            ),
 
-            'source' =>
-                $source,
+            'source' => $source,
 
-            'source_record_id' =>
-                $sourceRecordId,
+            'source_record_id' => $sourceRecordId,
 
-            'ingestion_key' =>
-                $ingestionKey,
+            'ingestion_key' => $ingestionKey,
 
-            'raw_payload' =>
-                $rawPayload,
+            'raw_payload' => $rawPayload,
 
-            'mapped_at' =>
-                $mapping
+            'mapped_at' => $mapping
                     ? now()
                     : null,
 
-            'processing_status' =>
-                $mapping
+            'processing_status' => $mapping
                     ? 'pending'
                     : 'unmapped',
 
-            'processing_error' =>
-                null,
+            'processing_error' => null,
 
-            'processed_at' =>
-                null,
+            'processed_at' => null,
 
-            'received_at' =>
-                now(),
+            'received_at' => now(),
         ]);
     }
 
@@ -242,35 +216,27 @@ class AttendancePunchIngestor
         mixed $rawPayload
     ): string {
         $payload = [
-            'device_id' =>
-                $deviceId,
+            'device_id' => $deviceId,
 
-            'source' =>
-                $source,
+            'source' => $source,
 
-            'external_user_id' =>
-                $externalUserId,
+            'external_user_id' => $externalUserId,
 
-            'punched_at' =>
-                CarbonImmutable::instance(
-                    $punchedAtUtc
-                )
-                    ->utc()
-                    ->format(
-                        'Y-m-d H:i:s.u'
-                    ),
+            'punched_at' => CarbonImmutable::instance(
+                $punchedAtUtc
+            )
+                ->utc()
+                ->format(
+                    'Y-m-d H:i:s.u'
+                ),
 
-            'source_record_id' =>
-                $sourceRecordId,
+            'source_record_id' => $sourceRecordId,
 
-            'punch_state' =>
-                $punchState,
+            'punch_state' => $punchState,
 
-            'verification_method' =>
-                $verificationMethod,
+            'verification_method' => $verificationMethod,
 
-            'raw_payload' =>
-                $rawPayload,
+            'raw_payload' => $rawPayload,
         ];
 
         return hash(

@@ -3,9 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Depot extends Model
 {
@@ -89,16 +89,13 @@ class Depot extends Model
     }
 
     public function documents(): HasMany
-   {
-       return $this->hasMany(DepotDocument::class);
-   }
+    {
+        return $this->hasMany(DepotDocument::class);
+    }
 
-   public function currentDocuments(): HasMany
-   {
-       return $this->hasMany(DepotDocument::class)
-           ->where('is_current', true);
-   }
-
-
-
+    public function currentDocuments(): HasMany
+    {
+        return $this->hasMany(DepotDocument::class)
+            ->where('is_current', true);
+    }
 }

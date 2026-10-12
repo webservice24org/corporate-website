@@ -20,10 +20,9 @@ class PageController extends Controller
                     ->orWhere('published_at', '<=', now());
             })
             ->with([
-                'sections' => fn ($query) =>
-                    $query
-                        ->where('is_active', true)
-                        ->orderBy('sort_order'),
+                'sections' => fn ($query) => $query
+                    ->where('is_active', true)
+                    ->orderBy('sort_order'),
             ])
             ->firstOrFail();
 

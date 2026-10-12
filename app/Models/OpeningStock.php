@@ -35,14 +35,11 @@ class OpeningStock extends Model
 
             'total_items' => 'integer',
 
-            'total_quantity' =>
-                'decimal:4',
+            'total_quantity' => 'decimal:4',
 
-            'total_value' =>
-                'decimal:4',
+            'total_value' => 'decimal:4',
 
-            'posted_at' =>
-                'datetime',
+            'posted_at' => 'datetime',
         ];
     }
 

@@ -17,8 +17,8 @@ class BrandController extends Controller
         $rows = Brand::with('company:id,name')
             ->when($r->filled('search'), function ($query) use ($r) {
                 $query->where(function ($q) use ($r) {
-                    $q->where('name', 'like', '%' . $r->input('search') . '%')
-                      ->orWhere('code', 'like', '%' . $r->input('search') . '%');
+                    $q->where('name', 'like', '%'.$r->input('search').'%')
+                        ->orWhere('code', 'like', '%'.$r->input('search').'%');
                 });
             })
             ->when($r->filled('company_id'), function ($query) use ($r) {

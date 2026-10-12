@@ -118,85 +118,61 @@ class DealerDocumentController extends Controller
 
             $document =
                 DealerDocument::create([
-                    'dealer_id' =>
-                        $dealer->id,
+                    'dealer_id' => $dealer->id,
 
-                    'document_type' =>
-                        $type,
+                    'document_type' => $type,
 
-                    'title' =>
-                        $validated['title'] ?? null,
+                    'title' => $validated['title'] ?? null,
 
-                    'disk' =>
-                        'local',
+                    'disk' => 'local',
 
-                    'file_path' =>
-                        $path,
+                    'file_path' => $path,
 
-                    'original_name' =>
-                        $file->getClientOriginalName(),
+                    'original_name' => $file->getClientOriginalName(),
 
-                    'mime_type' =>
-                        $file->getClientMimeType(),
+                    'mime_type' => $file->getClientMimeType(),
 
-                    'file_size' =>
-                        $file->getSize(),
+                    'file_size' => $file->getSize(),
 
-                    'version' =>
-                        $nextVersion,
+                    'version' => $nextVersion,
 
-                    'is_current' =>
-                        true,
+                    'is_current' => true,
 
-                    'verified_at' =>
-                        null,
+                    'verified_at' => null,
 
-                    'verified_by' =>
-                        null,
+                    'verified_by' => null,
 
-                    'uploaded_by' =>
-                        $request->user()?->id,
+                    'uploaded_by' => $request->user()?->id,
 
-                    'notes' =>
-                        $validated['notes'] ?? null,
+                    'notes' => $validated['notes'] ?? null,
                 ]);
 
             app(
                 MasterProfileActivityLogger::class
             )->record(
-                subject:
-                    $dealer,
+                subject: $dealer,
 
-                actorId:
-                    $request->user()?->id,
+                actorId: $request->user()?->id,
 
-                action:
-                    'document.uploaded',
+                action: 'document.uploaded',
 
-                source:
-                    'admin',
+                source: 'admin',
 
-                description:
-                    $nextVersion > 1
+                description: $nextVersion > 1
                         ? 'Dealer document replaced with a new version.'
                         : 'Dealer document uploaded.',
 
                 meta: [
-                    'document_id' =>
-                        $document->id,
+                    'document_id' => $document->id,
 
-                    'document_type' =>
-                        $document->document_type,
+                    'document_type' => $document->document_type,
 
-                    'version' =>
-                        $document->version,
+                    'version' => $document->version,
 
-                    'original_name' =>
-                        $document->original_name,
+                    'original_name' => $document->original_name,
                 ],
 
-                request:
-                    $request
+                request: $request
             );
         });
 
@@ -224,37 +200,27 @@ class DealerDocumentController extends Controller
         app(
             MasterProfileActivityLogger::class
         )->record(
-            subject:
-                $dealer,
+            subject: $dealer,
 
-            actorId:
-                $request->user()?->id,
+            actorId: $request->user()?->id,
 
-            action:
-                'document.verified',
+            action: 'document.verified',
 
-            source:
-                'admin',
+            source: 'admin',
 
-            description:
-                'Dealer document verified.',
+            description: 'Dealer document verified.',
 
             meta: [
-                'document_id' =>
-                    $document->id,
+                'document_id' => $document->id,
 
-                'document_type' =>
-                    $document->document_type,
+                'document_type' => $document->document_type,
 
-                'version' =>
-                    $document->version,
+                'version' => $document->version,
 
-                'original_name' =>
-                    $document->original_name,
+                'original_name' => $document->original_name,
             ],
 
-            request:
-                $request
+            request: $request
         );
 
         return back()->with(
@@ -281,37 +247,27 @@ class DealerDocumentController extends Controller
         app(
             MasterProfileActivityLogger::class
         )->record(
-            subject:
-                $dealer,
+            subject: $dealer,
 
-            actorId:
-                $request->user()?->id,
+            actorId: $request->user()?->id,
 
-            action:
-                'document.unverified',
+            action: 'document.unverified',
 
-            source:
-                'admin',
+            source: 'admin',
 
-            description:
-                'Dealer document verification removed.',
+            description: 'Dealer document verification removed.',
 
             meta: [
-                'document_id' =>
-                    $document->id,
+                'document_id' => $document->id,
 
-                'document_type' =>
-                    $document->document_type,
+                'document_type' => $document->document_type,
 
-                'version' =>
-                    $document->version,
+                'version' => $document->version,
 
-                'original_name' =>
-                    $document->original_name,
+                'original_name' => $document->original_name,
             ],
 
-            request:
-                $request
+            request: $request
         );
 
         return back()->with(
@@ -372,37 +328,27 @@ class DealerDocumentController extends Controller
         app(
             MasterProfileActivityLogger::class
         )->record(
-            subject:
-                $dealer,
+            subject: $dealer,
 
-            actorId:
-                $request->user()?->id,
+            actorId: $request->user()?->id,
 
-            action:
-                'document.removed',
+            action: 'document.removed',
 
-            source:
-                'admin',
+            source: 'admin',
 
-            description:
-                'Dealer document removed from current use. Version history was preserved.',
+            description: 'Dealer document removed from current use. Version history was preserved.',
 
             meta: [
-                'document_id' =>
-                    $document->id,
+                'document_id' => $document->id,
 
-                'document_type' =>
-                    $document->document_type,
+                'document_type' => $document->document_type,
 
-                'version' =>
-                    $document->version,
+                'version' => $document->version,
 
-                'original_name' =>
-                    $document->original_name,
+                'original_name' => $document->original_name,
             ],
 
-            request:
-                $request
+            request: $request
         );
 
         return back()->with(

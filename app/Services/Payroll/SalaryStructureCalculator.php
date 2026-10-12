@@ -18,8 +18,7 @@ class SalaryStructureCalculator
         $submittedByComponent =
             collect($submittedItems)
                 ->keyBy(
-                    fn (array $item) =>
-                        (int)
+                    fn (array $item) => (int)
                         $item[
                             'salary_component_id'
                         ]
@@ -57,8 +56,7 @@ class SalaryStructureCalculator
                     )
                 ) {
                     throw ValidationException::withMessages([
-                        'items' =>
-                            'A circular percentage dependency exists between salary components.',
+                        'items' => 'A circular percentage dependency exists between salary components.',
                     ]);
                 }
 
@@ -74,12 +72,11 @@ class SalaryStructureCalculator
                     );
 
                 if (
-                    !$component ||
-                    !$submitted
+                    ! $component ||
+                    ! $submitted
                 ) {
                     throw ValidationException::withMessages([
-                        'items' =>
-                            'An invalid salary component was submitted.',
+                        'items' => 'An invalid salary component was submitted.',
                     ]);
                 }
 
@@ -98,14 +95,13 @@ class SalaryStructureCalculator
                             ->percentage_of_component_id;
 
                     if (
-                        !$submittedByComponent
+                        ! $submittedByComponent
                             ->has(
                                 $baseId
                             )
                     ) {
                         throw ValidationException::withMessages([
-                            'items' =>
-                                "{$component->name} requires its base salary component to be included in this structure.",
+                            'items' => "{$component->name} requires its base salary component to be included in this structure.",
                         ]);
                     }
 
@@ -164,8 +160,7 @@ class SalaryStructureCalculator
             };
 
         foreach (
-            $submittedByComponent
-            as $componentId => $submitted
+            $submittedByComponent as $componentId => $submitted
         ) {
             $resolve(
                 (int)
@@ -180,8 +175,7 @@ class SalaryStructureCalculator
         $grossSalary = 0;
 
         foreach (
-            $submittedByComponent
-            as $componentId => $submitted
+            $submittedByComponent as $componentId => $submitted
         ) {
             /** @var SalaryComponent $component */
             $component =
@@ -217,104 +211,86 @@ class SalaryStructureCalculator
             }
 
             $items[] = [
-                'salary_component_id' =>
-                    $component->id,
+                'salary_component_id' => $component->id,
 
-                'component_name' =>
-                    $component->name,
+                'component_name' => $component->name,
 
-                'component_code' =>
-                    $component->code,
+                'component_code' => $component->code,
 
-                'component_type' =>
-                    $component
-                        ->component_type,
+                'component_type' => $component
+                    ->component_type,
 
-                'calculation_type' =>
-                    $component
-                        ->calculation_type,
+                'calculation_type' => $component
+                    ->calculation_type,
 
-                'percentage_of_component_id' =>
-                    $component
-                        ->percentage_of_component_id,
+                'percentage_of_component_id' => $component
+                    ->percentage_of_component_id,
 
-                'amount' =>
-                    $component
-                            ->calculation_type ===
+                'amount' => $component
+                    ->calculation_type ===
                         'fixed'
-                            ? (
-                                $submitted[
-                                    'amount'
-                                ]
-                                ??
-                                $component
-                                    ->default_amount
-                            )
+                    ? (
+                        $submitted[
+                            'amount'
+                        ]
+                        ??
+                        $component
+                            ->default_amount
+                    )
                             : 0,
 
-                'percentage' =>
-                    $component
-                            ->calculation_type ===
+                'percentage' => $component
+                    ->calculation_type ===
                         'percentage'
-                            ? (
-                                $submitted[
-                                    'percentage'
-                                ]
-                                ??
-                                $component
-                                    ->default_percentage
-                            )
+                    ? (
+                        $submitted[
+                            'percentage'
+                        ]
+                        ??
+                        $component
+                            ->default_percentage
+                    )
                             : 0,
 
-                'calculated_amount' =>
-                    $calculatedAmount,
+                'calculated_amount' => $calculatedAmount,
 
-                'is_taxable' =>
-                    $component
-                        ->is_taxable,
+                'is_taxable' => $component
+                    ->is_taxable,
 
-                'affects_gross_salary' =>
-                    $component
-                        ->affects_gross_salary,
+                'affects_gross_salary' => $component
+                    ->affects_gross_salary,
 
-                'is_recurring' =>
-                    $component
-                        ->is_recurring,
+                'is_recurring' => $component
+                    ->is_recurring,
 
-                'sort_order' =>
-                    $component
-                        ->sort_order,
+                'sort_order' => $component
+                    ->sort_order,
             ];
         }
 
         return [
-            'items' =>
-                $items,
+            'items' => $items,
 
-            'total_earnings' =>
-                round(
-                    $totalEarnings,
-                    2
-                ),
+            'total_earnings' => round(
+                $totalEarnings,
+                2
+            ),
 
-            'total_deductions' =>
-                round(
-                    $totalDeductions,
-                    2
-                ),
+            'total_deductions' => round(
+                $totalDeductions,
+                2
+            ),
 
-            'gross_salary' =>
-                round(
-                    $grossSalary,
-                    2
-                ),
+            'gross_salary' => round(
+                $grossSalary,
+                2
+            ),
 
-            'net_salary' =>
-                round(
-                    $totalEarnings -
-                    $totalDeductions,
-                    2
-                ),
+            'net_salary' => round(
+                $totalEarnings -
+                $totalDeductions,
+                2
+            ),
         ];
     }
 }

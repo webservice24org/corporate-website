@@ -71,29 +71,26 @@ class DistrictController extends Controller
 
             ->when(
                 $filters['division_id'] ?? null,
-                fn ($query, $divisionId) =>
-                    $query->where(
-                        'division_id',
-                        $divisionId
-                    )
+                fn ($query, $divisionId) => $query->where(
+                    'division_id',
+                    $divisionId
+                )
             )
 
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        true
-                    )
+                fn ($query) => $query->where(
+                    'is_active',
+                    true
+                )
             )
 
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        false
-                    )
+                fn ($query) => $query->where(
+                    'is_active',
+                    false
+                )
             )
 
             ->orderBy('name')
@@ -196,13 +193,11 @@ class DistrictController extends Controller
         return Inertia::render(
             'ERP/Geography/Districts/Edit',
             [
-                'district' =>
-                    $district->load(
-                        'division:id,name,name_bn,code,is_active'
-                    ),
+                'district' => $district->load(
+                    'division:id,name,name_bn,code,is_active'
+                ),
 
-                'divisions' =>
-                    $divisions,
+                'divisions' => $divisions,
             ]
         );
     }
@@ -240,8 +235,7 @@ class DistrictController extends Controller
                 ->exists()
         ) {
             return back()->withErrors([
-                'district' =>
-                    'This district cannot be deleted because it has upazilas assigned to it.',
+                'district' => 'This district cannot be deleted because it has upazilas assigned to it.',
             ]);
         }
 
@@ -270,18 +264,16 @@ class DistrictController extends Controller
                     'divisions',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'is_active',
-                            true
-                        )
+                    fn ($query) => $query->where(
+                        'is_active',
+                        true
+                    )
                         ->when(
                             $district,
-                            fn ($query) =>
-                                $query->orWhere(
-                                    'id',
-                                    $district->division_id
-                                )
+                            fn ($query) => $query->orWhere(
+                                'id',
+                                $district->division_id
+                            )
                         )
                 ),
             ],
@@ -296,13 +288,12 @@ class DistrictController extends Controller
                     'name'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'division_id',
-                                $request->integer(
-                                    'division_id'
-                                )
+                        fn ($query) => $query->where(
+                            'division_id',
+                            $request->integer(
+                                'division_id'
                             )
+                        )
                     )
                     ->ignore(
                         $district?->id

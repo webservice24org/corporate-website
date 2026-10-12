@@ -51,14 +51,10 @@ class Department extends Model
         );
     }
 
-
     public function employees(): HasMany
     {
         return $this->hasMany(
             Employee::class
         );
     }
-
-
-
 }

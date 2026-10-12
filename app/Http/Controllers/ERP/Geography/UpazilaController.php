@@ -7,6 +7,7 @@ use App\Models\District;
 use App\Models\Division;
 use App\Models\Upazila;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -81,40 +82,36 @@ class UpazilaController extends Controller
                 function ($query, $divisionId) {
                     $query->whereHas(
                         'district',
-                        fn ($query) =>
-                            $query->where(
-                                'division_id',
-                                $divisionId
-                            )
+                        fn($query) => $query->where(
+                            'division_id',
+                            $divisionId
+                        )
                     );
                 }
             )
 
             ->when(
                 $filters['district_id'] ?? null,
-                fn ($query, $districtId) =>
-                    $query->where(
-                        'district_id',
-                        $districtId
-                    )
+                fn($query, $districtId) => $query->where(
+                    'district_id',
+                    $districtId
+                )
             )
 
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        true
-                    )
+                fn($query) => $query->where(
+                    'is_active',
+                    true
+                )
             )
 
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        false
-                    )
+                fn($query) => $query->where(
+                    'is_active',
+                    false
+                )
             )
 
             ->orderBy('name')
@@ -178,11 +175,10 @@ class UpazilaController extends Controller
             )
             ->whereHas(
                 'division',
-                fn ($query) =>
-                    $query->where(
-                        'is_active',
-                        true
-                    )
+                fn($query) => $query->where(
+                    'is_active',
+                    true
+                )
             )
             ->orderBy('name')
             ->get([
@@ -230,8 +226,10 @@ class UpazilaController extends Controller
             'district:id,division_id,name,name_bn,code,is_active'
         );
 
-        $divisionId =
-            $upazila->district?->division_id;
+        $district = District::query()
+            ->find($upazila->district_id);
+
+        $divisionId = $district?->division_id;
 
         $divisions = Division::query()
             ->where(
@@ -288,14 +286,11 @@ class UpazilaController extends Controller
             [
                 'upazila' => $upazila,
 
-                'division_id' =>
-                    $divisionId,
+                'division_id' => $divisionId,
 
-                'divisions' =>
-                    $divisions,
+                'divisions' => $divisions,
 
-                'districts' =>
-                    $districts,
+                'districts' => $districts,
             ]
         );
     }
@@ -328,11 +323,12 @@ class UpazilaController extends Controller
     ): RedirectResponse {
         if (
             $upazila->dealers()->exists() ||
-            $upazila->dealerApplications()->exists()
+            DB::table('dealer_applications')
+                ->where('upazila_id', $upazila->getKey())
+                ->exists()
         ) {
             return back()->withErrors([
-                'upazila' =>
-                    'This Upazila cannot be deleted because Dealer records or Dealer applications reference it.',
+                'upazila' => 'This Upazila cannot be deleted because Dealer records or Dealer applications reference it.',
             ]);
         }
 
@@ -361,20 +357,20 @@ class UpazilaController extends Controller
                     'districts',
                     'id'
                 )->where(
-                    function ($query) use ($upazila) {
-                        $query->where(
-                            'is_active',
-                            true
-                        );
-
-                        if ($upazila) {
-                            $query->orWhere(
-                                'id',
-                                $upazila->district_id
+                        function ($query) use ($upazila) {
+                            $query->where(
+                                'is_active',
+                                true
                             );
+
+                            if ($upazila) {
+                                $query->orWhere(
+                                    'id',
+                                    $upazila->district_id
+                                );
+                            }
                         }
-                    }
-                ),
+                    ),
             ],
 
             'name' => [
@@ -387,13 +383,12 @@ class UpazilaController extends Controller
                     'name'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'district_id',
-                                $request->integer(
-                                    'district_id'
-                                )
+                        fn($query) => $query->where(
+                            'district_id',
+                            $request->integer(
+                                'district_id'
                             )
+                        )
                     )
                     ->ignore(
                         $upazila?->id
@@ -415,8 +410,8 @@ class UpazilaController extends Controller
                     'upazilas',
                     'code'
                 )->ignore(
-                    $upazila?->id
-                ),
+                        $upazila?->id
+                    ),
             ],
 
             'is_active' => [

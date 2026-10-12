@@ -61,64 +61,58 @@ class AttendanceHolidayController extends Controller
                 ->when(
                     $filters['search']
                         ?? null,
-                    fn ($query, $search) =>
-                        $query->where(
-                            'name',
-                            'like',
-                            "%{$search}%"
-                        )
+                    fn ($query, $search) => $query->where(
+                        'name',
+                        'like',
+                        "%{$search}%"
+                    )
                 )
 
                 ->when(
                     $filters['company_id']
                         ?? null,
-                    fn ($query, $companyId) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query, $companyId) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
 
                 ->when(
                     $filters['branch_id']
                         ?? null,
-                    fn ($query, $branchId) =>
-                        $query->where(
-                            'branch_id',
-                            $branchId
-                        )
+                    fn ($query, $branchId) => $query->where(
+                        'branch_id',
+                        $branchId
+                    )
                 )
 
                 ->when(
                     $filters['status']
                         ?? null,
-                    fn ($query, $status) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    fn ($query, $status) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
 
                 ->when(
                     $filters['date_from']
                         ?? null,
-                    fn ($query, $date) =>
-                        $query->whereDate(
-                            'holiday_date',
-                            '>=',
-                            $date
-                        )
+                    fn ($query, $date) => $query->whereDate(
+                        'holiday_date',
+                        '>=',
+                        $date
+                    )
                 )
 
                 ->when(
                     $filters['date_to']
                         ?? null,
-                    fn ($query, $date) =>
-                        $query->whereDate(
-                            'holiday_date',
-                            '<=',
-                            $date
-                        )
+                    fn ($query, $date) => $query->whereDate(
+                        'holiday_date',
+                        '<=',
+                        $date
+                    )
                 )
 
                 ->orderByDesc(
@@ -131,59 +125,50 @@ class AttendanceHolidayController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Holidays/Index',
             [
-                'holidays' =>
-                    $holidays,
+                'holidays' => $holidays,
 
                 'filters' => [
-                    'search' =>
-                        $filters['search']
+                    'search' => $filters['search']
                         ?? '',
 
-                    'company_id' =>
-                        $filters['company_id']
+                    'company_id' => $filters['company_id']
                         ?? '',
 
-                    'branch_id' =>
-                        $filters['branch_id']
+                    'branch_id' => $filters['branch_id']
                         ?? '',
 
-                    'status' =>
-                        $filters['status']
+                    'status' => $filters['status']
                         ?? '',
 
-                    'date_from' =>
-                        $filters['date_from']
+                    'date_from' => $filters['date_from']
                         ?? '',
 
-                    'date_to' =>
-                        $filters['date_to']
+                    'date_to' => $filters['date_to']
                         ?? '',
                 ],
 
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-                'branches' =>
-                    Branch::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                        ]),
+                'branches' => Branch::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                    ]),
             ]
         );
     }
@@ -193,30 +178,28 @@ class AttendanceHolidayController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Holidays/Create',
             [
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-                'branches' =>
-                    Branch::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                        ]),
+                'branches' => Branch::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                    ]),
             ]
         );
     }
@@ -230,16 +213,13 @@ class AttendanceHolidayController extends Controller
             );
 
         $this->ensureScopeIsUnique(
-            companyId:
-                (int) $data['company_id'],
+            companyId: (int) $data['company_id'],
 
-            branchId:
-                $data['branch_id']
+            branchId: $data['branch_id']
                     ? (int) $data['branch_id']
                     : null,
 
-            holidayDate:
-                $data['holiday_date']
+            holidayDate: $data['holiday_date']
         );
 
         AttendanceHoliday::create(
@@ -262,43 +242,40 @@ class AttendanceHolidayController extends Controller
         return Inertia::render(
             'ERP/HRM/Attendance/Holidays/Edit',
             [
-                'holiday' =>
-                    $attendanceHoliday,
+                'holiday' => $attendanceHoliday,
 
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orWhere(
-                            'id',
-                            $attendanceHoliday
-                                ->company_id
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orWhere(
+                        'id',
+                        $attendanceHoliday
+                            ->company_id
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
-                'branches' =>
-                    Branch::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orWhere(
-                            'id',
-                            $attendanceHoliday
-                                ->branch_id
-                        )
-                        ->orderBy('name')
-                        ->get([
-                            'id',
-                            'company_id',
-                            'name',
-                        ]),
+                'branches' => Branch::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orWhere(
+                        'id',
+                        $attendanceHoliday
+                            ->branch_id
+                    )
+                    ->orderBy('name')
+                    ->get([
+                        'id',
+                        'company_id',
+                        'name',
+                    ]),
             ]
         );
     }
@@ -313,19 +290,15 @@ class AttendanceHolidayController extends Controller
             );
 
         $this->ensureScopeIsUnique(
-            companyId:
-                (int) $data['company_id'],
+            companyId: (int) $data['company_id'],
 
-            branchId:
-                $data['branch_id']
+            branchId: $data['branch_id']
                     ? (int) $data['branch_id']
                     : null,
 
-            holidayDate:
-                $data['holiday_date'],
+            holidayDate: $data['holiday_date'],
 
-            ignoreId:
-                $attendanceHoliday->id
+            ignoreId: $attendanceHoliday->id
         );
 
         $attendanceHoliday->update(
@@ -403,7 +376,7 @@ class AttendanceHolidayController extends Controller
             ]);
 
         if (
-            !empty($data['branch_id'])
+            ! empty($data['branch_id'])
         ) {
             $validBranch =
                 Branch::query()
@@ -417,10 +390,9 @@ class AttendanceHolidayController extends Controller
                     )
                     ->exists();
 
-            if (!$validBranch) {
+            if (! $validBranch) {
                 throw ValidationException::withMessages([
-                    'branch_id' =>
-                        'The selected branch does not belong to the selected company.',
+                    'branch_id' => 'The selected branch does not belong to the selected company.',
                 ]);
             }
         }
@@ -466,8 +438,7 @@ class AttendanceHolidayController extends Controller
 
         if ($query->exists()) {
             throw ValidationException::withMessages([
-                'holiday_date' =>
-                    'A holiday already exists for this company/branch scope on this date.',
+                'holiday_date' => 'A holiday already exists for this company/branch scope on this date.',
             ]);
         }
     }

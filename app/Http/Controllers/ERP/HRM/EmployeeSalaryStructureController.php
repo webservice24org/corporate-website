@@ -70,11 +70,10 @@ class EmployeeSalaryStructureController extends Controller
                     fn (
                         $query,
                         $companyId
-                    ) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    ) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 )
                 ->when(
                     $filters[
@@ -83,11 +82,10 @@ class EmployeeSalaryStructureController extends Controller
                     fn (
                         $query,
                         $employeeId
-                    ) =>
-                        $query->where(
-                            'employee_id',
-                            $employeeId
-                        )
+                    ) => $query->where(
+                        'employee_id',
+                        $employeeId
+                    )
                 )
                 ->when(
                     $filters[
@@ -96,11 +94,10 @@ class EmployeeSalaryStructureController extends Controller
                     fn (
                         $query,
                         $status
-                    ) =>
-                        $query->where(
-                            'status',
-                            $status
-                        )
+                    ) => $query->where(
+                        'status',
+                        $status
+                    )
                 )
                 ->when(
                     $filters[
@@ -152,17 +149,13 @@ class EmployeeSalaryStructureController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/SalaryStructures/Index',
             [
-                'structures' =>
-                    $structures,
+                'structures' => $structures,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'employees' =>
-                    $this->employees(),
+                'employees' => $this->employees(),
 
-                'filters' =>
-                    $filters,
+                'filters' => $filters,
             ]
         );
     }
@@ -172,14 +165,11 @@ class EmployeeSalaryStructureController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/SalaryStructures/Create',
             [
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'employees' =>
-                    $this->employees(),
+                'employees' => $this->employees(),
 
-                'components' =>
-                    $this->components(),
+                'components' => $this->components(),
             ]
         );
     }
@@ -235,61 +225,50 @@ class EmployeeSalaryStructureController extends Controller
             ) {
                 $structure =
                     EmployeeSalaryStructure::create([
-                        'company_id' =>
-                            $data[
+                        'company_id' => $data[
                                 'company_id'
                             ],
 
-                        'employee_id' =>
-                            $data[
+                        'employee_id' => $data[
                                 'employee_id'
                             ],
 
-                        'effective_from' =>
-                            $data[
+                        'effective_from' => $data[
                                 'effective_from'
                             ],
 
-                        'effective_to' =>
-                            $data[
+                        'effective_to' => $data[
                                 'effective_to'
                             ]
                             ?? null,
 
-                        'status' =>
-                            $data[
+                        'status' => $data[
                                 'status'
                             ],
 
-                        'currency' =>
-                            strtoupper(
-                                $data[
-                                    'currency'
-                                ]
-                            ),
+                        'currency' => strtoupper(
+                            $data[
+                                'currency'
+                            ]
+                        ),
 
-                        'gross_salary' =>
-                            $calculation[
+                        'gross_salary' => $calculation[
                                 'gross_salary'
                             ],
 
-                        'total_earnings' =>
-                            $calculation[
+                        'total_earnings' => $calculation[
                                 'total_earnings'
                             ],
 
-                        'total_deductions' =>
-                            $calculation[
+                        'total_deductions' => $calculation[
                                 'total_deductions'
                             ],
 
-                        'net_salary' =>
-                            $calculation[
+                        'net_salary' => $calculation[
                                 'net_salary'
                             ],
 
-                        'notes' =>
-                            $data[
+                        'notes' => $data[
                                 'notes'
                             ]
                             ?? null,
@@ -337,8 +316,7 @@ class EmployeeSalaryStructureController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/SalaryStructures/Show',
             [
-                'salaryStructure' =>
-                    $salaryStructure,
+                'salaryStructure' => $salaryStructure,
             ]
         );
     }
@@ -353,17 +331,13 @@ class EmployeeSalaryStructureController extends Controller
         return Inertia::render(
             'ERP/HRM/Payroll/SalaryStructures/Edit',
             [
-                'salaryStructure' =>
-                    $salaryStructure,
+                'salaryStructure' => $salaryStructure,
 
-                'companies' =>
-                    $this->companies(),
+                'companies' => $this->companies(),
 
-                'employees' =>
-                    $this->employees(),
+                'employees' => $this->employees(),
 
-                'components' =>
-                    $this->components(),
+                'components' => $this->components(),
             ]
         );
     }
@@ -421,61 +395,50 @@ class EmployeeSalaryStructureController extends Controller
                 $calculation
             ) {
                 $salaryStructure->update([
-                    'company_id' =>
-                        $data[
+                    'company_id' => $data[
                             'company_id'
                         ],
 
-                    'employee_id' =>
-                        $data[
+                    'employee_id' => $data[
                             'employee_id'
                         ],
 
-                    'effective_from' =>
-                        $data[
+                    'effective_from' => $data[
                             'effective_from'
                         ],
 
-                    'effective_to' =>
-                        $data[
+                    'effective_to' => $data[
                             'effective_to'
                         ]
                         ?? null,
 
-                    'status' =>
-                        $data[
+                    'status' => $data[
                             'status'
                         ],
 
-                    'currency' =>
-                        strtoupper(
-                            $data[
-                                'currency'
-                            ]
-                        ),
+                    'currency' => strtoupper(
+                        $data[
+                            'currency'
+                        ]
+                    ),
 
-                    'gross_salary' =>
-                        $calculation[
+                    'gross_salary' => $calculation[
                             'gross_salary'
                         ],
 
-                    'total_earnings' =>
-                        $calculation[
+                    'total_earnings' => $calculation[
                             'total_earnings'
                         ],
 
-                    'total_deductions' =>
-                        $calculation[
+                    'total_deductions' => $calculation[
                             'total_deductions'
                         ],
 
-                    'net_salary' =>
-                        $calculation[
+                    'net_salary' => $calculation[
                             'net_salary'
                         ],
 
-                    'notes' =>
-                        $data[
+                    'notes' => $data[
                             'notes'
                         ]
                         ?? null,
@@ -604,8 +567,7 @@ class EmployeeSalaryStructureController extends Controller
             $companyId
         ) {
             throw ValidationException::withMessages([
-                'employee_id' =>
-                    'The selected employee does not belong to the selected company.',
+                'employee_id' => 'The selected employee does not belong to the selected company.',
             ]);
         }
     }
@@ -632,12 +594,11 @@ class EmployeeSalaryStructureController extends Controller
                 )
                 ->when(
                     $ignoreId,
-                    fn ($query) =>
-                        $query->where(
-                            'id',
-                            '!=',
-                            $ignoreId
-                        )
+                    fn ($query) => $query->where(
+                        'id',
+                        '!=',
+                        $ignoreId
+                    )
                 )
                 ->where(
                     'effective_from',
@@ -665,8 +626,7 @@ class EmployeeSalaryStructureController extends Controller
 
         if ($overlap) {
             throw ValidationException::withMessages([
-                'effective_from' =>
-                    'This employee already has an active salary structure overlapping the selected effective period.',
+                'effective_from' => 'This employee already has an active salary structure overlapping the selected effective period.',
             ]);
         }
     }
@@ -681,8 +641,7 @@ class EmployeeSalaryStructureController extends Controller
                     'salary_component_id'
                 )
                 ->map(
-                    fn ($id) =>
-                        (int) $id
+                    fn ($id) => (int) $id
                 )
                 ->unique()
                 ->values();
@@ -704,8 +663,7 @@ class EmployeeSalaryStructureController extends Controller
             $ids->count()
         ) {
             throw ValidationException::withMessages([
-                'items' =>
-                    'Every salary component must belong to the selected company.',
+                'items' => 'Every salary component must belong to the selected company.',
             ]);
         }
 
@@ -725,8 +683,7 @@ class EmployeeSalaryStructureController extends Controller
 
         if ($inactive) {
             throw ValidationException::withMessages([
-                'items' =>
-                    "Salary component {$inactive->name} is inactive.",
+                'items' => "Salary component {$inactive->name} is inactive.",
             ]);
         }
 

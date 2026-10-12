@@ -9,6 +9,7 @@ use App\Models\InventoryBalance;
 use App\Models\ProductCategory;
 use App\Models\Warehouse;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -156,43 +157,37 @@ class InventoryStockController extends Controller
         $query
             ->when(
                 $companyId,
-                fn (Builder $query) =>
-                    $query->where(
-                        'company_id',
-                        $companyId
-                    )
+                fn(Builder $query) => $query->where(
+                    'company_id',
+                    $companyId
+                )
             )
             ->when(
                 $warehouseId,
-                fn (Builder $query) =>
-                    $query->where(
-                        'warehouse_id',
-                        $warehouseId
-                    )
+                fn(Builder $query) => $query->where(
+                    'warehouse_id',
+                    $warehouseId
+                )
             )
             ->when(
                 $categoryId,
-                fn (Builder $query) =>
-                    $query->whereHas(
-                        'product',
-                        fn (Builder $productQuery) =>
-                            $productQuery->where(
-                                'product_category_id',
-                                $categoryId
-                            )
+                fn(Builder $query) => $query->whereHas(
+                    'product',
+                    fn(Builder $productQuery) => $productQuery->where(
+                        'product_category_id',
+                        $categoryId
                     )
+                )
             )
             ->when(
                 $brandId,
-                fn (Builder $query) =>
-                    $query->whereHas(
-                        'product',
-                        fn (Builder $productQuery) =>
-                            $productQuery->where(
-                                'brand_id',
-                                $brandId
-                            )
+                fn(Builder $query) => $query->whereHas(
+                    'product',
+                    fn(Builder $productQuery) => $productQuery->where(
+                        'brand_id',
+                        $brandId
                     )
+                )
             );
 
         $this->applyStockStatus(
@@ -224,65 +219,54 @@ class InventoryStockController extends Controller
                 'summary' => $summary,
 
                 'filters' => [
-                    'search' =>
-                        $search,
+                    'search' => $search,
 
-                    'company_id' =>
-                        $companyId
-                            ? (string) $companyId
-                            : '',
+                    'company_id' => $companyId
+                        ? (string) $companyId
+                        : '',
 
-                    'warehouse_id' =>
-                        $warehouseId
-                            ? (string) $warehouseId
-                            : '',
+                    'warehouse_id' => $warehouseId
+                        ? (string) $warehouseId
+                        : '',
 
-                    'category_id' =>
-                        $categoryId
-                            ? (string) $categoryId
-                            : '',
+                    'category_id' => $categoryId
+                        ? (string) $categoryId
+                        : '',
 
-                    'brand_id' =>
-                        $brandId
-                            ? (string) $brandId
-                            : '',
+                    'brand_id' => $brandId
+                        ? (string) $brandId
+                        : '',
 
-                    'stock_status' =>
-                        $stockStatus ?? '',
+                    'stock_status' => $stockStatus ?? '',
 
-                    'per_page' =>
-                        (string) $perPage,
+                    'per_page' => (string) $perPage,
                 ],
 
-                'companies' =>
-                    Company::query()
-                        ->select('id', 'name')
-                        ->orderBy('name')
-                        ->get(),
+                'companies' => Company::query()
+                    ->select('id', 'name')
+                    ->orderBy('name')
+                    ->get(),
 
-                'warehouses' =>
-                    Warehouse::query()
-                        ->select(
-                            'id',
-                            'company_id',
-                            'code',
-                            'name'
-                        )
-                        ->where('is_active', true)
-                        ->orderBy('name')
-                        ->get(),
+                'warehouses' => Warehouse::query()
+                    ->select(
+                        'id',
+                        'company_id',
+                        'code',
+                        'name'
+                    )
+                    ->where('is_active', true)
+                    ->orderBy('name')
+                    ->get(),
 
-                'categories' =>
-                    ProductCategory::query()
-                        ->select('id', 'name')
-                        ->orderBy('name')
-                        ->get(),
+                'categories' => ProductCategory::query()
+                    ->select('id', 'name')
+                    ->orderBy('name')
+                    ->get(),
 
-                'brands' =>
-                    Brand::query()
-                        ->select('id', 'name')
-                        ->orderBy('name')
-                        ->get(),
+                'brands' => Brand::query()
+                    ->select('id', 'name')
+                    ->orderBy('name')
+                    ->get(),
             ]
         );
     }
@@ -296,60 +280,61 @@ class InventoryStockController extends Controller
         }
 
         match ($status) {
-            'in_stock' =>
-                $query->where(
+            'in_stock' => $query->where(
+                'quantity_on_hand',
+                '>',
+                0
+            ),
+
+            'out_of_stock' => $query->where(
+                'quantity_on_hand',
+                '=',
+                0
+            ),
+
+            'negative' => $query->where(
+                'quantity_on_hand',
+                '<',
+                0
+            ),
+
+            'low_stock' => $query
+                ->where(
                     'quantity_on_hand',
                     '>',
                     0
-                ),
-
-            'out_of_stock' =>
-                $query->where(
-                    'quantity_on_hand',
-                    '=',
-                    0
-                ),
-
-            'negative' =>
-                $query->where(
-                    'quantity_on_hand',
-                    '<',
-                    0
-                ),
-
-            'low_stock' =>
-                $query
-                    ->where(
-                        'quantity_on_hand',
-                        '>',
-                        0
-                    )
-                    ->whereHas(
-                        'product',
-                        function (Builder $productQuery) {
+                )
+                ->whereHas(
+                    'product',
+                    function (Builder $productQuery) {
                             /*
                              * The threshold comparison itself
                              * is applied through a correlated
                              * product column below.
                              */
                         }
-                    )
-                    ->whereRaw(
-                        'inventory_balances.quantity_on_hand <= (
+                )
+                ->whereRaw(
+                    'inventory_balances.quantity_on_hand <= (
                             SELECT products.reorder_level
                             FROM products
                             WHERE products.id = inventory_balances.product_id
                             LIMIT 1
                         )'
-                    ),
+                ),
 
             default => null,
         };
     }
 
+    /**
+     * @param Builder<InventoryBalance> $query
+     * @return array<string, int|string>
+     */
     private function summary(
         Builder $query
     ): array {
+        /** @var EloquentCollection<int, InventoryBalance> $rows */
         $rows = $query->get([
             'quantity_on_hand',
             'quantity_reserved',
@@ -408,20 +393,15 @@ class InventoryStockController extends Controller
         }
 
         return [
-            'stock_items' =>
-                $rows->count(),
+            'stock_items' => $rows->count(),
 
-            'quantity_on_hand' =>
-                $onHand,
+            'quantity_on_hand' => $onHand,
 
-            'quantity_reserved' =>
-                $reserved,
+            'quantity_reserved' => $reserved,
 
-            'quantity_available' =>
-                $available,
+            'quantity_available' => $available,
 
-            'inventory_value' =>
-                $value,
+            'inventory_value' => $value,
         ];
     }
 }

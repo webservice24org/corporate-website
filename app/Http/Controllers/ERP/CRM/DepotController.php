@@ -28,8 +28,7 @@ class DepotController extends Controller
         return Inertia::render(
             'ERP/CRM/Depots/Index',
             [
-                'depots' =>
-                    $depots,
+                'depots' => $depots,
             ]
         );
     }
@@ -48,8 +47,7 @@ class DepotController extends Controller
         return Inertia::render(
             'ERP/CRM/Depots/Show',
             [
-                'depot' =>
-                    $depot,
+                'depot' => $depot,
             ]
         );
     }

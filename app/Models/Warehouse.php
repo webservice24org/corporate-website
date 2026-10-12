@@ -4,12 +4,13 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Warehouse extends Model
 {
     use SoftDeletes;
+
     protected $fillable = [
         'company_id',
         'division_id',
@@ -82,5 +83,30 @@ class Warehouse extends Model
             OpeningStock::class
         );
     }
+
+    public function outgoingStockTransfers(): HasMany
+    {
+        return $this->hasMany(
+            StockTransfer::class,
+            'source_warehouse_id'
+        );
+    }
+
+    public function incomingStockTransfers(): HasMany
+    {
+        return $this->hasMany(
+            StockTransfer::class,
+            'destination_warehouse_id'
+        );
+    }
+
+
+    public function inventoryReorderSettings(): HasMany
+    {
+        return $this->hasMany(
+            InventoryReorderSetting::class
+        );
+    }
+
 
 }

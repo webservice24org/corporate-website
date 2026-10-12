@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\ContactMessage;
@@ -55,11 +56,9 @@ class ContactMessageController extends Controller
         ContactMessage::create([
             ...$validated,
 
-            'ip_address' =>
-                $request->ip(),
+            'ip_address' => $request->ip(),
 
-            'status' =>
-                'unread',
+            'status' => 'unread',
         ]);
 
         return back()->with(

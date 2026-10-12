@@ -25,11 +25,10 @@ class LeaveTypeController extends Controller
                     $request->filled(
                         'company_id'
                     ),
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $request->company_id
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $request->company_id
+                    )
                 )
                 ->when(
                     $request->filled(
@@ -74,30 +73,26 @@ class LeaveTypeController extends Controller
         return Inertia::render(
             'ERP/HRM/Leave/Types/Index',
             [
-                'leaveTypes' =>
-                    $leaveTypes,
+                'leaveTypes' => $leaveTypes,
 
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy(
-                            'name'
-                        )
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy(
+                        'name'
+                    )
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
 
                 'filters' => [
-                    'search' =>
-                        $request->search,
+                    'search' => $request->search,
 
-                    'company_id' =>
-                        $request
-                            ->company_id,
+                    'company_id' => $request
+                        ->company_id,
                 ],
             ]
         );
@@ -108,19 +103,18 @@ class LeaveTypeController extends Controller
         return Inertia::render(
             'ERP/HRM/Leave/Types/Create',
             [
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            'status',
-                            'active'
-                        )
-                        ->orderBy(
-                            'name'
-                        )
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        'status',
+                        'active'
+                    )
+                    ->orderBy(
+                        'name'
+                    )
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
             ]
         );
     }
@@ -153,36 +147,34 @@ class LeaveTypeController extends Controller
         return Inertia::render(
             'ERP/HRM/Leave/Types/Edit',
             [
-                'leaveType' =>
-                    $leaveType,
+                'leaveType' => $leaveType,
 
-                'companies' =>
-                    Company::query()
-                        ->where(
-                            function (
-                                $query
-                            ) use (
-                                $leaveType
-                            ) {
-                                $query
-                                    ->where(
-                                        'status',
-                                        'active'
-                                    )
-                                    ->orWhere(
-                                        'id',
-                                        $leaveType
-                                            ->company_id
-                                    );
-                            }
-                        )
-                        ->orderBy(
-                            'name'
-                        )
-                        ->get([
-                            'id',
-                            'name',
-                        ]),
+                'companies' => Company::query()
+                    ->where(
+                        function (
+                            $query
+                        ) use (
+                            $leaveType
+                        ) {
+                            $query
+                                ->where(
+                                    'status',
+                                    'active'
+                                )
+                                ->orWhere(
+                                    'id',
+                                    $leaveType
+                                        ->company_id
+                                );
+                        }
+                    )
+                    ->orderBy(
+                        'name'
+                    )
+                    ->get([
+                        'id',
+                        'name',
+                    ]),
             ]
         );
     }
@@ -271,12 +263,11 @@ class LeaveTypeController extends Controller
                     'code'
                 )
                     ->where(
-                        fn ($query) =>
-                            $query->where(
-                                'company_id',
-                                $request
-                                    ->company_id
-                            )
+                        fn ($query) => $query->where(
+                            'company_id',
+                            $request
+                                ->company_id
+                        )
                     )
                     ->ignore(
                         $leaveType?->id

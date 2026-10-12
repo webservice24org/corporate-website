@@ -85,9 +85,4 @@ class CrmActivity extends Model
             'completed'
         );
     }
-
-
-
-
-    
 }

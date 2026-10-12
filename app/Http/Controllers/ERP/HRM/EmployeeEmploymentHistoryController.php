@@ -23,10 +23,9 @@ class EmployeeEmploymentHistoryController extends Controller
         return Inertia::render(
             'ERP/HRM/Employees/EmploymentHistory/Create',
             [
-                'employee' =>
-                    $this->employeeData(
-                        $employee
-                    ),
+                'employee' => $this->employeeData(
+                    $employee
+                ),
 
                 ...$this->organizationData(),
             ]
@@ -44,7 +43,7 @@ class EmployeeEmploymentHistoryController extends Controller
 
         $this->saveHistory(
             $employee,
-            new EmployeeEmploymentHistory(),
+            new EmployeeEmploymentHistory,
             $validated
         );
 
@@ -69,13 +68,11 @@ class EmployeeEmploymentHistoryController extends Controller
         return Inertia::render(
             'ERP/HRM/Employees/EmploymentHistory/Edit',
             [
-                'employee' =>
-                    $this->employeeData(
-                        $employee
-                    ),
+                'employee' => $this->employeeData(
+                    $employee
+                ),
 
-                'history' =>
-                    $history,
+                'history' => $history,
 
                 ...$this->organizationData(),
             ]
@@ -147,7 +144,7 @@ class EmployeeEmploymentHistoryController extends Controller
             'internal'
         ) {
             $company =
-                !empty(
+                ! empty(
                     $validated[
                         'company_id'
                     ]
@@ -160,7 +157,7 @@ class EmployeeEmploymentHistoryController extends Controller
                     : null;
 
             $branch =
-                !empty(
+                ! empty(
                     $validated[
                         'branch_id'
                     ]
@@ -173,7 +170,7 @@ class EmployeeEmploymentHistoryController extends Controller
                     : null;
 
             $department =
-                !empty(
+                ! empty(
                     $validated[
                         'department_id'
                     ]
@@ -186,7 +183,7 @@ class EmployeeEmploymentHistoryController extends Controller
                     : null;
 
             $designation =
-                !empty(
+                ! empty(
                     $validated[
                         'designation_id'
                     ]
@@ -201,39 +198,29 @@ class EmployeeEmploymentHistoryController extends Controller
             $history->fill([
                 ...$validated,
 
-                'employee_id' =>
-                    $employee->id,
+                'employee_id' => $employee->id,
 
-                'employer_name' =>
-                    $company?->name,
+                'employer_name' => $company?->name,
 
-                'branch_name' =>
-                    $branch?->name,
+                'branch_name' => $branch?->name,
 
-                'department_name' =>
-                    $department?->name,
+                'department_name' => $department?->name,
 
-                'designation_name' =>
-                    $designation?->name,
+                'designation_name' => $designation?->name,
             ]);
         } else {
             $history->fill([
                 ...$validated,
 
-                'employee_id' =>
-                    $employee->id,
+                'employee_id' => $employee->id,
 
-                'company_id' =>
-                    null,
+                'company_id' => null,
 
-                'branch_id' =>
-                    null,
+                'branch_id' => null,
 
-                'department_id' =>
-                    null,
+                'department_id' => null,
 
-                'designation_id' =>
-                    null,
+                'designation_id' => null,
             ]);
         }
 
@@ -247,16 +234,14 @@ class EmployeeEmploymentHistoryController extends Controller
                 )
                 ->when(
                     $history->exists,
-                    fn ($query) =>
-                        $query->where(
-                            'id',
-                            '!=',
-                            $history->id
-                        )
+                    fn ($query) => $query->where(
+                        'id',
+                        '!=',
+                        $history->id
+                    )
                 )
                 ->update([
-                    'is_current' =>
-                        false,
+                    'is_current' => false,
                 ]);
         }
 
@@ -309,11 +294,10 @@ class EmployeeEmploymentHistoryController extends Controller
                     'branches',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -325,11 +309,10 @@ class EmployeeEmploymentHistoryController extends Controller
                     'departments',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -341,11 +324,10 @@ class EmployeeEmploymentHistoryController extends Controller
                     'designations',
                     'id'
                 )->where(
-                    fn ($query) =>
-                        $query->where(
-                            'company_id',
-                            $companyId
-                        )
+                    fn ($query) => $query->where(
+                        'company_id',
+                        $companyId
+                    )
                 ),
             ],
 
@@ -427,52 +409,48 @@ class EmployeeEmploymentHistoryController extends Controller
     private function organizationData(): array
     {
         return [
-            'companies' =>
-                Company::query()
-                    ->orderByDesc(
-                        'is_default'
-                    )
-                    ->orderBy('name')
-                    ->get([
-                        'id',
-                        'name',
-                        'code',
-                    ]),
+            'companies' => Company::query()
+                ->orderByDesc(
+                    'is_default'
+                )
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'name',
+                    'code',
+                ]),
 
-            'branches' =>
-                Branch::query()
-                    ->orderBy('name')
-                    ->get([
-                        'id',
-                        'company_id',
-                        'name',
-                        'code',
-                    ]),
+            'branches' => Branch::query()
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'company_id',
+                    'name',
+                    'code',
+                ]),
 
-            'departments' =>
-                Department::query()
-                    ->orderBy('name')
-                    ->get([
-                        'id',
-                        'company_id',
-                        'branch_id',
-                        'name',
-                        'code',
-                    ]),
+            'departments' => Department::query()
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'company_id',
+                    'branch_id',
+                    'name',
+                    'code',
+                ]),
 
-            'designations' =>
-                Designation::query()
-                    ->orderBy(
-                        'sort_order'
-                    )
-                    ->orderBy('name')
-                    ->get([
-                        'id',
-                        'company_id',
-                        'department_id',
-                        'name',
-                        'code',
-                    ]),
+            'designations' => Designation::query()
+                ->orderBy(
+                    'sort_order'
+                )
+                ->orderBy('name')
+                ->get([
+                    'id',
+                    'company_id',
+                    'department_id',
+                    'name',
+                    'code',
+                ]),
         ];
     }
 

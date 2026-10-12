@@ -38,47 +38,33 @@ class AttendanceSetting extends Model
     protected function casts(): array
     {
         return [
-            'grace_minutes' =>
-                'integer',
+            'grace_minutes' => 'integer',
 
-            'early_leave_grace_minutes' =>
-                'integer',
+            'early_leave_grace_minutes' => 'integer',
 
-            'half_day_minutes' =>
-                'integer',
+            'half_day_minutes' => 'integer',
 
-            'minimum_full_day_minutes' =>
-                'integer',
+            'minimum_full_day_minutes' => 'integer',
 
-            'overtime_after_minutes' =>
-                'integer',
+            'overtime_after_minutes' => 'integer',
 
-            'duplicate_punch_window_seconds' =>
-                'integer',
+            'duplicate_punch_window_seconds' => 'integer',
 
-            'auto_pair_punches' =>
-                'boolean',
+            'auto_pair_punches' => 'boolean',
 
-            'allow_manual_attendance' =>
-                'boolean',
+            'allow_manual_attendance' => 'boolean',
 
-            'allow_multiple_checkins' =>
-                'boolean',
+            'allow_multiple_checkins' => 'boolean',
 
-            'mark_absent_automatically' =>
-                'boolean',
+            'mark_absent_automatically' => 'boolean',
 
-            'count_weekends_as_absent' =>
-                'boolean',
+            'count_weekends_as_absent' => 'boolean',
 
-            'count_holidays_as_absent' =>
-                'boolean',
+            'count_holidays_as_absent' => 'boolean',
 
-            'device_attendance_enabled' =>
-                'boolean',
+            'device_attendance_enabled' => 'boolean',
 
-            'is_active' =>
-                'boolean',
+            'is_active' => 'boolean',
         ];
     }
 

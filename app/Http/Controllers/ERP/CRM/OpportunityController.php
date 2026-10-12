@@ -27,7 +27,7 @@ class OpportunityController extends Controller
             'company_id' => ['nullable', 'integer', 'exists:companies,id'],
             'stage_id' => ['nullable', 'integer', 'exists:opportunity_stages,id'],
             'salesperson_user_id' => ['nullable', 'integer', 'exists:users,id'],
-            'party_type' => ['nullable', Rule::in(['customer','dealer','seller'])],
+            'party_type' => ['nullable', Rule::in(['customer', 'dealer', 'seller'])],
         ]);
 
         $opportunities = Opportunity::query()
@@ -40,35 +40,30 @@ class OpportunityController extends Controller
             ])
             ->when(
                 $filters['search'] ?? null,
-                fn ($query, $search) =>
-                    $query->where(function ($query) use ($search) {
-                        $query
-                            ->where('title', 'like', "%{$search}%")
-                            ->orWhere('opportunity_number', 'like', "%{$search}%");
-                    })
+                fn($query, $search) => $query->where(function ($query) use ($search) {
+                    $query
+                        ->where('title', 'like', "%{$search}%")
+                        ->orWhere('opportunity_number', 'like', "%{$search}%");
+                })
             )
             ->when(
                 $filters['company_id'] ?? null,
-                fn ($query, $companyId) =>
-                    $query->where('company_id', $companyId)
+                fn($query, $companyId) => $query->where('company_id', $companyId)
             )
             ->when(
                 $filters['stage_id'] ?? null,
-                fn ($query, $stageId) =>
-                    $query->where('opportunity_stage_id', $stageId)
+                fn($query, $stageId) => $query->where('opportunity_stage_id', $stageId)
             )
             ->when(
                 $filters['salesperson_user_id'] ?? null,
-                fn ($query, $userId) =>
-                    $query->where('salesperson_user_id', $userId)
+                fn($query, $userId) => $query->where('salesperson_user_id', $userId)
             )
             ->when(
                 $filters['party_type'] ?? null,
-                fn ($query, $partyType) =>
-                    $query->where(
-                        'party_type',
-                        $this->partyClass($partyType)
-                    )
+                fn($query, $partyType) => $query->where(
+                    'party_type',
+                    $this->partyClass($partyType)
+                )
             )
             ->latest()
             ->paginate(20)
@@ -76,13 +71,13 @@ class OpportunityController extends Controller
 
         return Inertia::render('ERP/CRM/Opportunities/Index', [
             'opportunities' => $opportunities,
-            'companies' => Company::query()->orderBy('name')->get(['id','name']),
+            'companies' => Company::query()->orderBy('name')->get(['id', 'name']),
             'stages' => OpportunityStage::query()
                 ->where('is_active', true)
                 ->orderBy('company_id')
                 ->orderBy('sort_order')
-                ->get(['id','company_id','name','code','probability','is_won','is_lost']),
-            'salespeople' => User::query()->orderBy('name')->get(['id','name','email']),
+                ->get(['id', 'company_id', 'name', 'code', 'probability', 'is_won', 'is_lost']),
+            'salespeople' => User::query()->orderBy('name')->get(['id', 'name', 'email']),
             'filters' => $filters,
         ]);
     }
@@ -195,21 +190,21 @@ class OpportunityController extends Controller
     private function validateOpportunity(Request $request): array
     {
         return $request->validate([
-            'company_id' => ['required','integer','exists:companies,id'],
-            'lead_id' => ['nullable','integer','exists:leads,id'],
-            'party_type' => ['required', Rule::in(['customer','dealer','seller'])],
-            'party_id' => ['required','integer'],
-            'opportunity_stage_id' => ['required','integer','exists:opportunity_stages,id'],
-            'salesperson_user_id' => ['nullable','integer','exists:users,id'],
-            'title' => ['required','string','max:255'],
-            'description' => ['nullable','string','max:5000'],
-            'expected_value' => ['required','numeric','min:0'],
-            'currency' => ['required','string','max:10'],
-            'probability' => ['nullable','integer','min:0','max:100'],
-            'expected_close_date' => ['nullable','date'],
-            'lost_reason' => ['nullable','string','max:3000'],
-            'is_active' => ['required','boolean'],
-            'notes' => ['nullable','string','max:5000'],
+            'company_id' => ['required', 'integer', 'exists:companies,id'],
+            'lead_id' => ['nullable', 'integer', 'exists:leads,id'],
+            'party_type' => ['required', Rule::in(['customer', 'dealer', 'seller'])],
+            'party_id' => ['required', 'integer'],
+            'opportunity_stage_id' => ['required', 'integer', 'exists:opportunity_stages,id'],
+            'salesperson_user_id' => ['nullable', 'integer', 'exists:users,id'],
+            'title' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:5000'],
+            'expected_value' => ['required', 'numeric', 'min:0'],
+            'currency' => ['required', 'string', 'max:10'],
+            'probability' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'expected_close_date' => ['nullable', 'date'],
+            'lost_reason' => ['nullable', 'string', 'max:3000'],
+            'is_active' => ['required', 'boolean'],
+            'notes' => ['nullable', 'string', 'max:5000'],
         ]);
     }
 
@@ -220,38 +215,49 @@ class OpportunityController extends Controller
         $leadId = $request->integer('lead_id') ?: $opportunity?->lead_id;
 
         return [
-            'companies' => Company::query()->orderBy('name')->get(['id','name']),
+            'companies' => Company::query()->orderBy('name')->get(['id', 'name']),
             'leads' => Lead::query()
                 ->orderByDesc('id')
                 ->limit(500)
                 ->get([
-                    'id','company_id','lead_number','contact_name',
-                    'company_name','expected_value','currency',
-                    'converted_to_type','converted_to_id',
+                    'id',
+                    'company_id',
+                    'lead_number',
+                    'contact_name',
+                    'company_name',
+                    'expected_value',
+                    'currency',
+                    'converted_to_type',
+                    'converted_to_id',
                 ]),
             'customers' => Customer::query()
                 ->where('is_active', true)
                 ->orderBy('name')
-                ->get(['id','company_id','customer_code','name','business_name']),
+                ->get(['id', 'company_id', 'customer_code', 'name', 'business_name']),
             'dealers' => Dealer::query()
                 ->where('is_active', true)
                 ->orderBy('business_name')
-                ->get(['id','company_id','dealer_code','business_name']),
+                ->get(['id', 'company_id', 'dealer_code', 'business_name']),
             'sellers' => Seller::query()
                 ->where('is_active', true)
                 ->orderBy('business_name')
-                ->get(['id','company_id','seller_code','business_name']),
+                ->get(['id', 'company_id', 'seller_code', 'business_name']),
             'stages' => OpportunityStage::query()
                 ->where('is_active', true)
                 ->orderBy('company_id')
                 ->orderBy('sort_order')
                 ->get([
-                    'id','company_id','name','code','probability',
-                    'is_won','is_lost',
+                    'id',
+                    'company_id',
+                    'name',
+                    'code',
+                    'probability',
+                    'is_won',
+                    'is_lost',
                 ]),
             'salespeople' => User::query()
                 ->orderBy('name')
-                ->get(['id','name','email']),
+                ->get(['id', 'name', 'email']),
             'selectedLeadId' => $leadId,
         ];
     }
@@ -294,6 +300,9 @@ class OpportunityController extends Controller
             'customer' => Customer::query(),
             'dealer' => Dealer::query(),
             'seller' => Seller::query(),
+            default => throw ValidationException::withMessages([
+                'party_type' => 'Invalid commercial party type.',
+            ]),
         };
     }
 
@@ -303,6 +312,9 @@ class OpportunityController extends Controller
             'customer' => Customer::class,
             'dealer' => Dealer::class,
             'seller' => Seller::class,
+            default => throw ValidationException::withMessages([
+                'party_type' => 'Invalid commercial party type.',
+            ]),
         };
     }
 
@@ -312,11 +324,11 @@ class OpportunityController extends Controller
     ): array {
         return [
             'won_at' => $stage->is_won
-                ? ($opportunity?->won_at ?? now())
+                ? (($opportunity !== null ? $opportunity->won_at : null) ?? now())
                 : null,
 
             'lost_at' => $stage->is_lost
-                ? ($opportunity?->lost_at ?? now())
+                ? (($opportunity !== null ? $opportunity->lost_at : null) ?? now())
                 : null,
         ];
     }
