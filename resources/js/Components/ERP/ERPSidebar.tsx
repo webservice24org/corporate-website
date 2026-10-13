@@ -231,6 +231,22 @@ export default function ERPSidebar({
     const inventoryOpen = inventoryActive || inventoryExpanded;
 
 
+    // --- Purchase ---
+    const canViewPurchase =
+        can("erp.purchase-reports.view") ||
+        can("erp.suppliers.view") ||
+        can("erp.purchase-requisitions.view") ||
+        can("erp.purchase-rfqs.view") ||
+        can("erp.purchase-orders.view") ||
+        can("erp.goods-receipts.view") ||
+        can("erp.purchase-returns.view") ||
+        can("erp.supplier-bills.view") ||
+        can("erp.supplier-payables.view");
+
+    const purchaseActive = url.startsWith("/erp/purchase/");
+    const [purchaseExpanded, setPurchaseExpanded] = useState(false);
+    const purchaseOpen = purchaseActive || purchaseExpanded;
+
     // --- ERP Settings State & Checks ---
     const canViewGeographySub =
         can("erp.divisions.view") ||
@@ -984,7 +1000,59 @@ export default function ERPSidebar({
                         </div>
                     )}
 
-                    <FutureSidebarItem label="Purchasing" icon={ShoppingCart} />
+                    {canViewPurchase && (
+                        <div className="space-y-1">
+                            <button
+                                type="button"
+                                aria-expanded={purchaseOpen}
+                                aria-controls="erp-purchase-submenu"
+                                onClick={() => setPurchaseExpanded((open) => !open)}
+                                className={`
+                                    flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition
+                                    ${purchaseActive ? "bg-white/10 text-white" : "text-slate-300 hover:bg-white/5 hover:text-white"}
+                                `}
+                            >
+                                <ShoppingCart className="size-4 shrink-0" />
+                                <span className="flex-1">Purchase</span>
+                                <ChevronDown className={`size-4 shrink-0 transition-transform duration-200 ${purchaseOpen ? "rotate-180" : ""}`} />
+                            </button>
+
+                            {purchaseOpen && (
+                                <div id="erp-purchase-submenu" className="ml-4 space-y-1 border-l border-white/10 pl-3">
+                                    {can("erp.purchase-reports.view") && (
+                                        <SidebarLink href="/erp/purchase/dashboard" label="Dashboard" icon={LayoutDashboard} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.suppliers.view") && (
+                                        <SidebarLink href="/erp/purchase/suppliers" label="Suppliers" icon={ContactRound} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.purchase-requisitions.view") && (
+                                        <SidebarLink href="/erp/purchase/requisitions" label="Purchase Requisitions" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.purchase-rfqs.view") && (
+                                        <SidebarLink href="/erp/purchase/rfqs" label="RFQs & Supplier Quotations" icon={ShoppingCart} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.purchase-orders.view") && (
+                                        <SidebarLink href="/erp/purchase/orders" label="Purchase Orders" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.goods-receipts.view") && (
+                                        <SidebarLink href="/erp/purchase/receipts" label="Goods Receiving (GRN)" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.purchase-returns.view") && (
+                                        <SidebarLink href="/erp/purchase/returns" label="Purchase Returns" icon={ArrowLeftRight} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.supplier-bills.view") && (
+                                        <SidebarLink href="/erp/purchase/bills" label="Supplier Bills" icon={FileText} currentUrl={url} excludePrefix="/erp/purchase/bills/payables" onClick={closeMobile} />
+                                    )}
+                                    {can("erp.supplier-payables.view") && (
+                                        <SidebarLink href="/erp/purchase/bills/payables" label="Supplier Payables" icon={BanknoteCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.purchase-reports.view") && (
+                                        <SidebarLink href="/erp/purchase/reports" label="Reports" icon={FileBarChart} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
                     <FutureSidebarItem label="Sales" icon={ShoppingBag} />
 
                     {/* Operations */}
@@ -1195,6 +1263,7 @@ type SidebarLinkProps = {
     icon: LucideIcon;
     currentUrl: string;
     exact?: boolean;
+    excludePrefix?: string;
     onClick?: () => void;
 };
 
@@ -1204,11 +1273,13 @@ function SidebarLink({
     icon: Icon,
     currentUrl,
     exact = false,
+    excludePrefix,
     onClick,
 }: SidebarLinkProps) {
-    const isActive = exact
+    const matchesPath = exact
         ? currentUrl === href
         : currentUrl.startsWith(href);
+    const isActive = matchesPath && !(excludePrefix && currentUrl.startsWith(excludePrefix));
 
     return (
         <Link

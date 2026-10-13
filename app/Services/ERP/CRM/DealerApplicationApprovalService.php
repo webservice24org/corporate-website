@@ -50,7 +50,7 @@ class DealerApplicationApprovalService
                 }
 
                 $depot = $application->depot;
-                if (!$depot instanceof Depot || !$depot->is_active) {
+                if (! $depot instanceof Depot || ! $depot->is_active) {
                     throw ValidationException::withMessages([
                         'depot' => 'The selected Depot is not active.',
                     ]);
@@ -58,8 +58,8 @@ class DealerApplicationApprovalService
 
                 $upazila = $application->upazila;
                 if (
-                    !$upazila instanceof Upazila ||
-                    !$upazila->district ||
+                    ! $upazila instanceof Upazila ||
+                    ! $upazila->district ||
                     $upazila->district_id !== $depot->district_id
                 ) {
                     throw ValidationException::withMessages([
@@ -84,13 +84,13 @@ class DealerApplicationApprovalService
                                 $type
                             );
 
-                    if (!$document) {
+                    if (! $document) {
                         throw ValidationException::withMessages([
                             'documents' => "Required document '{$type}' is missing.",
                         ]);
                     }
 
-                    if (!$document->getAttribute('verified_at')) {
+                    if (! $document->getAttribute('verified_at')) {
                         throw ValidationException::withMessages([
                             'documents' => "Required document '{$type}' must be verified before approval.",
                         ]);

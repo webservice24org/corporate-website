@@ -128,7 +128,7 @@ class OpeningStockController extends Controller
         );
 
         if (
-            !in_array(
+            ! in_array(
                 $perPage,
                 [10, 15, 25, 50, 100],
                 true
@@ -265,7 +265,7 @@ class OpeningStockController extends Controller
 
             'poster:id,name',
 
-            'items' => fn($query) => $query->orderBy('id'),
+            'items' => fn ($query) => $query->orderBy('id'),
 
             'items.product:id,company_id,name,sku',
 
@@ -288,7 +288,7 @@ class OpeningStockController extends Controller
         );
 
         $openingStock->load([
-            'items' => fn($query) => $query->orderBy('id'),
+            'items' => fn ($query) => $query->orderBy('id'),
 
             'items.product:id,company_id,name,sku',
 
@@ -456,7 +456,7 @@ class OpeningStockController extends Controller
             )
             ->exists();
 
-        if (!$valid) {
+        if (! $valid) {
             throw ValidationException::withMessages([
                 'warehouse_id' => 'The selected warehouse does not belong to the selected company.',
             ]);
@@ -484,8 +484,8 @@ class OpeningStockController extends Controller
 
             $variantId =
                 isset(
-                $item['product_variant_id']
-            ) &&
+                    $item['product_variant_id']
+                ) &&
                 $item['product_variant_id'] !== ''
                 ? (int) $item[
                     'product_variant_id'
@@ -503,7 +503,7 @@ class OpeningStockController extends Controller
                 )
                 ->exists();
 
-            if (!$productValid) {
+            if (! $productValid) {
                 throw ValidationException::withMessages([
                     "items.{$index}.product_id" => 'The selected product does not belong to the selected company.',
                 ]);
@@ -525,7 +525,7 @@ class OpeningStockController extends Controller
                         )
                         ->exists();
 
-                if (!$variantValid) {
+                if (! $variantValid) {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_variant_id" => 'The selected variant does not belong to the selected product.',
                     ]);
@@ -542,8 +542,8 @@ class OpeningStockController extends Controller
              * 5:12 = Product 5, Variant 12
              */
             $duplicateKey =
-                $productId .
-                ':' .
+                $productId.
+                ':'.
                 ($variantId ?? 0);
 
             if (isset($seen[$duplicateKey])) {
@@ -590,8 +590,8 @@ class OpeningStockController extends Controller
 
             $variantId =
                 isset(
-                $item['product_variant_id']
-            ) &&
+                    $item['product_variant_id']
+                ) &&
                 $item['product_variant_id'] !== ''
                 ? (int) $item[
                     'product_variant_id'
@@ -648,7 +648,7 @@ class OpeningStockController extends Controller
     private function ensureDraft(
         OpeningStock $openingStock
     ): void {
-        if (!$openingStock->isDraft()) {
+        if (! $openingStock->isDraft()) {
             abort(
                 422,
                 'Posted opening stock documents cannot be modified.'
@@ -729,7 +729,7 @@ class OpeningStockController extends Controller
              */
             'products' => Product::query()
                 ->with([
-                    'variants' => fn($query) => $query
+                    'variants' => fn ($query) => $query
                         ->select([
                             'id',
                             'product_id',
@@ -807,7 +807,7 @@ class OpeningStockController extends Controller
                 'You are not authorized to post opening stock for this company.'
             );
 
-            if (!$document->canBePosted()) {
+            if (! $document->canBePosted()) {
                 throw ValidationException::withMessages([
                     'status' => 'Only draft opening stock documents can be posted.',
                 ]);
@@ -823,7 +823,7 @@ class OpeningStockController extends Controller
             $warehouse = $document->warehouse;
 
             if (
-                !$warehouse ||
+                ! $warehouse ||
                 (int) $warehouse->company_id !==
                 (int) $document->company_id
             ) {
@@ -832,7 +832,7 @@ class OpeningStockController extends Controller
                 ]);
             }
 
-            if (!$warehouse->is_active) {
+            if (! $warehouse->is_active) {
                 throw ValidationException::withMessages([
                     'warehouse_id' => 'Cannot post opening stock to an inactive warehouse.',
                 ]);
@@ -856,7 +856,7 @@ class OpeningStockController extends Controller
                 $variant = $item->variant;
 
                 if (
-                    !$product ||
+                    ! $product ||
                     (int) $product->company_id !==
                     (int) $document->company_id
                 ) {
@@ -866,17 +866,17 @@ class OpeningStockController extends Controller
                 }
 
                 if (
-                    ($item->product_variant_id !== null && !$variant) ||
+                    ($item->product_variant_id !== null && ! $variant) ||
                     ($variant && (int) $variant->product_id !== (int) $product->getKey()) ||
-                    ($product->has_variants && !$variant) ||
-                    (!$product->has_variants && $variant)
+                    ($product->has_variants && ! $variant) ||
+                    (! $product->has_variants && $variant)
                 ) {
                     throw ValidationException::withMessages([
                         "items.{$index}.product_variant_id" => 'Select an existing variant belonging to this product when variants are required; products without variants must not have one.',
                     ]);
                 }
 
-                $key = $item->product_id . ':' .
+                $key = $item->product_id.':'.
                     ($item->product_variant_id ?? 0);
 
                 if (isset($seen[$key])) {

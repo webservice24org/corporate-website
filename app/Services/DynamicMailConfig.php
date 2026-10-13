@@ -14,7 +14,7 @@ class DynamicMailConfig
             ->latest()
             ->first();
 
-        if (!$settings) {
+        if (! $settings) {
             return null;
         }
 

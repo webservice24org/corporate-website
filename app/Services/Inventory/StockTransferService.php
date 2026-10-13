@@ -9,15 +9,13 @@ use App\Models\StockMovement;
 use App\Models\StockTransfer;
 use App\Models\StockTransferItem;
 use App\Models\Warehouse;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class StockTransferService
 {
-    public function __construct(private readonly InventoryService $inventory)
-    {
-    }
+    public function __construct(private readonly InventoryService $inventory) {}
 
     /**
      * Validate a transfer before saving a draft. No inventory is changed.
@@ -25,7 +23,7 @@ class StockTransferService
      */
     public function validateDraft(StockTransfer $transfer): void
     {
-        if (!$transfer->isDraft()) {
+        if (! $transfer->isDraft()) {
             $this->fail('status', 'Only draft stock transfers can be changed.');
         }
 
@@ -42,7 +40,7 @@ class StockTransferService
         $seen = [];
         foreach ($items as $index => $item) {
             $this->validateItem($transfer, $item, $index);
-            $key = $item->product_id . ':' . ($item->product_variant_id ?? 0);
+            $key = $item->product_id.':'.($item->product_variant_id ?? 0);
             if (isset($seen[$key])) {
                 $this->fail("items.$index.product_id", 'Duplicate product and variant in this transfer.');
             }
@@ -62,7 +60,7 @@ class StockTransferService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            if (!$locked->isDraft()) {
+            if (! $locked->isDraft()) {
                 $this->fail('status', 'This transfer has already been posted.');
             }
 
@@ -91,7 +89,7 @@ class StockTransferService
 
             foreach ($items as $index => $item) {
                 [$product, $variant, $quantity] = $this->validateItem($locked, $item, $index);
-                $key = $product->getKey() . ':' . ($variant?->getKey() ?? 0);
+                $key = $product->getKey().':'.($variant?->getKey() ?? 0);
                 if (isset($seen[$key])) {
                     $this->fail("items.$index.product_id", 'Duplicate product and variant in this transfer.');
                 }
@@ -172,10 +170,10 @@ class StockTransferService
         ?Warehouse $source,
         ?Warehouse $destination,
     ): void {
-        if (!$source) {
+        if (! $source) {
             $this->fail('source_warehouse_id', 'Source warehouse does not exist.');
         }
-        if (!$destination) {
+        if (! $destination) {
             $this->fail('destination_warehouse_id', 'Destination warehouse does not exist.');
         }
         if ($source->getKey() === $destination->getKey()) {
@@ -187,7 +185,7 @@ class StockTransferService
         ) {
             $this->fail('company_id', 'Both warehouses must belong to the transfer company.');
         }
-        if (!$source->is_active || !$destination->is_active || $source->trashed() || $destination->trashed()) {
+        if (! $source->is_active || ! $destination->is_active || $source->trashed() || $destination->trashed()) {
             $this->fail('source_warehouse_id', 'Both warehouses must be active and not deleted.');
         }
     }
@@ -196,14 +194,14 @@ class StockTransferService
     private function validateItem(StockTransfer $transfer, StockTransferItem $item, int $index): array
     {
         $product = Product::query()->find($item->product_id);
-        if (!$product || (int) $product->company_id !== (int) $transfer->company_id || !$product->isStockItem()) {
+        if (! $product || (int) $product->company_id !== (int) $transfer->company_id || ! $product->isStockItem()) {
             $this->fail("items.$index.product_id", 'Select a stock-tracked product belonging to the transfer company.');
         }
 
         $variant = null;
         if ($item->product_variant_id !== null) {
             $variant = ProductVariant::query()->find($item->product_variant_id);
-            if (!$variant || (int) $variant->product_id !== (int) $product->getKey()) {
+            if (! $variant || (int) $variant->product_id !== (int) $product->getKey()) {
                 $this->fail("items.$index.product_variant_id", 'Variant does not belong to the selected product.');
             }
         }
@@ -215,7 +213,7 @@ class StockTransferService
         }
 
         $raw = (string) $item->quantity;
-        if (!preg_match('/^\d+(?:\.\d{1,4})?$/', $raw) || bccomp($raw, '0', 4) <= 0) {
+        if (! preg_match('/^\d+(?:\.\d{1,4})?$/', $raw) || bccomp($raw, '0', 4) <= 0) {
             $this->fail("items.$index.quantity", 'Quantity must be positive with at most four decimal places.');
         }
 

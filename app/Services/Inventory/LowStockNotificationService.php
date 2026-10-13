@@ -21,7 +21,7 @@ final class LowStockNotificationService
         InventoryLowStockAlert $alert,
         string $event
     ): int {
-        if (!in_array($event, ['created', 'reopened'], true)) {
+        if (! in_array($event, ['created', 'reopened'], true)) {
             throw new InvalidArgumentException(
                 'Unsupported low-stock notification event.'
             );
@@ -52,7 +52,7 @@ final class LowStockNotificationService
             ->cursor();
 
         foreach ($users as $user) {
-            if (!$this->companyAccess->canView($user, $companyId)) {
+            if (! $this->companyAccess->canView($user, $companyId)) {
                 continue;
             }
 

@@ -23,7 +23,7 @@ final class ScanLowStockAlerts extends Command
         if (
             $companyOption !== null
             && (
-                !ctype_digit($companyOption)
+                ! ctype_digit($companyOption)
                 || (int) $companyOption <= 0
             )
         ) {
@@ -84,6 +84,7 @@ final class ScanLowStockAlerts extends Command
 
         if ($totals['companies'] === 0) {
             $this->warn('No matching active companies found.');
+
             return $companyOption !== null ? self::FAILURE : self::SUCCESS;
         }
 

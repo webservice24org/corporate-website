@@ -354,7 +354,6 @@ Route::prefix('erp/')->name('erp.')->middleware(['auth'])->group(function () {
     Route::post('notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
     Route::get('notifications/unread-count', [NotificationController::class, 'unreadCount'])->name('notifications.unread-count');
 
-
     /*
     |--------------------------------------------------------------------------
     | Depot Management System
@@ -396,7 +395,6 @@ Route::prefix('erp/')->name('erp.')->middleware(['auth'])->group(function () {
     Route::get('geography/upazilas/{upazila}/edit', [UpazilaController::class, 'edit'])->middleware('can:erp.upazilas.edit')->name('upazilas.edit');
     Route::put('geography/upazilas/{upazila}', [UpazilaController::class, 'update'])->middleware('can:erp.upazilas.edit')->name('upazilas.update');
     Route::delete('geography/upazilas/{upazila}', [UpazilaController::class, 'destroy'])->middleware('can:erp.upazilas.delete')->name('upazilas.destroy');
-
 
     Route::get('crm/dealers', [DealerController::class, 'index'])->middleware('can:erp.dealers.view')->name('dealers.index');
     Route::get('crm/dealers/{dealer}', [DealerController::class, 'show'])->middleware('can:erp.dealers.view')->name('dealers.show');
@@ -598,5 +596,7 @@ Route::prefix('erp/')->name('erp.')->middleware(['auth'])->group(function () {
         Route::delete('/{openingStock}', [OpeningStockController::class, 'destroy'])->middleware('can:erp.opening-stocks.delete')->name('destroy');
         Route::post('/{openingStock}/post', [OpeningStockController::class, 'post'])->middleware('can:erp.opening-stocks.post')->name('post');
     });
+
+    require __DIR__.'/purchase.php';
 
 });

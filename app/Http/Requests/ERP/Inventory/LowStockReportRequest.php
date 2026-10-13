@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Requests\ERP\Inventory;
 
 use App\Models\Company;
+use App\Models\Product;
+use App\Models\Warehouse;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
@@ -84,7 +86,7 @@ class LowStockReportRequest extends FormRequest
             return Company::query()
                 ->pluck('id')
                 ->map(
-                    fn($id): int => (int) $id
+                    fn ($id): int => (int) $id
                 )
                 ->all();
         }
@@ -92,7 +94,7 @@ class LowStockReportRequest extends FormRequest
         return $user->employee()
             ->pluck('company_id')
             ->map(
-                fn($id): int => (int) $id
+                fn ($id): int => (int) $id
             )
             ->unique()
             ->values()
@@ -121,7 +123,7 @@ class LowStockReportRequest extends FormRequest
         if ($requestedId !== null) {
             $companyId = (int) $requestedId;
 
-            if (!in_array($companyId, $allowedIds, true)) {
+            if (! in_array($companyId, $allowedIds, true)) {
                 abort(
                     403,
                     'You cannot access inventory for this company.'
@@ -146,7 +148,7 @@ class LowStockReportRequest extends FormRequest
 
         if (
             isset($data['warehouse_id']) &&
-            !\App\Models\Warehouse::query()
+            ! Warehouse::query()
                 ->where('company_id', $companyId)
                 ->where('is_active', true)
                 ->whereKey((int) $data['warehouse_id'])
@@ -158,7 +160,7 @@ class LowStockReportRequest extends FormRequest
 
         if (
             isset($data['product_id']) &&
-            !\App\Models\Product::query()
+            ! Product::query()
                 ->where('company_id', $companyId)
                 ->where('is_active', true)
                 ->where('product_type', 'physical')
@@ -172,7 +174,7 @@ class LowStockReportRequest extends FormRequest
 
         if (
             isset($data['category_id']) &&
-            !\App\Models\Product::query()
+            ! Product::query()
                 ->where('company_id', $companyId)
                 ->where('product_category_id', (int) $data['category_id'])
                 ->exists()

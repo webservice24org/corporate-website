@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class InventoryLowStockAlert extends Model
 {
     public const STATUS_ACTIVE = 'active';
+
     public const STATUS_RESOLVED = 'resolved';
 
     protected $fillable = [

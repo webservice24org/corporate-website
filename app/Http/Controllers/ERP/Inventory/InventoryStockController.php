@@ -157,23 +157,23 @@ class InventoryStockController extends Controller
         $query
             ->when(
                 $companyId,
-                fn(Builder $query) => $query->where(
+                fn (Builder $query) => $query->where(
                     'company_id',
                     $companyId
                 )
             )
             ->when(
                 $warehouseId,
-                fn(Builder $query) => $query->where(
+                fn (Builder $query) => $query->where(
                     'warehouse_id',
                     $warehouseId
                 )
             )
             ->when(
                 $categoryId,
-                fn(Builder $query) => $query->whereHas(
+                fn (Builder $query) => $query->whereHas(
                     'product',
-                    fn(Builder $productQuery) => $productQuery->where(
+                    fn (Builder $productQuery) => $productQuery->where(
                         'product_category_id',
                         $categoryId
                     )
@@ -181,9 +181,9 @@ class InventoryStockController extends Controller
             )
             ->when(
                 $brandId,
-                fn(Builder $query) => $query->whereHas(
+                fn (Builder $query) => $query->whereHas(
                     'product',
-                    fn(Builder $productQuery) => $productQuery->where(
+                    fn (Builder $productQuery) => $productQuery->where(
                         'brand_id',
                         $brandId
                     )
@@ -275,7 +275,7 @@ class InventoryStockController extends Controller
         Builder $query,
         ?string $status
     ): void {
-        if (!$status) {
+        if (! $status) {
             return;
         }
 
@@ -307,12 +307,12 @@ class InventoryStockController extends Controller
                 ->whereHas(
                     'product',
                     function (Builder $productQuery) {
-                            /*
-                             * The threshold comparison itself
-                             * is applied through a correlated
-                             * product column below.
-                             */
-                        }
+                        /*
+                         * The threshold comparison itself
+                         * is applied through a correlated
+                         * product column below.
+                         */
+                    }
                 )
                 ->whereRaw(
                     'inventory_balances.quantity_on_hand <= (
@@ -328,7 +328,7 @@ class InventoryStockController extends Controller
     }
 
     /**
-     * @param Builder<InventoryBalance> $query
+     * @param  Builder<InventoryBalance>  $query
      * @return array<string, int|string>
      */
     private function summary(

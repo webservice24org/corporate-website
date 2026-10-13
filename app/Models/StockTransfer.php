@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class StockTransfer extends Model
 {
     public const STATUS_DRAFT = 'draft';
+
     public const STATUS_POSTED = 'posted';
 
     protected $fillable = [

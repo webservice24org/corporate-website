@@ -7,11 +7,11 @@ use App\Models\AttendanceHoliday;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSetting;
 use App\Models\AttendanceShift;
-use App\Models\LeaveType;
 use App\Models\Company;
 use App\Models\Employee;
 use App\Models\EmployeeLeaveRequest;
 use App\Models\EmployeeShiftAssignment;
+use App\Models\LeaveType;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -217,8 +217,8 @@ class AttendanceDayFinalizer
                 ->first();
 
         if (
-            !$assignment ||
-            !$assignment->shift
+            ! $assignment ||
+            ! $assignment->shift
         ) {
             $summary[
                 'no_shift_skipped'
@@ -229,7 +229,7 @@ class AttendanceDayFinalizer
 
         $shift = $assignment->shift;
 
-        if (!$shift instanceof AttendanceShift) {
+        if (! $shift instanceof AttendanceShift) {
             $summary['no_shift_skipped']++;
 
             return;
@@ -291,16 +291,16 @@ class AttendanceDayFinalizer
 
         $scheduledStartLocal =
             CarbonImmutable::parse(
-                $attendanceDate .
-                ' ' .
+                $attendanceDate.
+                ' '.
                 $shift->start_time,
                 $timezone
             );
 
         $scheduledEndLocal =
             CarbonImmutable::parse(
-                $attendanceDate .
-                ' ' .
+                $attendanceDate.
+                ' '.
                 $shift->end_time,
                 $timezone
             );
@@ -422,7 +422,7 @@ class AttendanceDayFinalizer
             $summary[
                 'off_day_created'
             ]++;
-        } elseif (!$workingDay) {
+        } elseif (! $workingDay) {
             $attendanceStatus =
                 'off_day';
 
@@ -460,7 +460,7 @@ class AttendanceDayFinalizer
             'finalization_reason' => $holiday
                 ? 'holiday'
                 : (
-                    !$workingDay
+                    ! $workingDay
                     ? 'weekly_off'
                     : (
                         $approvedLeave
@@ -643,7 +643,7 @@ class AttendanceDayFinalizer
         }
 
         if (
-            !is_array(
+            ! is_array(
                 $workingDays
             )
         ) {
@@ -655,7 +655,7 @@ class AttendanceDayFinalizer
                 $workingDays
             )
                 ->map(
-                    fn($day) => strtolower(
+                    fn ($day) => strtolower(
                         trim(
                             (string) $day
                         )
@@ -687,7 +687,7 @@ class AttendanceDayFinalizer
         }
 
         $isoDay =
-            (string) 
+            (string)
             $date->dayOfWeekIso;
 
         if (

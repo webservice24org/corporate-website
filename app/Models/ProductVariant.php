@@ -55,7 +55,6 @@ class ProductVariant extends Model
         );
     }
 
-
     public function inventoryReorderSettings(): HasMany
     {
         return $this->hasMany(
@@ -63,6 +62,4 @@ class ProductVariant extends Model
             'product_variant_id'
         );
     }
-
-
 }

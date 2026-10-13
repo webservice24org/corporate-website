@@ -80,7 +80,7 @@ class LowStockServiceTest extends TestCase
         string $reorder,
         string $expected
     ): void {
-        $service = new LowStockService();
+        $service = new LowStockService;
 
         $this->assertSame(
             $expected,
@@ -94,7 +94,7 @@ class LowStockServiceTest extends TestCase
 
     public function test_suggested_reorder_quantity(): void
     {
-        $service = new LowStockService();
+        $service = new LowStockService;
 
         $this->assertSame(
             '8.0000',

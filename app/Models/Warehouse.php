@@ -100,13 +100,10 @@ class Warehouse extends Model
         );
     }
 
-
     public function inventoryReorderSettings(): HasMany
     {
         return $this->hasMany(
             InventoryReorderSetting::class
         );
     }
-
-
 }

@@ -18,7 +18,7 @@ function lowStockSecurityFixture(string $label = 'A'): array
 {
     $company = Company::create([
         'name' => "Low Stock Company {$label}",
-        'code' => 'LS-' . Str::upper(Str::random(12)),
+        'code' => 'LS-'.Str::upper(Str::random(12)),
         'status' => 'active',
     ]);
 
@@ -34,7 +34,7 @@ function lowStockSecurityFixture(string $label = 'A'): array
 
     $warehouse = Warehouse::create([
         'company_id' => $company->id,
-        'code' => 'LSW-' . Str::upper(Str::random(12)),
+        'code' => 'LSW-'.Str::upper(Str::random(12)),
         'name' => "Low Stock Warehouse {$label}",
         'is_active' => true,
     ]);
@@ -76,7 +76,7 @@ function lowStockSecurityUser(?Company $company = null, array $permissions = [],
         Employee::create([
             'user_id' => $user->id,
             'company_id' => $company->id,
-            'employee_number' => 'LSE-' . Str::upper(Str::random(12)),
+            'employee_number' => 'LSE-'.Str::upper(Str::random(12)),
             'first_name' => 'Low',
             'last_name' => 'Stock',
             'joining_date' => now()->toDateString(),

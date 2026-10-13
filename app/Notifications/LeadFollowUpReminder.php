@@ -13,8 +13,7 @@ class LeadFollowUpReminder extends Notification
 
     public function __construct(
         public Lead $lead
-    ) {
-    }
+    ) {}
 
     public function via(
         object $notifiable

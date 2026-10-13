@@ -11,8 +11,7 @@ class LeaveAttendanceReconciler
 {
     public function __construct(
         private readonly AttendanceDayFinalizer $finalizer
-    ) {
-    }
+    ) {}
 
     public function reconcile(
         EmployeeLeaveRequest $request
@@ -56,7 +55,7 @@ class LeaveAttendanceReconciler
                     )
                     ->first();
 
-            if (!$record) {
+            if (! $record) {
                 continue;
             }
 
@@ -84,7 +83,7 @@ class LeaveAttendanceReconciler
 
             $details = $record->getAttribute('calculation_details');
 
-            if (!is_array($details)) {
+            if (! is_array($details)) {
                 $details = [];
             }
 
@@ -95,15 +94,15 @@ class LeaveAttendanceReconciler
 
                 'leave_type_name' => $request
                     ->leaveType
-                        ?->getAttribute('name'),
+                    ?->getAttribute('name'),
 
                 'leave_type_code' => $request
                     ->leaveType
-                        ?->getAttribute('code'),
+                    ?->getAttribute('code'),
 
                 'is_paid' => $request
                     ->leaveType
-                        ?->getAttribute('is_paid'),
+                    ?->getAttribute('is_paid'),
 
                 'duration_type' => $request
                     ->duration_type,
@@ -195,7 +194,7 @@ class LeaveAttendanceReconciler
                     )
                     ->first();
 
-            if (!$record) {
+            if (! $record) {
                 continue;
             }
 
@@ -234,7 +233,7 @@ class LeaveAttendanceReconciler
 
             $details = $record->getAttribute('calculation_details');
 
-            if (!is_array($details)) {
+            if (! is_array($details)) {
                 $details = [];
             }
 
@@ -243,7 +242,7 @@ class LeaveAttendanceReconciler
                 ?? null;
 
             if (
-                !is_array(
+                ! is_array(
                     $leaveDetails
                 )
             ) {

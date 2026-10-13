@@ -2,13 +2,13 @@
 
 namespace App\Services\Attendance;
 
+use App\Models\AttendanceDevice;
 use App\Models\AttendanceHoliday;
 use App\Models\AttendanceRawPunch;
 use App\Models\AttendanceRecord;
 use App\Models\AttendanceSetting;
 use App\Models\AttendanceShift;
 use App\Models\Company;
-use App\Models\AttendanceDevice;
 use App\Models\Employee;
 use App\Models\EmployeeShiftAssignment;
 use Carbon\CarbonImmutable;
@@ -79,8 +79,8 @@ class AttendanceProcessor
 
             foreach ($dates as $date) {
                 $key =
-                    $punch->employee_id .
-                    '|' .
+                    $punch->employee_id.
+                    '|'.
                     $date;
 
                 $days[$key] = [
@@ -134,7 +134,7 @@ class AttendanceProcessor
         AttendanceRecord $record
     ): ?AttendanceRecord {
         $attendanceDate =
-            (string) 
+            (string)
             $record->getRawOriginal(
                 'attendance_date'
             );
@@ -203,15 +203,15 @@ class AttendanceProcessor
                 ->first();
 
         if (
-            !$assignment ||
-            !$assignment->shift
+            ! $assignment ||
+            ! $assignment->shift
         ) {
             return null;
         }
 
         $shift = $assignment->shift;
 
-        if (!$shift instanceof AttendanceShift) {
+        if (! $shift instanceof AttendanceShift) {
             return null;
         }
 
@@ -247,16 +247,16 @@ class AttendanceProcessor
 
         $scheduledStartLocal =
             CarbonImmutable::parse(
-                $attendanceDate .
-                ' ' .
+                $attendanceDate.
+                ' '.
                 $shift->start_time,
                 $timezone
             );
 
         $scheduledEndLocal =
             CarbonImmutable::parse(
-                $attendanceDate .
-                ' ' .
+                $attendanceDate.
+                ' '.
                 $shift->end_time,
                 $timezone
             );
@@ -350,7 +350,7 @@ class AttendanceProcessor
                     'attendance_raw_punches.id'
                 )
                 ->map(
-                    fn($id) => (int) $id
+                    fn ($id) => (int) $id
                 )
                 ->all()
             : [];
@@ -397,7 +397,7 @@ class AttendanceProcessor
                 ],
                 true
             ) &&
-            (int) 
+            (int)
             $existingRecord
                 ->punch_count === 0;
 
@@ -631,7 +631,7 @@ class AttendanceProcessor
                 );
 
             if (
-                !$paidBreak &&
+                ! $paidBreak &&
                 $breakMinutes > 0
             ) {
                 $workedMinutes =
@@ -793,11 +793,11 @@ class AttendanceProcessor
         if ($holiday) {
             $attendanceStatus =
                 'off_day_work';
-        } elseif (!$workingDay) {
+        } elseif (! $workingDay) {
             $attendanceStatus =
                 'off_day_work';
         } elseif (
-            !$checkOutLocal
+            ! $checkOutLocal
         ) {
             $attendanceStatus =
                 'incomplete';
@@ -909,7 +909,7 @@ class AttendanceProcessor
                                     ),
 
                                 'check_out_at' => $checkOutLocal
-                                        ?->utc()
+                                    ?->utc()
                                     ->format(
                                         'Y-m-d H:i:s'
                                     ),
@@ -994,7 +994,7 @@ class AttendanceProcessor
                     $rawPunches
                         ->pluck('id')
                         ->map(
-                            fn($id) => (int) $id
+                            fn ($id) => (int) $id
                         )
                         ->values()
                         ->all();
@@ -1007,7 +1007,7 @@ class AttendanceProcessor
                             $rawPunchIds
                         )
                         ->map(
-                            fn($id) => (int) $id
+                            fn ($id) => (int) $id
                         )
                         ->unique()
                         ->values()
@@ -1119,8 +1119,8 @@ class AttendanceProcessor
             ),
             'UTC'
         )->setTimezone(
-                $timezone
-            );
+            $timezone
+        );
     }
 
     /*
@@ -1247,7 +1247,7 @@ class AttendanceProcessor
         }
 
         if (
-            !is_array(
+            ! is_array(
                 $workingDays
             )
         ) {
@@ -1259,7 +1259,7 @@ class AttendanceProcessor
                 $workingDays
             )
                 ->map(
-                    fn($day) => strtolower(
+                    fn ($day) => strtolower(
                         trim(
                             (string) $day
                         )
@@ -1299,7 +1299,7 @@ class AttendanceProcessor
         */
 
         $isoDay =
-            (string) 
+            (string)
             $date->dayOfWeekIso;
 
         if (

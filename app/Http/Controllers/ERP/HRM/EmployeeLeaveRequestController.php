@@ -35,21 +35,21 @@ class EmployeeLeaveRequestController extends Controller
                 ])
                 ->when(
                     $request->company_id,
-                    fn($query, $companyId) => $query->where(
+                    fn ($query, $companyId) => $query->where(
                         'company_id',
                         $companyId
                     )
                 )
                 ->when(
                     $request->leave_type_id,
-                    fn($query, $typeId) => $query->where(
+                    fn ($query, $typeId) => $query->where(
                         'leave_type_id',
                         $typeId
                     )
                 )
                 ->when(
                     $request->status,
-                    fn($query, $status) => $query->where(
+                    fn ($query, $status) => $query->where(
                         'status',
                         $status
                     )
@@ -196,7 +196,7 @@ class EmployeeLeaveRequestController extends Controller
         if (
             $data['duration_type']
             === 'half_day' &&
-            !$leaveType->allow_half_day
+            ! $leaveType->allow_half_day
         ) {
             throw ValidationException::withMessages([
                 'duration_type' => 'This leave type does not allow half-day leave.',
@@ -249,7 +249,7 @@ class EmployeeLeaveRequestController extends Controller
         if (
             $leaveType
                 ->requires_attachment &&
-            !$request->hasFile(
+            ! $request->hasFile(
                 'attachment'
             )
         ) {
@@ -590,7 +590,7 @@ class EmployeeLeaveRequestController extends Controller
             ]);
 
         if (
-            !in_array(
+            ! in_array(
                 $leaveRequest->status,
                 [
                     'pending',

@@ -36,7 +36,7 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'auth' => [
-                'user' => fn() => $request->user()
+                'user' => fn () => $request->user()
                     ? [
                         'id' => $request->user()->id,
 
@@ -82,25 +82,25 @@ class HandleInertiaRequests extends Middleware
                          */
                         'profile_photo' => $request->user()
                             ->profile
-                                ?->getAttribute('profile_photo'),
+                            ?->getAttribute('profile_photo'),
 
                         'designation' => $request->user()
                             ->profile
-                                ?->getAttribute('designation'),
+                            ?->getAttribute('designation'),
 
                         'department' => $request->user()
                             ->profile
-                                ?->getAttribute('department'),
+                            ?->getAttribute('department'),
                     ]
                     : null,
             ],
 
             'flash' => [
-                'success' => fn() => $request->session()->get('success'),
-                'error' => fn() => $request->session()->get('error'),
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
             ],
 
-            'globalFooter' => fn() => GlobalSection::query()
+            'globalFooter' => fn () => GlobalSection::query()
                 ->where('type', 'footer')
                 ->where('is_active', true)
                 ->first([
@@ -111,12 +111,12 @@ class HandleInertiaRequests extends Middleware
                     'is_active',
                 ]),
 
-            'globalHeader' => fn() => GlobalSection::query()
+            'globalHeader' => fn () => GlobalSection::query()
                 ->where('type', 'header')
                 ->where('is_active', true)
                 ->first(),
 
-            'globalFloatingContact' => fn() => GlobalSection::query()
+            'globalFloatingContact' => fn () => GlobalSection::query()
                 ->where(
                     'type',
                     'floating-contact'
@@ -188,10 +188,10 @@ class HandleInertiaRequests extends Middleware
                                     ? ($event === 'reopened' ? 'Low-stock alert reopened' : 'Low-stock alert')
                                     : ($data['title'] ?? 'Notification'),
                                 'message' => $isInventory
-                                    ? 'Inventory alert (' . str_replace('_', ' ', $severity) . ') for product #' . (string) ($data['product_id'] ?? '') . '.'
+                                    ? 'Inventory alert ('.str_replace('_', ' ', $severity).') for product #'.(string) ($data['product_id'] ?? '').'.'
                                     : ($data['message'] ?? null),
                                 'url' => $isInventory
-                                    ? '/erp/inventory/low-stock?company_id=' . (int) ($data['company_id'] ?? 0)
+                                    ? '/erp/inventory/low-stock?company_id='.(int) ($data['company_id'] ?? 0)
                                     : ($data['url'] ?? null),
                                 'lead_id' => $data['lead_id'] ?? null,
                                 'lead_number' => $data['lead_number'] ?? null,

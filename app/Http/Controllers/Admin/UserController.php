@@ -380,8 +380,8 @@ class UserController extends Controller
                     'user_profiles',
                     'employee_id'
                 )->ignore(
-                        $user->profile?->getKey()
-                    ),
+                    $user->profile?->getKey()
+                ),
             ],
 
             'designation' => [
@@ -441,9 +441,9 @@ class UserController extends Controller
                 ];
 
                 if (
-                    !empty(
-                    $validated['password']
-                )
+                    ! empty(
+                        $validated['password']
+                    )
                 ) {
                     $userData['password'] =
                         Hash::make(
@@ -472,8 +472,8 @@ class UserController extends Controller
                         Storage::disk(
                             'public'
                         )->delete(
-                                $photoPath
-                            );
+                            $photoPath
+                        );
                     }
 
                     $photoPath = null;
@@ -488,8 +488,8 @@ class UserController extends Controller
                         Storage::disk(
                             'public'
                         )->delete(
-                                $photoPath
-                            );
+                            $photoPath
+                        );
                     }
 
                     $photoPath =

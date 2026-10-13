@@ -172,12 +172,12 @@ it('registers one correctly handled ERP proprietor photo route per resource', fu
         $matches = collect(
             Route::getRoutes()->getRoutes()
         )->filter(
-                fn($route) => in_array(
-                    'GET',
-                    $route->methods(),
-                    true
-                ) && $route->uri() === $details['uri']
-            );
+            fn ($route) => in_array(
+                'GET',
+                $route->methods(),
+                true
+            ) && $route->uri() === $details['uri']
+        );
 
         expect($matches)->toHaveCount(1);
 

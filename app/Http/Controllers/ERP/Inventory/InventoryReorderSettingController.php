@@ -36,12 +36,12 @@ class InventoryReorderSettingController extends Controller
          * Company authorization is separate from
          * the reorder-management permission.
          */
-        if (!$user->hasRole('super-admin')) {
+        if (! $user->hasRole('super-admin')) {
             $hasCompanyAccess = $user->employee()
                 ->where('company_id', $companyId)
                 ->exists();
 
-            if (!$hasCompanyAccess) {
+            if (! $hasCompanyAccess) {
                 abort(
                     403,
                     'You cannot manage inventory for this company.'
@@ -60,8 +60,7 @@ class InventoryReorderSettingController extends Controller
 
         if ($warehouse === null) {
             throw ValidationException::withMessages([
-                'warehouse_id' =>
-                    'The selected warehouse is not available for this company.',
+                'warehouse_id' => 'The selected warehouse is not available for this company.',
             ]);
         }
 
@@ -74,8 +73,7 @@ class InventoryReorderSettingController extends Controller
 
         if ($product === null) {
             throw ValidationException::withMessages([
-                'product_id' =>
-                    'The selected product is not available for this company.',
+                'product_id' => 'The selected product is not available for this company.',
             ]);
         }
 
@@ -86,8 +84,7 @@ class InventoryReorderSettingController extends Controller
         if ($product->has_variants) {
             if ($variantId === null) {
                 throw ValidationException::withMessages([
-                    'product_variant_id' =>
-                        'A variant is required for this product.',
+                    'product_variant_id' => 'A variant is required for this product.',
                 ]);
             }
 
@@ -97,16 +94,14 @@ class InventoryReorderSettingController extends Controller
                 ->whereKey($variantId)
                 ->exists();
 
-            if (!$variantExists) {
+            if (! $variantExists) {
                 throw ValidationException::withMessages([
-                    'product_variant_id' =>
-                        'The selected variant does not belong to this product.',
+                    'product_variant_id' => 'The selected variant does not belong to this product.',
                 ]);
             }
         } elseif ($variantId !== null) {
             throw ValidationException::withMessages([
-                'product_variant_id' =>
-                    'This product does not use variants.',
+                'product_variant_id' => 'This product does not use variants.',
             ]);
         }
 

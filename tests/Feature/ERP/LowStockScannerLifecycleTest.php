@@ -28,7 +28,7 @@ final class LowStockScannerLifecycleTest extends TestCase
     {
         $company = Company::query()->create([
             'name' => 'Lifecycle Test Company',
-            'code' => 'LIFECYCLE-' . uniqid(),
+            'code' => 'LIFECYCLE-'.uniqid(),
             'status' => 'active',
         ]);
 

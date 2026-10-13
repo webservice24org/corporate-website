@@ -52,7 +52,7 @@ class LeaveDayCalculator
 
             if (
                 $leaveType->exclude_weekly_off &&
-                !$this->isWorkingDay(
+                ! $this->isWorkingDay(
                     $employee,
                     $date
                 )
@@ -141,7 +141,7 @@ class LeaveDayCalculator
                 ->first();
 
         if (
-            !$assignment?->shift
+            ! $assignment?->shift
         ) {
             return true;
         }
@@ -170,7 +170,7 @@ class LeaveDayCalculator
         $normalized =
             collect($workingDays)
                 ->map(
-                    fn($day) => strtolower(
+                    fn ($day) => strtolower(
                         trim(
                             (string) $day
                         )
@@ -199,7 +199,7 @@ class LeaveDayCalculator
 
         if (
             $normalized->contains(
-                (string) 
+                (string)
                 $date->dayOfWeekIso
             )
         ) {

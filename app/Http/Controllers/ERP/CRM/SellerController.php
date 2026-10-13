@@ -77,18 +77,18 @@ class SellerController extends Controller
             )
             ->when(
                 $filters['dealer_id'] ?? null,
-                fn(
-                Builder $query,
-                int $dealerId
-            ) => $query->where(
-                        'dealer_id',
-                        $dealerId
-                    )
+                fn (
+                    Builder $query,
+                    int $dealerId
+                ) => $query->where(
+                    'dealer_id',
+                    $dealerId
+                )
             )
             ->when(
                 ($filters['status'] ?? null)
                 === 'active',
-                fn(Builder $query) => $query->where(
+                fn (Builder $query) => $query->where(
                     'is_active',
                     true
                 )
@@ -96,7 +96,7 @@ class SellerController extends Controller
             ->when(
                 ($filters['status'] ?? null)
                 === 'inactive',
-                fn(Builder $query) => $query->where(
+                fn (Builder $query) => $query->where(
                     'is_active',
                     false
                 )
@@ -341,15 +341,15 @@ class SellerController extends Controller
                     'dealers',
                     'id'
                 )->where(
-                        fn($query) => $query
-                            ->where(
-                                'is_active',
-                                true
-                            )
-                            ->whereNull(
-                                'deleted_at'
-                            )
-                    ),
+                    fn ($query) => $query
+                        ->where(
+                            'is_active',
+                            true
+                        )
+                        ->whereNull(
+                            'deleted_at'
+                        )
+                ),
             ],
 
             'business_name' => [
@@ -374,8 +374,8 @@ class SellerController extends Controller
             'seller_type' => [
                 'required',
                 Rule::in([
-                    'retailer',
-                    'general_seller',
+                'retailer',
+                'general_seller',
                 ]),
             ],
 

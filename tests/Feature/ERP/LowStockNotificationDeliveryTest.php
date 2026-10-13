@@ -22,7 +22,7 @@ class LowStockNotificationDeliveryTest extends TestCase
     {
         return Company::query()->create([
             'name' => 'Notification Test Company',
-            'code' => 'NTC-' . uniqid(),
+            'code' => 'NTC-'.uniqid(),
             'status' => 'active',
         ]);
     }

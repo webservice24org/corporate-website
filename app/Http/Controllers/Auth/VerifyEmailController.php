@@ -17,18 +17,18 @@ class VerifyEmailController extends Controller
     {
         $user = $request->user();
 
-        if (!$user instanceof MustVerifyEmail) {
+        if (! $user instanceof MustVerifyEmail) {
             abort(403, 'Email verification is not supported for this account.');
         }
 
         if ($user->hasVerifiedEmail()) {
-            return redirect()->intended(route('admin.dashboard', absolute: false) . '?verified=1');
+            return redirect()->intended(route('admin.dashboard', absolute: false).'?verified=1');
         }
 
         if ($user->markEmailAsVerified()) {
             event(new Verified($user));
         }
 
-        return redirect()->intended(route('admin.dashboard', absolute: false) . '?verified=1');
+        return redirect()->intended(route('admin.dashboard', absolute: false).'?verified=1');
     }
 }

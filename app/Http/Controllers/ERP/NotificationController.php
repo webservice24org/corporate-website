@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -21,7 +22,7 @@ class NotificationController extends Controller
         private readonly LowStockCompanyAccess $companyAccess
     ) {}
 
-    /** @return MorphMany<\Illuminate\Notifications\DatabaseNotification, User> */
+    /** @return MorphMany<DatabaseNotification, User> */
     private function visibleNotifications(User $user): MorphMany
     {
         $query = $user->notifications();
@@ -69,10 +70,10 @@ class NotificationController extends Controller
                     ? ($event === 'reopened' ? 'Low-stock alert reopened' : 'Low-stock alert')
                     : ($data['title'] ?? 'Notification'),
                 'message' => $isInventory
-                    ? 'Inventory alert (' . str_replace('_', ' ', $severity) . ') for product #' . (string) ($data['product_id'] ?? '') . '.'
+                    ? 'Inventory alert ('.str_replace('_', ' ', $severity).') for product #'.(string) ($data['product_id'] ?? '').'.'
                     : ($data['message'] ?? null),
                 'url' => $isInventory
-                    ? '/erp/inventory/low-stock?company_id=' . (int) ($data['company_id'] ?? 0)
+                    ? '/erp/inventory/low-stock?company_id='.(int) ($data['company_id'] ?? 0)
                     : ($data['url'] ?? null),
                 'lead_id' => $data['lead_id'] ?? null,
                 'lead_number' => $data['lead_number'] ?? null,

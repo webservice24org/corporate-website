@@ -6,7 +6,6 @@ namespace App\Services\Inventory;
 
 use App\Models\Company;
 use App\Models\User;
-use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Shared company authorization rules for low-stock reports and notifications.
@@ -16,7 +15,7 @@ final class LowStockCompanyAccess
 {
     public function canView(User $user, int $companyId): bool
     {
-        if ($companyId <= 0 || !$user->can('erp.low-stock-reports.view')) {
+        if ($companyId <= 0 || ! $user->can('erp.low-stock-reports.view')) {
             return false;
         }
 
@@ -32,7 +31,7 @@ final class LowStockCompanyAccess
     /** @return array<int, int> */
     public function allowedCompanyIds(User $user): array
     {
-        if (!$user->can('erp.low-stock-reports.view')) {
+        if (! $user->can('erp.low-stock-reports.view')) {
             return [];
         }
 

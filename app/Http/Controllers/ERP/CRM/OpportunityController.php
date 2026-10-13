@@ -40,7 +40,7 @@ class OpportunityController extends Controller
             ])
             ->when(
                 $filters['search'] ?? null,
-                fn($query, $search) => $query->where(function ($query) use ($search) {
+                fn ($query, $search) => $query->where(function ($query) use ($search) {
                     $query
                         ->where('title', 'like', "%{$search}%")
                         ->orWhere('opportunity_number', 'like', "%{$search}%");
@@ -48,19 +48,19 @@ class OpportunityController extends Controller
             )
             ->when(
                 $filters['company_id'] ?? null,
-                fn($query, $companyId) => $query->where('company_id', $companyId)
+                fn ($query, $companyId) => $query->where('company_id', $companyId)
             )
             ->when(
                 $filters['stage_id'] ?? null,
-                fn($query, $stageId) => $query->where('opportunity_stage_id', $stageId)
+                fn ($query, $stageId) => $query->where('opportunity_stage_id', $stageId)
             )
             ->when(
                 $filters['salesperson_user_id'] ?? null,
-                fn($query, $userId) => $query->where('salesperson_user_id', $userId)
+                fn ($query, $userId) => $query->where('salesperson_user_id', $userId)
             )
             ->when(
                 $filters['party_type'] ?? null,
-                fn($query, $partyType) => $query->where(
+                fn ($query, $partyType) => $query->where(
                     'party_type',
                     $this->partyClass($partyType)
                 )
@@ -268,7 +268,7 @@ class OpportunityController extends Controller
             ->whereKey($data['party_id'])
             ->first();
 
-        if (!$party) {
+        if (! $party) {
             throw ValidationException::withMessages([
                 'party_id' => 'The selected commercial party does not exist.',
             ]);
@@ -280,13 +280,13 @@ class OpportunityController extends Controller
             ]);
         }
 
-        if (!empty($data['lead_id'])) {
+        if (! empty($data['lead_id'])) {
             $leadValid = Lead::query()
                 ->whereKey($data['lead_id'])
                 ->where('company_id', $data['company_id'])
                 ->exists();
 
-            if (!$leadValid) {
+            if (! $leadValid) {
                 throw ValidationException::withMessages([
                     'lead_id' => 'The selected Lead does not belong to this company.',
                 ]);

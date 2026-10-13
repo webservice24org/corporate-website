@@ -1,0 +1,19 @@
+import { Head, Link, router } from "@inertiajs/react";
+import { useState } from "react";
+import ERPLayout from "@/Layouts/erp-layout";
+import { useAuthorization } from "@/hooks/useAuthorization";
+import type { Receipt } from "./types";
+import { box, button } from "./types";
+
+type Props = { receipts: { data: Receipt[]; total: number; current_page: number; last_page: number; prev_page_url: string | null; next_page_url: string | null }; companies: { id: number; name: string }[]; filters: { search?: string; company_id?: string | number; status?: string } };
+export default function Index({ receipts, companies, filters }: Props) {
+    const { can } = useAuthorization();
+    const [search, setSearch] = useState(filters.search ?? "");
+    const [company, setCompany] = useState(String(filters.company_id ?? ""));
+    const [status, setStatus] = useState(filters.status ?? "");
+    return <ERPLayout><Head title="Goods receiving" /><div className="space-y-6"><div className="flex flex-wrap justify-between gap-3"><div><h1 className="text-2xl font-semibold">Goods receiving (GRN)</h1><p className="mt-1 text-sm text-slate-500">Record inspections, partial deliveries and accepted stock.</p></div>{can("erp.goods-receipts.create") && <Link href="/erp/purchase/receipts/create" className="rounded-lg bg-indigo-600 px-4 py-2 text-sm text-white">New goods receipt</Link>}</div>
+        <form onSubmit={(e) => { e.preventDefault(); router.get("/erp/purchase/receipts", { search, status: status || undefined, company_id: company || undefined }, { preserveState: true, replace: true }); }} className="grid gap-3 rounded-xl border bg-white p-4 sm:grid-cols-2 xl:grid-cols-4"><label className="text-sm">Receipt number<input maxLength={100} value={search} onChange={(e) => setSearch(e.target.value)} className={box} /></label><label className="text-sm">Company<select value={company} onChange={(e) => setCompany(e.target.value)} className={box}><option value="">All authorized companies</option>{companies.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label className="text-sm">Status<select value={status} onChange={(e) => setStatus(e.target.value)} className={box}><option value="">All statuses</option>{["draft", "posted", "cancelled"].map((item) => <option key={item}>{item}</option>)}</select></label><button type="submit" className={`${button} self-end`}>Apply filters</button></form>
+        <div className="overflow-x-auto rounded-xl border bg-white"><table className="w-full min-w-162.5 text-left text-sm"><thead className="bg-slate-50"><tr>{["GRN", "Purchase order", "Company", "Warehouse", "Status", "Actions"].map((label) => <th key={label} className="p-4">{label}</th>)}</tr></thead><tbody>{receipts.data.map((item) => <tr key={item.id} className="border-t"><td className="p-4"><Link className="font-medium text-indigo-700" href={`/erp/purchase/receipts/${item.id}`}>{item.number}</Link></td><td className="p-4">{item.purchase_order?.number}</td><td className="p-4">{item.company?.name}</td><td className="p-4">{item.warehouse?.name ?? `Warehouse #${item.warehouse_id}`}</td><td className="p-4 capitalize">{item.status}</td><td className="p-4">{item.status === "draft" && can("erp.goods-receipts.edit") && <Link className="text-indigo-700" href={`/erp/purchase/receipts/${item.id}/edit`}>Edit draft</Link>}</td></tr>)}{receipts.data.length === 0 && <tr><td colSpan={6} className="p-8 text-center text-slate-500">No goods receipts found.</td></tr>}</tbody></table></div>
+        <div className="flex flex-wrap justify-between gap-3 text-sm"><p>{receipts.total} receipts · Page {receipts.current_page} of {receipts.last_page}</p><div className="flex gap-4">{receipts.prev_page_url && <Link href={receipts.prev_page_url}>Previous</Link>}{receipts.next_page_url && <Link href={receipts.next_page_url}>Next</Link>}</div></div>
+    </div></ERPLayout>;
+}

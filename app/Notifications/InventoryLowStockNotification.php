@@ -15,8 +15,7 @@ final class InventoryLowStockNotification extends Notification
     public function __construct(
         private readonly InventoryLowStockAlert $alert,
         private readonly string $event
-    ) {
-    }
+    ) {}
 
     /**
      * @return array<int, string>
@@ -44,7 +43,7 @@ final class InventoryLowStockNotification extends Notification
             'severity' => (string) $this->alert->severity,
             'occurrence_count' => (int) $this->alert->occurrence_count,
             'url' => '/erp/inventory/low-stock?company_id='
-                . (int) $this->alert->company_id,
+                .(int) $this->alert->company_id,
         ];
     }
 }

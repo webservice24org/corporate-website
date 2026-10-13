@@ -26,7 +26,7 @@ function constraintFixture(): array
 {
     $company = Company::create([
         'name' => 'Constraint Test Company',
-        'code' => 'CT-' . Str::upper(Str::random(12)),
+        'code' => 'CT-'.Str::upper(Str::random(12)),
         'status' => 'active',
     ]);
 
@@ -42,14 +42,14 @@ function constraintFixture(): array
 
     $source = Warehouse::create([
         'company_id' => $company->id,
-        'code' => 'CS-' . Str::upper(Str::random(12)),
+        'code' => 'CS-'.Str::upper(Str::random(12)),
         'name' => 'Constraint Source Warehouse',
         'is_active' => true,
     ]);
 
     $destination = Warehouse::create([
         'company_id' => $company->id,
-        'code' => 'CD-' . Str::upper(Str::random(12)),
+        'code' => 'CD-'.Str::upper(Str::random(12)),
         'name' => 'Constraint Destination Warehouse',
         'is_active' => true,
     ]);
@@ -93,7 +93,7 @@ function validConstraintTransfer(array $fixture): array
 {
     return [
         'company_id' => $fixture['company']->id,
-        'document_number' => 'CT-ST-' . Str::upper(Str::random(16)),
+        'document_number' => 'CT-ST-'.Str::upper(Str::random(16)),
         'transfer_date' => now()->toDateString(),
         'source_warehouse_id' => $fixture['source']->id,
         'destination_warehouse_id' => $fixture['destination']->id,
@@ -161,7 +161,7 @@ function verifyInventoryConstraint(
     $beforeCount = DB::table($table)->count();
 
     expectDatabaseConstraintViolation(
-        static fn() => DB::table($table)->insert($invalidData)
+        static fn () => DB::table($table)->insert($invalidData)
     );
 
     expect(DB::table($table)->count())
@@ -170,7 +170,7 @@ function verifyInventoryConstraint(
     $id = DB::table($table)->insertGetId($validData);
 
     expectDatabaseConstraintViolation(
-        static fn() => DB::table($table)
+        static fn () => DB::table($table)
             ->where('id', $id)
             ->update([$column => $invalidValue])
     );
@@ -268,7 +268,7 @@ it('rejects zero and negative stock transfer quantities', function () {
         $invalidItem['quantity'] = $invalidQuantity;
 
         expectDatabaseConstraintViolation(
-            static fn() => DB::table('stock_transfer_items')
+            static fn () => DB::table('stock_transfer_items')
                 ->insert($invalidItem)
         );
     }
@@ -278,7 +278,7 @@ it('rejects zero and negative stock transfer quantities', function () {
 
     foreach (['0.0000', '-1.0000'] as $invalidQuantity) {
         expectDatabaseConstraintViolation(
-            static fn() => DB::table('stock_transfer_items')
+            static fn () => DB::table('stock_transfer_items')
                 ->where('id', $itemId)
                 ->update(['quantity' => $invalidQuantity])
         );
@@ -325,7 +325,7 @@ it('rejects zero and negative stock movement quantities', function () {
         $invalidMovement['quantity'] = $invalidQuantity;
 
         expectDatabaseConstraintViolation(
-            static fn() => DB::table('stock_movements')
+            static fn () => DB::table('stock_movements')
                 ->insert($invalidMovement)
         );
     }
@@ -335,7 +335,7 @@ it('rejects zero and negative stock movement quantities', function () {
 
     foreach (['0.0000', '-1.0000'] as $invalidQuantity) {
         expectDatabaseConstraintViolation(
-            static fn() => DB::table('stock_movements')
+            static fn () => DB::table('stock_movements')
                 ->where('id', $movementId)
                 ->update(['quantity' => $invalidQuantity])
         );

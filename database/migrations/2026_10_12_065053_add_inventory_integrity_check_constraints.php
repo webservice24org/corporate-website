@@ -5,7 +5,8 @@ declare(strict_types=1);
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 
-return new class extends Migration {
+return new class extends Migration
+{
     /**
      * Database-level inventory integrity rules.
      *
@@ -18,29 +19,23 @@ return new class extends Migration {
     {
         return [
             'inventory_balances' => [
-                'inv_bal_reserved_nonnegative_chk' =>
-                    'quantity_reserved >= 0',
+                'inv_bal_reserved_nonnegative_chk' => 'quantity_reserved >= 0',
 
-                'inv_bal_cost_nonnegative_chk' =>
-                    'average_cost >= 0',
+                'inv_bal_cost_nonnegative_chk' => 'average_cost >= 0',
 
-                'inv_bal_variant_consistency_chk' =>
-                    'variant_key = COALESCE(product_variant_id, 0)',
+                'inv_bal_variant_consistency_chk' => 'variant_key = COALESCE(product_variant_id, 0)',
             ],
 
             'stock_transfer_items' => [
-                'stock_transfer_item_qty_positive_chk' =>
-                    'quantity > 0',
+                'stock_transfer_item_qty_positive_chk' => 'quantity > 0',
             ],
 
             'stock_transfers' => [
-                'stock_transfer_warehouses_differ_chk' =>
-                    'source_warehouse_id <> destination_warehouse_id',
+                'stock_transfer_warehouses_differ_chk' => 'source_warehouse_id <> destination_warehouse_id',
             ],
 
             'stock_movements' => [
-                'stock_movement_qty_positive_chk' =>
-                    'quantity > 0',
+                'stock_movement_qty_positive_chk' => 'quantity > 0',
             ],
         ];
     }
@@ -114,8 +109,8 @@ return new class extends Migration {
         foreach ($this->constraints() as $table => $checks) {
             foreach ($checks as $name => $expression) {
                 DB::statement(
-                    "ALTER TABLE `{$table}` " .
-                    "ADD CONSTRAINT `{$name}` " .
+                    "ALTER TABLE `{$table}` ".
+                    "ADD CONSTRAINT `{$name}` ".
                     "CHECK ({$expression})"
                 );
             }
@@ -173,9 +168,8 @@ return new class extends Migration {
         ];
 
         return (string) preg_replace_callback(
-            '/\b(' . implode('|', $columns) . ')\b/',
-            static fn(array $match): string =>
-                'NEW."' . $match[1] . '"',
+            '/\b('.implode('|', $columns).')\b/',
+            static fn (array $match): string => 'NEW."'.$match[1].'"',
             $expression
         );
     }

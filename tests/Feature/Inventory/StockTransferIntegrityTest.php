@@ -15,7 +15,7 @@ function inventoryFixture(): array
 {
     $company = Company::create([
         'name' => 'Inventory Test Company',
-        'code' => 'ITC-' . Str::upper(Str::random(10)),
+        'code' => 'ITC-'.Str::upper(Str::random(10)),
         'status' => 'active',
     ]);
 
@@ -31,14 +31,14 @@ function inventoryFixture(): array
 
     $source = Warehouse::create([
         'company_id' => $company->id,
-        'code' => 'SRC-' . Str::upper(Str::random(10)),
+        'code' => 'SRC-'.Str::upper(Str::random(10)),
         'name' => 'Source Warehouse',
         'is_active' => true,
     ]);
 
     $destination = Warehouse::create([
         'company_id' => $company->id,
-        'code' => 'DST-' . Str::upper(Str::random(10)),
+        'code' => 'DST-'.Str::upper(Str::random(10)),
         'name' => 'Destination Warehouse',
         'is_active' => true,
     ]);
@@ -80,7 +80,7 @@ function inventoryTransfer(
 ): StockTransfer {
     $transfer = StockTransfer::create([
         'company_id' => $fixture['company']->id,
-        'document_number' => 'ST-TEST-' . Str::upper(Str::random(16)),
+        'document_number' => 'ST-TEST-'.Str::upper(Str::random(16)),
         'transfer_date' => now()->toDateString(),
         'source_warehouse_id' => $fixture['source']->id,
         'destination_warehouse_id' => $fixture['destination']->id,
@@ -201,13 +201,13 @@ it('rejects warehouses belonging to different companies', function (): void {
 
     $otherCompany = Company::create([
         'name' => 'Other Inventory Company',
-        'code' => 'OTHER-' . Str::upper(Str::random(10)),
+        'code' => 'OTHER-'.Str::upper(Str::random(10)),
         'status' => 'active',
     ]);
 
     $otherWarehouse = Warehouse::create([
         'company_id' => $otherCompany->id,
-        'code' => 'OTHER-WH-' . Str::upper(Str::random(10)),
+        'code' => 'OTHER-WH-'.Str::upper(Str::random(10)),
         'name' => 'Other Company Warehouse',
         'is_active' => true,
     ]);

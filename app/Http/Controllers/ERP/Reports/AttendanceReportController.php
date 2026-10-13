@@ -67,13 +67,13 @@ class AttendanceReportController extends Controller
                         $filters[
                             'company_id'
                         ] ?? null,
-                        fn(
-                        $query,
-                        $companyId
-                    ) => $query->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn (
+                            $query,
+                            $companyId
+                        ) => $query->where(
+                            'company_id',
+                            $companyId
+                        )
                     )
                     ->orderBy('name')
                     ->get([
@@ -87,13 +87,13 @@ class AttendanceReportController extends Controller
                         $filters[
                             'company_id'
                         ] ?? null,
-                        fn(
-                        $query,
-                        $companyId
-                    ) => $query->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn (
+                            $query,
+                            $companyId
+                        ) => $query->where(
+                            'company_id',
+                            $companyId
+                        )
                     )
                     ->orderBy('name')
                     ->get([
@@ -107,37 +107,37 @@ class AttendanceReportController extends Controller
                         $filters[
                             'company_id'
                         ] ?? null,
-                        fn(
-                        $query,
-                        $companyId
-                    ) => $query->where(
-                                'company_id',
-                                $companyId
-                            )
+                        fn (
+                            $query,
+                            $companyId
+                        ) => $query->where(
+                            'company_id',
+                            $companyId
+                        )
                     )
                     ->when(
                         $filters[
                             'branch_id'
                         ] ?? null,
-                        fn(
-                        $query,
-                        $branchId
-                    ) => $query->where(
-                                'branch_id',
-                                $branchId
-                            )
+                        fn (
+                            $query,
+                            $branchId
+                        ) => $query->where(
+                            'branch_id',
+                            $branchId
+                        )
                     )
                     ->when(
                         $filters[
                             'department_id'
                         ] ?? null,
-                        fn(
-                        $query,
-                        $departmentId
-                    ) => $query->where(
-                                'department_id',
-                                $departmentId
-                            )
+                        fn (
+                            $query,
+                            $departmentId
+                        ) => $query->where(
+                            'department_id',
+                            $departmentId
+                        )
                     )
                     ->orderBy(
                         'employee_number'

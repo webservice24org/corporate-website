@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Models\Lead;
 use App\Models\User;
-use Carbon\CarbonImmutable;
 use App\Notifications\LeadFollowUpReminder;
+use Carbon\CarbonImmutable;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use Throwable;
@@ -99,10 +99,10 @@ class SendLeadFollowUpNotifications extends Command
                                     $followUpAt = $lockedLead?->next_follow_up_at;
 
                                     if (
-                                        !$lockedLead ||
-                                        !$lockedLead->is_active ||
-                                        !$owner instanceof User ||
-                                        !is_string($followUpAt) ||
+                                        ! $lockedLead ||
+                                        ! $lockedLead->is_active ||
+                                        ! $owner instanceof User ||
+                                        ! is_string($followUpAt) ||
                                         $followUpAt === '' ||
                                         $lockedLead->follow_up_notification_sent_at ||
                                         CarbonImmutable::parse($followUpAt)->isFuture()

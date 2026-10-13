@@ -51,7 +51,7 @@ class EmployeeShiftAssignmentController extends Controller
 
             $query->whereHas(
                 'employee',
-                fn(Builder $employeeQuery) => $employeeQuery->where(
+                fn (Builder $employeeQuery) => $employeeQuery->where(
                     'company_id',
                     $companyId
                 )
@@ -268,7 +268,7 @@ class EmployeeShiftAssignmentController extends Controller
 
                     'assigned_by' => $request
                         ->user()
-                            ?->id,
+                        ?->id,
                 ]);
             }
         );
@@ -276,9 +276,9 @@ class EmployeeShiftAssignmentController extends Controller
         return to_route(
             'erp.employee-shifts.index'
         )->with(
-                'success',
-                'Employee shift assigned successfully.'
-            );
+            'success',
+            'Employee shift assigned successfully.'
+        );
     }
 
     public function edit(
@@ -373,9 +373,9 @@ class EmployeeShiftAssignmentController extends Controller
         return to_route(
             'erp.employee-shifts.index'
         )->with(
-                'success',
-                'Employee shift assignment updated successfully.'
-            );
+            'success',
+            'Employee shift assignment updated successfully.'
+        );
     }
 
     public function destroy(
@@ -386,9 +386,9 @@ class EmployeeShiftAssignmentController extends Controller
         return to_route(
             'erp.employee-shifts.index'
         )->with(
-                'success',
-                'Employee shift assignment deleted successfully.'
-            );
+            'success',
+            'Employee shift assignment deleted successfully.'
+        );
     }
 
     private function validateAssignment(
@@ -466,7 +466,7 @@ class EmployeeShiftAssignmentController extends Controller
                 )
                 ->when(
                     $ignoreId,
-                    fn(Builder $query) => $query->where(
+                    fn (Builder $query) => $query->where(
                         'id',
                         '!=',
                         $ignoreId

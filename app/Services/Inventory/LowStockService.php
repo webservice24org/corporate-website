@@ -16,8 +16,11 @@ use InvalidArgumentException;
 class LowStockService
 {
     public const STATUS_OUT_OF_STOCK = 'out_of_stock';
+
     public const STATUS_CRITICAL = 'critical';
+
     public const STATUS_LOW_STOCK = 'low_stock';
+
     public const STATUS_HEALTHY = 'healthy';
 
     /**
@@ -30,7 +33,7 @@ class LowStockService
      * - status: string|null
      * - include_healthy: bool (default false)
      *
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      * @return array{
      *     rows: array<int, array<string, mixed>>,
      *     summary: array<string, int>
@@ -70,7 +73,7 @@ class LowStockService
         if (
             $status !== null &&
             $status !== '' &&
-            !in_array($status, $validStatuses, true)
+            ! in_array($status, $validStatuses, true)
         ) {
             throw new InvalidArgumentException(
                 'Invalid inventory stock status.'
@@ -85,7 +88,7 @@ class LowStockService
             ->where('is_active', true)
             ->when(
                 $warehouseId !== null,
-                fn(Builder $query) => $query->whereKey($warehouseId)
+                fn (Builder $query) => $query->whereKey($warehouseId)
             )
             ->orderBy('name')
             ->get(['id', 'company_id', 'name', 'code']);
@@ -106,7 +109,7 @@ class LowStockService
 
         $warehouseIds = $warehouses
             ->pluck('id')
-            ->map(fn($id): int => (int) $id)
+            ->map(fn ($id): int => (int) $id)
             ->all();
 
         Product::query()
@@ -116,17 +119,17 @@ class LowStockService
             ->where('track_inventory', true)
             ->when(
                 $productId !== null,
-                fn(Builder $query) => $query->whereKey($productId)
+                fn (Builder $query) => $query->whereKey($productId)
             )
             ->when(
                 $categoryId !== null,
-                fn(Builder $query) => $query->where(
+                fn (Builder $query) => $query->where(
                     'product_category_id',
                     $categoryId
                 )
             )
             ->with([
-                'variants' => fn($query) => $query
+                'variants' => fn ($query) => $query
                     ->where('is_active', true)
                     ->orderBy('id'),
             ])
@@ -135,7 +138,7 @@ class LowStockService
                 function (Collection $products) use ($companyId, $warehouses, $warehouseIds, $status, $includeHealthy, &$rows, &$summary): void {
                     $productIds = $products
                         ->pluck('id')
-                        ->map(fn($id): int => (int) $id)
+                        ->map(fn ($id): int => (int) $id)
                         ->all();
 
                     $balances = InventoryBalance::query()
@@ -151,21 +154,19 @@ class LowStockService
                         ->get();
 
                     $balanceMap = $balances->keyBy(
-                        fn(InventoryBalance $balance): string =>
-                            $this->key(
-                                (int) $balance->warehouse_id,
-                                (int) $balance->product_id,
-                                (int) $balance->variant_key
-                            )
+                        fn (InventoryBalance $balance): string => $this->key(
+                            (int) $balance->warehouse_id,
+                            (int) $balance->product_id,
+                            (int) $balance->variant_key
+                        )
                     );
 
                     $settingMap = $settings->keyBy(
-                        fn(InventoryReorderSetting $setting): string =>
-                            $this->key(
-                                (int) $setting->warehouse_id,
-                                (int) $setting->product_id,
-                                (int) $setting->variant_key
-                            )
+                        fn (InventoryReorderSetting $setting): string => $this->key(
+                            (int) $setting->warehouse_id,
+                            (int) $setting->product_id,
+                            (int) $setting->variant_key
+                        )
                     );
 
                     foreach ($products as $product) {
@@ -261,7 +262,7 @@ class LowStockService
                                 }
 
                                 if (
-                                    !$includeHealthy &&
+                                    ! $includeHealthy &&
                                     ($status === null || $status === '') &&
                                     $stockStatus === self::STATUS_HEALTHY
                                 ) {
@@ -291,11 +292,10 @@ class LowStockService
                                     'minimum_stock' => $minimumStock,
                                     'reorder_level' => $reorderLevel,
 
-                                    'suggested_reorder_quantity' =>
-                                        $this->suggestedQuantity(
-                                            $available,
-                                            $reorderLevel
-                                        ),
+                                    'suggested_reorder_quantity' => $this->suggestedQuantity(
+                                        $available,
+                                        $reorderLevel
+                                    ),
 
                                     'status' => $stockStatus,
 
@@ -385,7 +385,7 @@ class LowStockService
         int $productId,
         int $variantKey
     ): string {
-        return $warehouseId . ':' . $productId . ':' . $variantKey;
+        return $warehouseId.':'.$productId.':'.$variantKey;
     }
 
     private function positiveId(mixed $value): ?int

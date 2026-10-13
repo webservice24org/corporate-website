@@ -20,9 +20,7 @@ final class LowStockAlertService
     public function __construct(
         private readonly LowStockService $lowStockService,
         private readonly LowStockNotificationService $notificationService,
-    )
-    {
-    }
+    ) {}
 
     /**
      * @return array{created:int,updated:int,reopened:int,resolved:int,unchanged:int}
@@ -59,7 +57,7 @@ final class LowStockAlertService
             foreach ($rows as $row) {
                 $severity = (string) $row['status'];
                 if (
-                    !in_array($severity, [
+                    ! in_array($severity, [
                         LowStockService::STATUS_OUT_OF_STOCK,
                         LowStockService::STATUS_CRITICAL,
                         LowStockService::STATUS_LOW_STOCK,
@@ -111,6 +109,7 @@ final class LowStockAlertService
                         ]
                     ));
                     $counts['created']++;
+
                     continue;
                 }
 
@@ -124,6 +123,7 @@ final class LowStockAlertService
                     ]));
                     $alert->save();
                     $counts['reopened']++;
+
                     continue;
                 }
 

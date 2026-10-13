@@ -161,7 +161,7 @@ class LowStockReportController extends Controller
 
                 'canManageReorderSettings' => $request
                     ->user()
-                        ?->can('erp.inventory-reorder-settings.manage') ?? false,
+                    ?->can('erp.inventory-reorder-settings.manage') ?? false,
             ]
         );
     }

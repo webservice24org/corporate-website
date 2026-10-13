@@ -36,11 +36,11 @@ class CrmActivityController extends Controller
                 'createdBy:id,name,email',
                 'activityable',
             ])
-            ->when($filters['company_id'] ?? null, fn($query, $companyId) => $query->where('company_id', $companyId))
-            ->when($filters['activity_type'] ?? null, fn($query, $type) => $query->where('activity_type', $type))
-            ->when($filters['status'] ?? null, fn($query, $status) => $query->where('status', $status))
-            ->when($filters['priority'] ?? null, fn($query, $priority) => $query->where('priority', $priority))
-            ->when($filters['assigned_to_user_id'] ?? null, fn($query, $userId) => $query->where('assigned_to_user_id', $userId))
+            ->when($filters['company_id'] ?? null, fn ($query, $companyId) => $query->where('company_id', $companyId))
+            ->when($filters['activity_type'] ?? null, fn ($query, $type) => $query->where('activity_type', $type))
+            ->when($filters['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($filters['priority'] ?? null, fn ($query, $priority) => $query->where('priority', $priority))
+            ->when($filters['assigned_to_user_id'] ?? null, fn ($query, $userId) => $query->where('assigned_to_user_id', $userId))
             ->when($filters['search'] ?? null, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('subject', 'like', "%{$search}%")
@@ -135,7 +135,7 @@ class CrmActivityController extends Controller
     {
         $crmActivity->load('activityable');
 
-        if (!$crmActivity->activityable) {
+        if (! $crmActivity->activityable) {
             abort(422, 'This activity subject is missing or not supported.');
         }
 

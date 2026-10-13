@@ -14,7 +14,7 @@ class PageBuilderController extends Controller
     public function edit(Page $page): Response
     {
         $page->load([
-            'sections' => fn($query) => $query->orderBy('sort_order'),
+            'sections' => fn ($query) => $query->orderBy('sort_order'),
         ]);
 
         return Inertia::render('Admin/Pages/Builder', [
@@ -54,7 +54,7 @@ class PageBuilderController extends Controller
             'is_active' => true,
         ]);
 
-        if (!$section instanceof PageSection) {
+        if (! $section instanceof PageSection) {
             throw new \LogicException('Expected a PageSection after creation.');
         }
 
@@ -133,8 +133,8 @@ class PageBuilderController extends Controller
         $copy->page_id = $page->id;
 
         $copy->name = $section->name
-            ? $section->name . ' Copy'
-            : ucfirst($section->type) . ' Copy';
+            ? $section->name.' Copy'
+            : ucfirst($section->type).' Copy';
 
         $copy->sort_order =
             $section->sort_order + 1;
@@ -165,7 +165,7 @@ class PageBuilderController extends Controller
             ->orderByDesc('sort_order')
             ->first();
 
-        if (!$previous instanceof PageSection) {
+        if (! $previous instanceof PageSection) {
             return back();
         }
 
@@ -203,7 +203,7 @@ class PageBuilderController extends Controller
             ->orderBy('sort_order')
             ->first();
 
-        if (!$next instanceof PageSection) {
+        if (! $next instanceof PageSection) {
             return back();
         }
 
@@ -271,7 +271,7 @@ class PageBuilderController extends Controller
 
         $sectionIds = collect(
             $validated['section_ids'],
-        )->map(fn($id) => (int) $id);
+        )->map(fn ($id) => (int) $id);
 
         $pageSectionIds = $page->sections()
             ->pluck('id');
@@ -321,7 +321,7 @@ class PageBuilderController extends Controller
         );
 
         return response()->json([
-            'url' => asset('storage/' . $path),
+            'url' => asset('storage/'.$path),
             'path' => $path,
         ]);
     }
@@ -332,7 +332,7 @@ class PageBuilderController extends Controller
             ->orderBy('sort_order')
             ->get()
             ->each(function ($section, int $index): void {
-                if (!$section instanceof PageSection) {
+                if (! $section instanceof PageSection) {
                     throw new \LogicException('Expected a PageSection when normalizing order.');
                 }
 

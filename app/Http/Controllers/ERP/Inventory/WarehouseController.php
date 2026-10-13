@@ -127,7 +127,7 @@ class WarehouseController extends Controller
 
             ->when(
                 $filters['company_id'] ?? null,
-                fn($query, $companyId) => $query->where(
+                fn ($query, $companyId) => $query->where(
                     'company_id',
                     $companyId
                 )
@@ -135,7 +135,7 @@ class WarehouseController extends Controller
 
             ->when(
                 $filters['type'] ?? null,
-                fn($query, $type) => $query->where(
+                fn ($query, $type) => $query->where(
                     'type',
                     $type
                 )
@@ -143,7 +143,7 @@ class WarehouseController extends Controller
 
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn($query) => $query->where(
+                fn ($query) => $query->where(
                     'is_active',
                     true
                 )
@@ -151,7 +151,7 @@ class WarehouseController extends Controller
 
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn($query) => $query->where(
+                fn ($query) => $query->where(
                     'is_active',
                     false
                 )
@@ -159,7 +159,7 @@ class WarehouseController extends Controller
 
             ->when(
                 $filters['division_id'] ?? null,
-                fn($query, $divisionId) => $query->where(
+                fn ($query, $divisionId) => $query->where(
                     'division_id',
                     $divisionId
                 )
@@ -167,7 +167,7 @@ class WarehouseController extends Controller
 
             ->when(
                 $filters['district_id'] ?? null,
-                fn($query, $districtId) => $query->where(
+                fn ($query, $districtId) => $query->where(
                     'district_id',
                     $districtId
                 )
@@ -175,7 +175,7 @@ class WarehouseController extends Controller
 
             ->when(
                 $filters['upazila_id'] ?? null,
-                fn($query, $upazilaId) => $query->where(
+                fn ($query, $upazilaId) => $query->where(
                     'upazila_id',
                     $upazilaId
                 )
@@ -417,7 +417,7 @@ class WarehouseController extends Controller
                     'code'
                 )
                     ->where(
-                        fn($query) => $query->where(
+                        fn ($query) => $query->where(
                             'company_id',
                             $companyId
                         )
@@ -499,7 +499,7 @@ class WarehouseController extends Controller
 
         if (
             $districtId &&
-            !$divisionId
+            ! $divisionId
         ) {
             throw ValidationException::withMessages([
                 'division_id' => 'Please select a division for the selected district.',
@@ -508,7 +508,7 @@ class WarehouseController extends Controller
 
         if (
             $upazilaId &&
-            !$districtId
+            ! $districtId
         ) {
             throw ValidationException::withMessages([
                 'district_id' => 'Please select a district for the selected upazila.',
@@ -526,7 +526,7 @@ class WarehouseController extends Controller
                     ->exists();
 
             if (
-                !$districtBelongsToDivision
+                ! $districtBelongsToDivision
             ) {
                 throw ValidationException::withMessages([
                     'district_id' => 'The selected district does not belong to the selected division.',
@@ -545,7 +545,7 @@ class WarehouseController extends Controller
                     ->exists();
 
             if (
-                !$upazilaBelongsToDistrict
+                ! $upazilaBelongsToDistrict
             ) {
                 throw ValidationException::withMessages([
                     'upazila_id' => 'The selected upazila does not belong to the selected district.',

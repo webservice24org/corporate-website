@@ -69,11 +69,9 @@ class UpdateInventoryReorderSettingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'reorder_level.regex' =>
-                'Reorder level must be a nonnegative number with at most four decimal places.',
+            'reorder_level.regex' => 'Reorder level must be a nonnegative number with at most four decimal places.',
 
-            'minimum_stock.regex' =>
-                'Minimum stock must be a nonnegative number with at most four decimal places.',
+            'minimum_stock.regex' => 'Minimum stock must be a nonnegative number with at most four decimal places.',
         ];
     }
 }

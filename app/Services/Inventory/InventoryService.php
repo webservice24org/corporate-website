@@ -8,6 +8,7 @@ use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
 use Carbon\CarbonInterface;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -138,7 +139,7 @@ class InventoryService
         );
 
         return DB::transaction(
-            function () use ($warehouse, $product, $variant, $quantity, $movementType, $direction, $unitCost, $referenceType, $referenceId, $referenceNumber, $occurredAt, $createdBy, $notes, ): StockMovement {
+            function () use ($warehouse, $product, $variant, $quantity, $movementType, $direction, $unitCost, $referenceType, $referenceId, $referenceNumber, $occurredAt, $createdBy, $notes): StockMovement {
                 /*
                  * Re-fetch and lock the Warehouse.
                  *
@@ -248,7 +249,7 @@ class InventoryService
                      * cannot go below zero.
                      */
                     if (
-                        !$lockedProduct
+                        ! $lockedProduct
                             ->allow_negative_stock &&
                         bccomp(
                             $after,
@@ -291,7 +292,7 @@ class InventoryService
 
                 $movementTime = $occurredAt === null
                     ? now()
-                    : \Illuminate\Support\Carbon::instance(
+                    : Carbon::instance(
                         $occurredAt->toDateTime()
                     );
 
@@ -329,7 +330,7 @@ class InventoryService
                         ->getKey(),
 
                     'product_variant_id' => $lockedVariant
-                            ?->getKey(),
+                        ?->getKey(),
 
                     'movement_type' => $movementType,
 
@@ -433,7 +434,7 @@ class InventoryService
                 $variant
             );
 
-        if (!$balance) {
+        if (! $balance) {
             return '0.0000';
         }
 
@@ -536,7 +537,7 @@ class InventoryService
         ?ProductVariant $variant,
     ): void {
         if (
-            !$product->isStockItem()
+            ! $product->isStockItem()
         ) {
             throw ValidationException::withMessages([
                 'product_id' => 'The selected product is not configured as an inventory stock item.',
@@ -582,7 +583,7 @@ class InventoryService
             ]);
         }
 
-        if (!$warehouse->is_active) {
+        if (! $warehouse->is_active) {
             throw ValidationException::withMessages([
                 'warehouse_id' => 'Inventory transactions cannot be posted to an inactive warehouse.',
             ]);
@@ -593,7 +594,7 @@ class InventoryService
         string $movementType
     ): void {
         if (
-            !in_array(
+            ! in_array(
                 $movementType,
                 StockMovement::movementTypes(),
                 true
@@ -609,7 +610,7 @@ class InventoryService
         string $direction
     ): void {
         if (
-            !in_array(
+            ! in_array(
                 $direction,
                 StockMovement::directions(),
                 true
@@ -701,7 +702,7 @@ class InventoryService
                         ' ',
                         $field
                     )
-                ) .
+                ).
                     ' must be greater than zero.',
             ]);
         }
@@ -733,7 +734,7 @@ class InventoryService
                         ' ',
                         $field
                     )
-                ) .
+                ).
                     ' cannot be negative.',
             ]);
         }
@@ -746,7 +747,7 @@ class InventoryService
         string $field
     ): string {
         if (
-            !is_numeric($value)
+            ! is_numeric($value)
         ) {
             throw ValidationException::withMessages([
                 $field => ucfirst(
@@ -755,7 +756,7 @@ class InventoryService
                         ' ',
                         $field
                     )
-                ) .
+                ).
                     ' must be numeric.',
             ]);
         }

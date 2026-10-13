@@ -7,9 +7,9 @@ use App\Models\Brand;
 use App\Models\Company;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductVariant;
 use App\Models\Unit;
 use Illuminate\Http\RedirectResponse;
-use App\Models\ProductVariant;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -38,24 +38,24 @@ class ProductController extends Controller
             ->withCount('variants')
             ->when(
                 $filters['company_id'] ?? null,
-                fn($query, $value) => $query->where('company_id', $value)
+                fn ($query, $value) => $query->where('company_id', $value)
             )
             ->when(
                 $filters['product_type'] ?? null,
-                fn($query, $value) => $query->where('product_type', $value)
+                fn ($query, $value) => $query->where('product_type', $value)
             )
             ->when(
                 ($filters['status'] ?? null) === 'active',
-                fn($query) => $query->where('is_active', true)
+                fn ($query) => $query->where('is_active', true)
             )
             ->when(
                 ($filters['status'] ?? null) === 'inactive',
-                fn($query) => $query->where('is_active', false)
+                fn ($query) => $query->where('is_active', false)
             )
             ->when(
                 $filters['search'] ?? null,
-                fn($query, $search) => $query->where(
-                    fn($nested) => $nested
+                fn ($query, $search) => $query->where(
+                    fn ($nested) => $nested
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('product_code', 'like', "%{$search}%")
                         ->orWhere('sku', 'like', "%{$search}%")
@@ -188,7 +188,7 @@ class ProductController extends Controller
                 'string',
                 'max:80',
                 Rule::unique('products', 'product_code')
-                    ->where(fn($query) => $query->where('company_id', $companyId))
+                    ->where(fn ($query) => $query->where('company_id', $companyId))
                     ->ignore($product?->id),
             ],
             'sku' => [
@@ -196,7 +196,7 @@ class ProductController extends Controller
                 'string',
                 'max:100',
                 Rule::unique('products', 'sku')
-                    ->where(fn($query) => $query->where('company_id', $companyId))
+                    ->where(fn ($query) => $query->where('company_id', $companyId))
                     ->ignore($product?->id),
             ],
             'barcode' => [
@@ -204,7 +204,7 @@ class ProductController extends Controller
                 'string',
                 'max:100',
                 Rule::unique('products', 'barcode')
-                    ->where(fn($query) => $query->where('company_id', $companyId))
+                    ->where(fn ($query) => $query->where('company_id', $companyId))
                     ->ignore($product?->id),
             ],
             'featured_image' => ['nullable', 'image', 'max:5120'],
@@ -234,13 +234,13 @@ class ProductController extends Controller
             'variants.*.is_active' => ['required', 'boolean'],
         ]);
 
-        if (!empty($data['product_category_id'])) {
+        if (! empty($data['product_category_id'])) {
             ProductCategory::whereKey($data['product_category_id'])
                 ->where('company_id', $companyId)
                 ->firstOrFail();
         }
 
-        if (!empty($data['brand_id'])) {
+        if (! empty($data['brand_id'])) {
             Brand::whereKey($data['brand_id'])
                 ->where('company_id', $companyId)
                 ->firstOrFail();
@@ -328,7 +328,7 @@ class ProductController extends Controller
 
     private function syncVariants(Product $product, array $rows): void
     {
-        if (!$product->has_variants) {
+        if (! $product->has_variants) {
             $product->variants()->delete();
 
             return;
@@ -348,7 +348,7 @@ class ProductController extends Controller
             ];
 
             /** @var ProductVariant $variant */
-            if (!empty($row['id'])) {
+            if (! empty($row['id'])) {
                 $variant = $product->variants()
                     ->whereKey($row['id'])
                     ->firstOrFail();

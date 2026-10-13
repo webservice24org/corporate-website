@@ -7,6 +7,7 @@ use App\Http\Requests\ERP\Inventory\StockTransferRequest;
 use App\Models\Company;
 use App\Models\Product;
 use App\Models\StockTransfer;
+use App\Models\User;
 use App\Models\Warehouse;
 use App\Services\Inventory\StockTransferService;
 use Illuminate\Http\RedirectResponse;
@@ -35,7 +36,7 @@ class StockTransferController extends Controller
      */
     private function allowedCompanyIds(): array
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = auth()->user();
 
         abort_unless($user !== null, 403);
@@ -43,13 +44,13 @@ class StockTransferController extends Controller
         if ($user->hasRole('super-admin')) {
             return Company::query()
                 ->pluck('id')
-                ->map(fn($id): int => (int) $id)
+                ->map(fn ($id): int => (int) $id)
                 ->all();
         }
 
         return $user->employee()
             ->pluck('company_id')
-            ->map(fn($id): int => (int) $id)
+            ->map(fn ($id): int => (int) $id)
             ->all();
     }
 
@@ -59,7 +60,7 @@ class StockTransferController extends Controller
         $query = StockTransfer::query()->whereIn('company_id', $companyIds)
             ->with(['company:id,name', 'sourceWarehouse:id,company_id,name,code', 'destinationWarehouse:id,company_id,name,code', 'creator:id,name']);
         if ($request->filled('search')) {
-            $query->where('document_number', 'like', '%' . trim((string) $request->input('search')) . '%');
+            $query->where('document_number', 'like', '%'.trim((string) $request->input('search')).'%');
         }
         if ($request->filled('company_id')) {
             $query->where('company_id', (int) $request->input('company_id'));
@@ -67,6 +68,7 @@ class StockTransferController extends Controller
         if (in_array($request->input('status'), StockTransfer::statuses(), true)) {
             $query->where('status', $request->input('status'));
         }
+
         return Inertia::render('ERP/Inventory/StockTransfers/Index', [
             'stockTransfers' => $query->orderByDesc('transfer_date')->orderByDesc('id')->paginate(15)->withQueryString(),
             'filters' => $request->only(['search', 'company_id', 'status']),
@@ -78,6 +80,7 @@ class StockTransferController extends Controller
     private function options(): array
     {
         $companyIds = $this->allowedCompanyIds();
+
         return [
             'companies' => Company::query()->whereIn('id', $companyIds)->orderBy('name')->get(['id', 'name']),
             'warehouses' => Warehouse::query()->whereIn('company_id', $companyIds)->where('is_active', true)->orderBy('name')->get(['id', 'company_id', 'name', 'code']),
@@ -97,7 +100,7 @@ class StockTransferController extends Controller
         $transfer = DB::transaction(function () use ($data, $service) {
             $transfer = StockTransfer::create([
                 'company_id' => $data['company_id'],
-                'document_number' => 'ST-' . now()->format('Y') . '-' . strtoupper((string) Str::ulid()),
+                'document_number' => 'ST-'.now()->format('Y').'-'.strtoupper((string) Str::ulid()),
                 'transfer_date' => $data['transfer_date'],
                 'source_warehouse_id' => $data['source_warehouse_id'],
                 'destination_warehouse_id' => $data['destination_warehouse_id'],
@@ -107,14 +110,17 @@ class StockTransferController extends Controller
             ]);
             $this->replaceItems($transfer, $data['items']);
             $service->validateDraft($transfer);
+
             return $transfer;
         }, 5);
+
         return redirect()->route('erp.inventory.stock-transfers.show', $transfer)->with('success', 'Stock transfer draft created.');
     }
 
     public function show(StockTransfer $stockTransfer): Response
     {
         $this->authorizeCompany((int) $stockTransfer->company_id);
+
         return Inertia::render('ERP/Inventory/StockTransfers/Show', [
             'stockTransfer' => $stockTransfer->load(['company:id,name', 'sourceWarehouse:id,company_id,name,code', 'destinationWarehouse:id,company_id,name,code', 'creator:id,name', 'poster:id,name', 'items.product:id,company_id,name,sku', 'items.variant:id,product_id,name,sku']),
         ]);
@@ -124,6 +130,7 @@ class StockTransferController extends Controller
     {
         $this->authorizeCompany((int) $stockTransfer->company_id);
         $this->ensureDraft($stockTransfer);
+
         return Inertia::render('ERP/Inventory/StockTransfers/Edit', [
             'stockTransfer' => $stockTransfer->load('items'),
             ...$this->options(),
@@ -148,6 +155,7 @@ class StockTransferController extends Controller
             $this->replaceItems($locked, $data['items']);
             $service->validateDraft($locked);
         }, 5);
+
         return redirect()->route('erp.inventory.stock-transfers.show', $stockTransfer)->with('success', 'Stock transfer draft updated.');
     }
 
@@ -159,6 +167,7 @@ class StockTransferController extends Controller
             $this->ensureDraft($locked);
             $locked->delete();
         }, 5);
+
         return redirect()->route('erp.inventory.stock-transfers.index')->with('success', 'Stock transfer draft deleted.');
     }
 
@@ -166,12 +175,13 @@ class StockTransferController extends Controller
     {
         $this->authorizeCompany((int) $stockTransfer->company_id);
         $service->post($stockTransfer, auth()->id());
+
         return redirect()->route('erp.inventory.stock-transfers.show', $stockTransfer)->with('success', 'Stock transfer posted.');
     }
 
     private function ensureDraft(StockTransfer $transfer): void
     {
-        if (!$transfer->isDraft()) {
+        if (! $transfer->isDraft()) {
             throw ValidationException::withMessages(['status' => 'Only draft stock transfers can be changed.']);
         }
     }
@@ -180,7 +190,7 @@ class StockTransferController extends Controller
     {
         $transfer->items()->delete();
         foreach ($items as $item) {
-            $variantId = !empty($item['product_variant_id']) ? (int) $item['product_variant_id'] : null;
+            $variantId = ! empty($item['product_variant_id']) ? (int) $item['product_variant_id'] : null;
             $transfer->items()->create([
                 'product_id' => (int) $item['product_id'],
                 'product_variant_id' => $variantId,

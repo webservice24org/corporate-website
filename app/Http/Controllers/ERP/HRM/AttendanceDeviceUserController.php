@@ -70,7 +70,7 @@ class AttendanceDeviceUserController extends Controller
 
             $query->whereHas(
                 'device',
-                fn(Builder $deviceQuery) => $deviceQuery->where(
+                fn (Builder $deviceQuery) => $deviceQuery->where(
                     'company_id',
                     $companyId
                 )
@@ -255,7 +255,7 @@ class AttendanceDeviceUserController extends Controller
 
                 'mapped_by' => $request
                     ->user()
-                        ?->id,
+                    ?->id,
 
                 'sync_status' => 'pending',
             ]);
@@ -270,17 +270,17 @@ class AttendanceDeviceUserController extends Controller
 
         if ($resolved > 0) {
             $message .=
-                " {$resolved} historical unmapped punch" .
-                ($resolved === 1 ? '' : 'es') .
+                " {$resolved} historical unmapped punch".
+                ($resolved === 1 ? '' : 'es').
                 ' resolved.';
         }
 
         return to_route(
             'erp.attendance-device-users.index'
         )->with(
-                'success',
-                $message
-            );
+            'success',
+            $message
+        );
     }
 
     public function edit(
@@ -373,17 +373,17 @@ class AttendanceDeviceUserController extends Controller
 
         if ($resolved > 0) {
             $message .=
-                " {$resolved} historical unmapped punch" .
-                ($resolved === 1 ? '' : 'es') .
+                " {$resolved} historical unmapped punch".
+                ($resolved === 1 ? '' : 'es').
                 ' resolved.';
         }
 
         return to_route(
             'erp.attendance-device-users.index'
         )->with(
-                'success',
-                $message
-            );
+            'success',
+            $message
+        );
     }
 
     public function destroy(
@@ -394,9 +394,9 @@ class AttendanceDeviceUserController extends Controller
         return to_route(
             'erp.attendance-device-users.index'
         )->with(
-                'success',
-                'Device employee mapping deleted successfully.'
-            );
+            'success',
+            'Device employee mapping deleted successfully.'
+        );
     }
 
     private function validateMapping(
@@ -413,22 +413,22 @@ class AttendanceDeviceUserController extends Controller
                 'attendance_device_users',
                 'external_user_id'
             )->where(
-                    fn($query) => $query->where(
-                        'device_id',
-                        $deviceId
-                    )
-                );
+                fn ($query) => $query->where(
+                    'device_id',
+                    $deviceId
+                )
+            );
 
         $employeeRule =
             Rule::unique(
                 'attendance_device_users',
                 'employee_id'
             )->where(
-                    fn($query) => $query->where(
-                        'device_id',
-                        $deviceId
-                    )
-                );
+                fn ($query) => $query->where(
+                    'device_id',
+                    $deviceId
+                )
+            );
 
         if ($mapping) {
             $externalIdRule->ignore(
@@ -635,8 +635,8 @@ class AttendanceDeviceUserController extends Controller
 
         return back()->with(
             'success',
-            "{$resolved} unmapped punch" .
-            ($resolved === 1 ? '' : 'es') .
+            "{$resolved} unmapped punch".
+            ($resolved === 1 ? '' : 'es').
             ' resolved successfully.'
         );
     }
