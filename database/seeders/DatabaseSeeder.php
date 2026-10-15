@@ -28,6 +28,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             OpportunitySeeder::class,
             PurchasePermissionSeeder::class,
+            SalesPermissionSeeder::class,
         ]);
     }
 }

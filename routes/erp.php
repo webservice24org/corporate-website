@@ -598,5 +598,6 @@ Route::prefix('erp/')->name('erp.')->middleware(['auth'])->group(function () {
     });
 
     require __DIR__.'/purchase.php';
+    require __DIR__.'/sales.php';
 
 });

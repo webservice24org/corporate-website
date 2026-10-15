@@ -48,6 +48,8 @@ import {
     Warehouse, FileText, Landmark, Store, BookOpen, ArrowLeftRight, AlertTriangle,
 } from "lucide-react";
 
+import { sidebarLinkIsActive, sidebarPath } from "@/lib/erp-sidebar-active";
+
 import { useAuthorization } from "@/hooks/useAuthorization";
 
 type SidebarProps = {
@@ -59,7 +61,8 @@ export default function ERPSidebar({
     mobileOpen = false,
     onMobileClose,
 }: SidebarProps) {
-    const { url, props } = usePage();
+    const { url: pageUrl, props } = usePage();
+    const url = sidebarPath(pageUrl);
     const { can } = useAuthorization();
 
     const user = props.auth?.user;
@@ -246,6 +249,24 @@ export default function ERPSidebar({
     const purchaseActive = url.startsWith("/erp/purchase/");
     const [purchaseExpanded, setPurchaseExpanded] = useState(false);
     const purchaseOpen = purchaseActive || purchaseExpanded;
+
+    // --- Sales foundation: operational links arrive with their completed modules. ---
+    const canViewSales =
+        can("erp.sales-customers.view") ||
+        can("erp.sales-quotations.view") ||
+        can("erp.sales-orders.view") ||
+        can("erp.sales-reservations.view") ||
+        can("erp.sales-deliveries.view") ||
+        can("erp.sales-invoices.view") ||
+        can("erp.customer-receipts.view") ||
+        can("erp.sales-returns.view") ||
+        can("erp.sales-credit-notes.view") ||
+        can("erp.customer-receivables.view") ||
+        can("erp.sales-reports.view");
+
+    const salesActive = url === "/erp/sales" || url.startsWith("/erp/sales/");
+    const [salesExpanded, setSalesExpanded] = useState(false);
+    const salesOpen = salesActive || salesExpanded;
 
     // --- ERP Settings State & Checks ---
     const canViewGeographySub =
@@ -1053,7 +1074,63 @@ export default function ERPSidebar({
                             )}
                         </div>
                     )}
-                    <FutureSidebarItem label="Sales" icon={ShoppingBag} />
+                    {canViewSales && (
+                        <div className="space-y-1">
+                            <button
+                                type="button"
+                                aria-expanded={salesOpen}
+                                aria-controls="erp-sales-submenu"
+                                onClick={() => setSalesExpanded((open) => !open)}
+                                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium transition ${
+                                    salesActive
+                                        ? "bg-white/10 text-white"
+                                        : "text-slate-300 hover:bg-white/5 hover:text-white"
+                                }`}
+                            >
+                                <ShoppingBag className="size-4 shrink-0" />
+                                <span className="flex-1">Sales</span>
+                                <ChevronDown
+                                    aria-hidden="true"
+                                    className={`size-4 shrink-0 transition-transform duration-200 ${salesOpen ? "rotate-180" : ""}`}
+                                />
+                            </button>
+                            {salesOpen && (
+                                <div id="erp-sales-submenu" className="ml-4 space-y-1 border-l border-white/10 pl-3">
+                                    {can("erp.sales-invoices.view") && (
+                                        <SidebarLink href="/erp/sales/invoices" label="Sales Invoices" icon={FileText} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.sales-reports.view") && <><SidebarLink href="/erp/sales/reports/dashboard" label="Sales Dashboard" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} /><SidebarLink href="/erp/sales/reports" label="Sales Reports" icon={FileText} currentUrl={url} excludePrefix="/erp/sales/reports/dashboard" onClick={closeMobile} /></>}
+                                    {can("erp.sales-credit-notes.view") && <SidebarLink href="/erp/sales/credit-notes" label="Sales Credit Notes" icon={FileText} currentUrl={url} onClick={closeMobile} />}
+                                    {can("erp.customer-receivables.view") && <SidebarLink href="/erp/sales/customer-credits" label="Customer Credits" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />}
+                                    {can("erp.sales-returns.view") && <SidebarLink href="/erp/sales/returns" label="Sales Returns" icon={FileText} currentUrl={url} onClick={closeMobile} />}
+                                    {can("erp.customer-receipts.view") && <SidebarLink href="/erp/sales/receipts" label="Customer Receipts" icon={FileText} currentUrl={url} excludePrefix="/erp/sales/receipts/statement" onClick={closeMobile} />}
+                                    {can("erp.customer-receivables.view") && <SidebarLink href="/erp/sales/receipts/statement" label="Customer Statements" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />}
+                                    {can("erp.customer-receivables.view") && (
+                                        <SidebarLink href="/erp/sales/receivables" label="Customer Receivables" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.sales-deliveries.view") && (
+                                        <SidebarLink href="/erp/sales/deliveries" label="Delivery Notes" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.sales-reservations.view") && (
+                                        <SidebarLink href="/erp/sales/reservations" label="Stock Reservations" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.sales-orders.view") && (
+                                        <SidebarLink href="/erp/sales/orders" label="Sales Orders" icon={ClipboardCheck} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.sales-quotations.view") && (
+                                        <SidebarLink href="/erp/sales/quotations" label="Quotations" icon={FileText} currentUrl={url} onClick={closeMobile} />
+                                    )}
+                                    {can("erp.sales-customers.view") ? (
+                                        <SidebarLink href="/erp/sales/customers" label="Customers" icon={ContactRound} currentUrl={url} onClick={closeMobile} />
+                                    ) : !can("erp.sales-quotations.view") && !can("erp.sales-orders.view") && !can("erp.sales-reservations.view") && !can("erp.sales-deliveries.view") && !can("erp.sales-invoices.view") && !can("erp.customer-receivables.view") && !can("erp.customer-receipts.view") && !can("erp.sales-returns.view") && !can("erp.sales-credit-notes.view") && !can("erp.sales-reports.view") ? (
+                                        <p className="px-3 py-2 text-xs leading-relaxed text-slate-400">
+                                            Sales features will appear here as they become available.
+                                        </p>
+                                    ) : null}
+                                </div>
+                            )}
+                        </div>
+                    )}
 
                     {/* Operations */}
                     <SidebarSectionLabel label="Operations" />
@@ -1276,14 +1353,12 @@ function SidebarLink({
     excludePrefix,
     onClick,
 }: SidebarLinkProps) {
-    const matchesPath = exact
-        ? currentUrl === href
-        : currentUrl.startsWith(href);
-    const isActive = matchesPath && !(excludePrefix && currentUrl.startsWith(excludePrefix));
+    const isActive = sidebarLinkIsActive(currentUrl, href, exact, excludePrefix);
 
     return (
         <Link
             href={href}
+            aria-current={isActive ? "page" : undefined}
             onClick={onClick}
             className={`
                 flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-medium transition

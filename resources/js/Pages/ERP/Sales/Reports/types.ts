@@ -1,0 +1,7 @@
+export type Column = { key: string; label: string; kind: 'text' | 'money' | 'quantity'; scale?: number };
+export type Group = { company: string; company_id: number; currency?: string; unit?: string; unit_id?: number; values: Record<string, string> };
+export type Summary = { title: string; basis: string; current: boolean; columns: Column[]; statuses: string[]; matching: number; review_count: number; totals: { money: Group[]; quantities: Group[]; statuses: Record<string, number> } };
+export type Filters = { type?: string; company_id?: number | string; customer_id?: number | string; created_by?: number | string; warehouse_id?: number | string; currency?: string; status?: string; search?: string; from: string; to: string; print?: boolean; page?: number };
+export type Options = { companies: { id: number; name: string; timezone: string }[]; customers: { id: number; company_id: number; name: string }[]; warehouses: { id: number; company_id: number; name: string }[]; creators: { id: number; name: string }[]; currencies: string[]; catalog: Record<string, Pick<Summary, 'title' | 'basis' | 'current' | 'columns' | 'statuses'>>; generatedAt: string };
+export type Row = Record<string, string | number | null> & { number: string; integrity: string; url: string | null };
+export function query(filters: Filters): string { return new URLSearchParams(Object.entries(filters).filter(([key, value]) => !['page', 'print'].includes(key) && value !== null && value !== undefined && value !== '').map(([key, value]) => [key, String(value)])).toString(); }

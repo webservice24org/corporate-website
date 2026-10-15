@@ -1,0 +1,9 @@
+export type Company = { id: number; name: string; currency_code: string };
+export type Choice = { id: number; name: string };
+export type Product = Choice & { selling_price: string; has_variants: boolean; variants: (Choice & { selling_price: string | null })[] };
+export type Catalog = { products: Product[]; customers: Choice[]; leads: { id: number; contact_name: string }[]; opportunities: { id: number; title: string }[]; contacts: Choice[]; addresses: { id: number; address_type: string; label: string | null; address: string }[] };
+export type Snapshot = { name?: string; business_name?: string | null; phone?: string | null; email?: string | null; selected_contact?: { id: number; name: string } | null };
+export type Quote = { id: number; company_id: number; customer_id: number | null; lead_id: number | null; opportunity_id: number | null; number: string; status: string; revision: number; document_date: string; valid_until: string | null; currency_code: string; terms_snapshot: { issuer?: { name?: string; address?: string | null; phone?: string | null; email?: string | null } | null } | null; notes: string | null; created_by: number | null; customer_snapshot: Snapshot | null; billing_address_snapshot: { id?: number; address?: string } | null; shipping_address_snapshot: { id?: number; address?: string } | null; subtotal: string; discount_total: string; tax_total: string; grand_total: string };
+export type Item = { id: number; product_id: number; product_variant_id: number | null; quantity: string; unit_price: string; discount_percent: string; tax_percent: string; description: string | null; product_snapshot: { name: string; unit: string; variant_name?: string | null }; line_total: string };
+export const button = "inline-flex items-center justify-center rounded-lg border bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50 disabled:opacity-50";
+export const input = "w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm";

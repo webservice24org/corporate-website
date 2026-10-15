@@ -1,0 +1,14 @@
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
+import ERPLayout from '@/Layouts/erp-layout';
+import { useAuthorization } from '@/hooks/useAuthorization';
+import { button, input } from '../Orders/types';
+import type { ReturnDocument } from './types';
+type Props = { returns: { data: ReturnDocument[]; links: { url: string | null; label: string; active: boolean }[] }; companies: { id: number; name: string }[]; filters: { company_id?: number; search?: string; status?: string } };
+export default function Index({ returns: rows, companies, filters }: Props) {
+    const { can } = useAuthorization();
+    const [search, setSearch] = useState(filters.search ?? '');
+    const [company, setCompany] = useState(String(filters.company_id ?? ''));
+    const [status, setStatus] = useState(filters.status ?? '');
+    return <ERPLayout><Head title="Sales returns" /><div className="space-y-5"><div className="flex justify-between gap-3"><h1 className="text-2xl font-semibold">Sales returns</h1>{can('erp.sales-returns.create') && can('erp.sales-deliveries.view') && <Link className={button} href="/erp/sales/returns/create">New return</Link>}</div><form className="flex flex-wrap gap-3" onSubmit={e => { e.preventDefault(); router.get('/erp/sales/returns', { company_id: company, search, status }); }}><select aria-label="Company" className={input} value={company} onChange={e => setCompany(e.target.value)}><option value="">All permitted companies</option>{companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select><input aria-label="Return number" className={input} value={search} onChange={e => setSearch(e.target.value)} placeholder="Return number" /><select aria-label="Status" className={input} value={status} onChange={e => setStatus(e.target.value)}><option value="">All statuses</option>{['draft', 'inspected', 'posted', 'cancelled'].map(s => <option key={s}>{s}</option>)}</select><button className={button}>Filter</button></form><div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr>{['Number', 'Customer', 'Date', 'Status'].map(h => <th className="p-3" key={h}>{h}</th>)}</tr></thead><tbody>{rows.data.map(r => <tr key={r.id} className="border-t"><td className="p-3"><Link href={`/erp/sales/returns/${r.id}`}>{r.number}</Link></td><td className="p-3">{r.customer_snapshot?.name}</td><td className="p-3">{r.document_date}</td><td className="p-3">{r.status}</td></tr>)}</tbody></table></div>{rows.data.length === 0 && <p>No matching returns.</p>}<nav aria-label="Pagination" className="flex flex-wrap gap-2">{rows.links.map((l, i) => l.url ? <Link className={button} aria-current={l.active ? 'page' : undefined} key={i} href={l.url}>{l.label.replace(/&laquo;/g, '«').replace(/&raquo;/g, '»')}</Link> : <span className="p-2 text-slate-400" key={i}>{l.label.replace(/&laquo;/g, '«').replace(/&raquo;/g, '»')}</span>)}</nav></div></ERPLayout>;
+}

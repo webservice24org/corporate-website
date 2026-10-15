@@ -1,0 +1,193 @@
+{
+    "audit": "phase-6.1A-installed-schema",
+    "generated_at_utc": "2026-10-15T16:41:57+00:00",
+    "scope": "Known table and column existence only; no business values or financial reconciliation",
+    "operational": {
+        "companies": {
+            "present": true,
+            "columns": {
+                "id": true,
+                "currency_code": true,
+                "timezone": true,
+                "status": true
+            }
+        },
+        "employees": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "user_id": true
+            }
+        },
+        "goods_receipts": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "status": true,
+                "posted_at": true
+            }
+        },
+        "goods_receipt_items": {
+            "present": true,
+            "columns": {
+                "stock_movement_id": true,
+                "unit_cost": true,
+                "is_stock_item": true
+            }
+        },
+        "supplier_bills": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "supplier_id": true,
+                "status": true,
+                "approved_at": true,
+                "grand_total": true
+            }
+        },
+        "supplier_payables": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "supplier_id": true,
+                "supplier_bill_id": true,
+                "amount": true,
+                "paid_amount": true
+            }
+        },
+        "purchase_returns": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "status": true,
+                "posted_at": true
+            }
+        },
+        "stock_movements": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "unit_cost": true,
+                "total_cost": true,
+                "reference_type": true,
+                "reference_id": true
+            }
+        },
+        "inventory_balances": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "quantity_on_hand": true,
+                "quantity_reserved": true,
+                "average_cost": true
+            }
+        },
+        "sales_invoices": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "customer_id": true,
+                "issued_at": true,
+                "idempotency_key": true,
+                "payload_hash": true
+            }
+        },
+        "sales_invoice_items": {
+            "present": true,
+            "columns": {
+                "sales_delivery_item_id": true,
+                "credited_quantity": true,
+                "credited_amount": true
+            }
+        },
+        "customer_receipts": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "customer_id": true,
+                "posted_at": true,
+                "reverses_receipt_id": true
+            }
+        },
+        "customer_receipt_allocations": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "sales_invoice_id": true,
+                "reverses_allocation_id": true,
+                "posted_at": true
+            }
+        },
+        "sales_return_items": {
+            "present": true,
+            "columns": {
+                "unbilled_quantity": true,
+                "credit_review_quantity": true,
+                "stock_movement_id": true
+            }
+        },
+        "sales_credit_notes": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "issued_at": true,
+                "issue_sequence": true,
+                "payload_hash": true
+            }
+        },
+        "customer_credit_allocations": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "source_sales_invoice_id": true,
+                "sales_invoice_id": true,
+                "reverses_allocation_id": true
+            }
+        },
+        "sales_document_events": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "document_type": true,
+                "document_id": true,
+                "action": true
+            }
+        },
+        "payroll_periods": {
+            "present": true,
+            "columns": {
+                "company_id": true,
+                "start_date": true,
+                "end_date": true,
+                "status": true
+            }
+        }
+    },
+    "future_discovery": {
+        "fiscal_years": false,
+        "accounting_periods": false,
+        "fiscal_periods": false,
+        "account_groups": false,
+        "accounts": false,
+        "accounting_accounts": false,
+        "journal_entries": false,
+        "journal_entry_lines": false,
+        "accounting_journals": false,
+        "accounting_journal_lines": false,
+        "bank_accounts": false,
+        "bank_transactions": false,
+        "bank_reconciliations": false,
+        "expense_categories": false,
+        "expenses": false,
+        "expense_attachments": false,
+        "supplier_payments": false,
+        "supplier_payment_allocations": false,
+        "supplier_credit_notes": false,
+        "payrolls": false,
+        "payroll_items": false,
+        "payroll_runs": false
+    },
+    "missing_operational": [],
+    "operational_prerequisites_present": true,
+    "accounting_readiness": "Not determined by this metadata probe"
+}
