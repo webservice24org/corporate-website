@@ -8,5 +8,5 @@ export type Bill = {
 };
 export type BillLine = { id: number; goods_receipt_item_id: number | null; quantity: string; description: string; unit_price: string; discount_amount: string; tax_amount: string; line_total: string; credit_review_quantity?: string | null };
 export type SourceLine = { id: number; product_name: string; variant_name: string | null; accepted: string; returned: string; billed: string; remaining: string; unit_price: string; ordered_quantity: string; order_discount: string; order_tax: string };
-export type Payable = { id: number; supplier_bill_id: number; company_name: string; supplier_name: string; bill_number: string; supplier_invoice_number: string; currency_code: string; amount: string; paid_amount: string; outstanding: string; due_date: string | null; overdue: boolean };
+export type Payable = { id: number; supplier_bill_id: number; company_name: string; supplier_name: string; bill_number: string; supplier_invoice_number: string; currency_code: string; amount: string; paid_amount: string; credited_amount: string; outstanding: string; due_date: string | null; overdue: boolean };
 export type Page<T> = { data: T[]; total: number; current_page: number; last_page: number; prev_page_url: string | null; next_page_url: string | null };

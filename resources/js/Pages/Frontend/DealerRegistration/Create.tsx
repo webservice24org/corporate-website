@@ -286,7 +286,7 @@ export default function Create({
         <FrontendLayout>
             <Head title="Dealer Registration" />
 
-            <section className="bg-neutral-50 py-12 dark:bg-neutral-950">
+            <section className="bg-neutral-50 py-12">
                 <div className="mx-auto max-w-5xl px-4 sm:px-6">
                     <div className="mb-8">
                         <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm dark:border-neutral-800 dark:bg-neutral-900">

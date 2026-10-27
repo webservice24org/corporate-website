@@ -1,0 +1,46 @@
+export type AccountingLink = { label: string; href: string; group: string; permissions: string[]; exact?: boolean };
+
+const items: AccountingLink[] = [
+    { group: 'Overview', label: 'Finance Dashboard', href: '/erp/accounting/dashboard', permissions: ['erp.finance-dashboard.view'] },
+    { group: 'Overview', label: 'Accounting Setup Overview', href: '/erp/accounting', permissions: ['erp.accounting-settings.view'], exact: true },
+    { group: 'Overview', label: 'Accounting Setup', href: '/erp/accounting/settings', permissions: ['erp.accounting-settings.view'] },
+    { group: 'Setup', label: 'Chart of Accounts', href: '/erp/accounting/accounts', permissions: ['erp.accounts.view'] },
+    { group: 'Setup', label: 'Account Setup Readiness', href: '/erp/accounting/setup-readiness', permissions: ['erp.accounts.view'] },
+    { group: 'Setup', label: 'Posting Profiles', href: '/erp/accounting/mappings', permissions: ['erp.accounting-mappings.view'] },
+    { group: 'Setup', label: 'Fiscal Calendar', href: '/erp/accounting/calendar', permissions: ['erp.fiscal-years.view'] },
+    { group: 'Setup', label: 'Cutover Preparation', href: '/erp/accounting/cutover', permissions: ['erp.accounting-openings.view'] },
+    { group: 'Setup', label: 'Opening Journals', href: '/erp/accounting/openings', permissions: ['erp.accounting-openings.view'] },
+    { group: 'Setup', label: 'Cutover Manifest', href: '/erp/accounting/manifest', permissions: ['erp.accounting-openings.view'] },
+    { group: 'Transactions', label: 'Journal Register', href: '/erp/accounting/journals', permissions: ['erp.journal-entries.view'] },
+    { group: 'Transactions', label: 'Expenses', href: '/erp/accounting/expense-workspace', permissions: ['erp.expenses.view'] },
+    { group: 'Transactions', label: 'Expense Categories', href: '/erp/accounting/expense-categories-workspace', permissions: ['erp.expense-categories.view'] },
+    { group: 'Transactions', label: 'Expense Payments and Reversals', href: '/erp/accounting/expense-finance-workspace', permissions: ['erp.expenses.view', 'erp.expense-finance.view'] },
+    { group: 'Transactions', label: 'Supplier Payments', href: '/erp/accounting/supplier-payments', permissions: ['erp.supplier-payments.view'] },
+    { group: 'Banking', label: 'Cash and Bank Readiness', href: '/erp/accounting/cash-bank', permissions: ['erp.cash-accounts.view'] },
+    { group: 'Banking', label: 'Cashbook', href: '/erp/accounting/cashbook', permissions: ['erp.cash-books.view'] },
+    { group: 'Banking', label: 'Bankbook', href: '/erp/accounting/bankbook', permissions: ['erp.cash-books.view'] },
+    { group: 'Banking', label: 'Cash and Bank Transfers', href: '/erp/accounting/cash-transfers', permissions: ['erp.cash-transfers.view'] },
+    { group: 'Banking', label: 'Transfer Reversals', href: '/erp/accounting/cash-transfer-reversals', permissions: ['erp.cash-transfer-reversals.view'] },
+    { group: 'Banking', label: 'Bank Statements', href: '/erp/accounting/bank-statements', permissions: ['erp.bank-statements.view'] },
+    { group: 'Banking', label: 'Bank Reconciliation', href: '/erp/accounting/bank-reconciliations', permissions: ['erp.bank-reconciliations.view', 'erp.bank-statements.view', 'erp.cash-books.view'] },
+    { group: 'Banking', label: 'Bank Adjustments', href: '/erp/accounting/bank-adjustments', permissions: ['erp.bank-reconciliations.view', 'erp.bank-statements.view', 'erp.cash-books.view', 'erp.bank-adjustments.view'] },
+    { group: 'Reports', label: 'General Ledger', href: '/erp/accounting/general-ledger', permissions: ['erp.general-ledger.view'] },
+    { group: 'Reports', label: 'Trial Balance', href: '/erp/accounting/trial-balance', permissions: ['erp.trial-balance.view'] },
+    { group: 'Reports', label: 'Profit and Loss', href: '/erp/accounting/profit-loss', permissions: ['erp.profit-loss.view'] },
+    { group: 'Reports', label: 'Balance Sheet', href: '/erp/accounting/balance-sheet', permissions: ['erp.balance-sheet.view'] },
+    { group: 'Reports', label: 'Cash Flow', href: '/erp/accounting/cash-flow', permissions: ['erp.cash-flow.view'] },
+    { group: 'Reports', label: 'AR Aging', href: '/erp/accounting/ar-aging', permissions: ['erp.ar-aging.view'] },
+    { group: 'Reports', label: 'AP Aging', href: '/erp/accounting/ap-aging', permissions: ['erp.ap-aging.view'] },
+    { group: 'Reports', label: 'Tax Reconciliation', href: '/erp/accounting/tax-reconciliation', permissions: ['erp.tax-reconciliation.view'] },
+    { group: 'Reports', label: 'Supplier Statements', href: '/erp/accounting/supplier-statements', permissions: ['erp.supplier-statements.view'] },
+    { group: 'Reports', label: 'Payable Register', href: '/erp/accounting/payable-register', permissions: ['erp.supplier-statements.view'] },
+    { group: 'Reports', label: 'AP Reconciliation', href: '/erp/accounting/payable-reconciliation', permissions: ['erp.supplier-statements.view', 'erp.accounting-reports.view'] },
+    { group: 'Reports', label: 'Source Posting Review', href: '/erp/accounting/source-reconciliation', permissions: ['erp.accounting-reports.view'] },
+    { group: 'Reports', label: 'General Ledger Prototype', href: '/erp/accounting/ledger', permissions: ['erp.accounting-reports.view'] },
+    { group: 'Close', label: 'Period Close Checklist', href: '/erp/accounting/period-close', permissions: ['erp.period-close.view'] },
+    { group: 'Close', label: 'Year-end and Retained Earnings', href: '/erp/accounting/year-end', permissions: ['erp.year-end.view'] },
+];
+
+export function accountingLinks(can: (permission: string) => boolean): AccountingLink[] {
+    return items.filter(item => item.permissions.every(can));
+}

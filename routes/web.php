@@ -672,6 +672,14 @@ Route::post('/dealer-registration', [DealerRegistrationController::class, 'store
 */
 
 require __DIR__.'/erp.php';
+require __DIR__.'/accounting-accounts.php';
+require __DIR__.'/accounting-mappings.php';
+require __DIR__.'/accounting-starter.php';
+require __DIR__.'/accounting-calendar.php';
+require __DIR__.'/accounting-journals.php';
+require __DIR__.'/accounting-openings.php';
+require __DIR__.'/accounting-cutover.php';
+require __DIR__.'/accounting-manifest.php';
 
 /*
 |--------------------------------------------------------------------------

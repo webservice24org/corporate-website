@@ -288,7 +288,7 @@ final class SalesReportService
                             $rows[] = $r;
                         }
 
-continue;
+                        continue;
                     }
                     if ($type === 'advances') {
                         if (bccomp($p['available'], '0', 2) <= 0) {
@@ -318,7 +318,7 @@ continue;
                         $rows[] = $r;
                     }
 
-continue;
+                    continue;
                 } elseif ($type === 'returns') {
                     $delivery = SalesDelivery::query()->where('company_id', $company->getKey())->findOrFail($model->getAttribute('sales_delivery_id'));
                     $this->proof($delivery);
@@ -331,7 +331,7 @@ continue;
                         } $rows[] = [...$row, ...$this->product($line), 'number' => $row['number'].' / '.$line->getAttribute('line_number'), 'sort_id' => (int) $line->getKey(), 'warehouse' => $this->warehouse($company, $line->getAttribute('warehouse_id')), 'quantity' => $line->getAttribute('accepted_quantity'), 'restocked' => $line->getAttribute('restocked_quantity'), 'damaged' => bcsub((string) $line->getAttribute('accepted_quantity'), (string) $line->getAttribute('restocked_quantity'), 4), 'rejected' => bcsub((string) $line->getAttribute('quantity'), (string) $line->getAttribute('accepted_quantity'), 4), 'unbilled' => $line->getAttribute('unbilled_quantity'), 'credit_review' => $line->getAttribute('credit_review_quantity'), 'amount' => $this->cost(bcmul((string) $line->getAttribute('restocked_quantity'), (string) $line->getAttribute('unit_cost'), 4))];
                     }
 
-continue;
+                    continue;
                 }
                 $rows[] = $row;
             } catch (ValidationException|ModelNotFoundException $e) {
@@ -384,7 +384,7 @@ continue;
                 $this->fail('Customer financial proof requires review.');
             }
 
-return $this->financial[$customerId];
+            return $this->financial[$customerId];
         }
         try {
             $state = $this->credits->customer($companyId, $customerId);
@@ -652,7 +652,7 @@ return $this->financial[$customerId];
             return 'Non-stock completion';
         }
 
-return (string) Warehouse::query()->withoutGlobalScope(SoftDeletingScope::class)->where('company_id', $company->getKey())->findOrFail($id)->getAttribute('name');
+        return (string) Warehouse::query()->withoutGlobalScope(SoftDeletingScope::class)->where('company_id', $company->getKey())->findOrFail($id)->getAttribute('name');
     }
 
     private function cost(string $value): string
@@ -661,7 +661,7 @@ return (string) Warehouse::query()->withoutGlobalScope(SoftDeletingScope::class)
             $this->fail('Stock cost requires review.');
         }
 
-return bcadd($value, '0', 4);
+        return bcadd($value, '0', 4);
     }
 
     /** @param list<array<string, mixed>> $rows @param list<array<string, mixed>> $columns @return array<string, mixed> */

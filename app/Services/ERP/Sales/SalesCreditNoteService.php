@@ -11,13 +11,15 @@ use App\Models\SalesInvoiceItem;
 use App\Models\SalesReturn;
 use App\Models\SalesReturnItem;
 use App\Models\User;
+use App\Services\ERP\Accounting\Source\Sales\AccountingSalesCorrectionPosting;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 final class SalesCreditNoteService
 {
-    public function __construct(private readonly SalesCompanyAccess $access, private readonly SalesOrderService $orders, private readonly SalesInvoiceBalanceService $balances, private readonly SalesCreditNoteLedger $ledger, private readonly CustomerCreditLedger $credits, private readonly SalesCreditMath $math, private readonly SalesDocumentGuard $guard, private readonly SalesDocumentNumberService $numbers, private readonly SalesAuditService $audit) {}
+    public function __construct(private readonly SalesCompanyAccess $access, private readonly SalesOrderService $orders, private readonly SalesInvoiceBalanceService $balances, private readonly SalesCreditNoteLedger $ledger, private readonly CustomerCreditLedger $credits, private readonly SalesCreditMath $math, private readonly SalesDocumentGuard $guard, private readonly SalesDocumentNumberService $numbers, private readonly SalesAuditService $audit, private readonly AccountingSalesCorrectionPosting $finance) {}
 
     public function find(User $actor, int $id, string $permission = 'erp.sales-credit-notes.view'): SalesCreditNote
     {
@@ -77,7 +79,11 @@ final class SalesCreditNoteService
         Validator::make(['revision' => $revision, 'key' => $key], ['revision' => ['required', 'integer', 'min:1'], 'key' => ['required', 'regex:/\A[a-zA-Z0-9_-]{16,100}\z/']])->validate();
 
         return DB::transaction(function () use ($actor, $id, $revision, $key): SalesCreditNote {
-            [$invoice, $note] = $this->locked($actor, $id, 'erp.sales-credit-notes.issue');
+            /** @var array{0: SalesInvoice, 1: SalesCreditNote} $locked */
+            $locked = $this->locked($actor, $id, 'erp.sales-credit-notes.issue');
+            $invoice = $locked[0];
+            $note = $locked[1];
+            /** @var Collection<int, SalesCreditNoteItem> $items */
             $items = SalesCreditNoteItem::query()->where('sales_credit_note_id', $id)->orderBy('line_number')->lockForUpdate()->get();
             $hash = $this->fingerprint($note, $items->all());
             if ($note->getAttribute('status') === 'issued') {
@@ -85,6 +91,8 @@ final class SalesCreditNoteService
                     $this->math->fail('Credit issue retry differs from the original.');
                 }
                 $this->credits->customer((int) $invoice->getAttribute('company_id'), (int) $invoice->getAttribute('customer_id'));
+
+                $this->finance->complete($actor, (int) $note->getAttribute('company_id'), 'sales_credit_note', $id, 'issued', false);
 
                 return $note;
             }
@@ -134,6 +142,8 @@ final class SalesCreditNoteService
             $invoice->forceFill(['revision' => (int) $invoice->getAttribute('revision') + 1, 'updated_by' => $actor->getKey()])->save();
             $this->audit->record($actor, (int) $company->getKey(), 'credit_note', $id, 'issue', ['status' => 'draft', 'revision' => $revision], ['status' => 'issued', 'revision' => $revision + 1, 'approved_and_issued_by' => $actor->getKey(), 'grand_total' => $note->getAttribute('grand_total')]);
 
+            $this->finance->complete($actor, (int) $note->getAttribute('company_id'), 'sales_credit_note', $id, 'issued', true);
+
             return $note;
         }, 3);
     }
@@ -141,7 +151,9 @@ final class SalesCreditNoteService
     public function cancel(User $actor, int $id, int $revision, string $reason): SalesCreditNote
     {
         return DB::transaction(function () use ($actor, $id, $revision, $reason): SalesCreditNote {
-            [, $note] = $this->locked($actor, $id, 'erp.sales-credit-notes.cancel');
+            /** @var array{0: SalesInvoice, 1: SalesCreditNote} $locked */
+            $locked = $this->locked($actor, $id, 'erp.sales-credit-notes.cancel');
+            $note = $locked[1];
             $this->draft($note);
             $this->guard->assertRevision($note, $revision);
             $note->forceFill(['status' => 'cancelled', 'revision' => $revision + 1, 'updated_by' => $actor->getKey()])->save();
@@ -256,6 +268,6 @@ final class SalesCreditNoteService
             ksort($value);
         }
 
-return array_map(fn (mixed $entry): mixed => $this->canonical($entry), $value);
+        return array_map(fn (mixed $entry): mixed => $this->canonical($entry), $value);
     }
 }

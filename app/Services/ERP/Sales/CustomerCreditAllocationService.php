@@ -9,13 +9,14 @@ use App\Models\Customer;
 use App\Models\CustomerCreditAllocation;
 use App\Models\SalesInvoice;
 use App\Models\User;
+use App\Services\ERP\Accounting\Source\Sales\AccountingSalesCorrectionPosting;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 final class CustomerCreditAllocationService
 {
-    public function __construct(private readonly SalesCompanyAccess $access, private readonly SalesOrderService $orders, private readonly CustomerCreditLedger $ledger, private readonly SalesInvoiceBalanceService $balances, private readonly SalesCreditMath $math) {}
+    public function __construct(private readonly SalesCompanyAccess $access, private readonly SalesOrderService $orders, private readonly CustomerCreditLedger $ledger, private readonly SalesInvoiceBalanceService $balances, private readonly SalesCreditMath $math, private readonly AccountingSalesCorrectionPosting $finance) {}
 
     /** @param array<string, mixed> $input */
     public function allocate(User $actor, array $input): CustomerCreditAllocation
@@ -36,9 +37,9 @@ final class CustomerCreditAllocationService
             if ($existing !== null) {
                 if ($existing->getAttribute('reverses_allocation_id') !== null || ! hash_equals((string) $existing->getAttribute('payload_hash'), $hash)) {
                     $this->math->fail('Credit operation key conflicts with another request.');
-                }
+                } $this->finance->complete($actor, (int) $company->getKey(), 'customer_credit_allocation', (int) $existing->getKey(), 'created', false);
 
-return $existing;
+                return $existing;
             }
             $this->balances->snapshot($source);
             $this->balances->snapshot($target);
@@ -48,6 +49,8 @@ return $existing;
             }
             $row = CustomerCreditAllocation::query()->create(['company_id' => $company->getKey(), 'source_sales_invoice_id' => $source->getKey(), 'sales_invoice_id' => $target->getKey(), 'amount' => $amount, 'reason' => $reason, 'posted_at' => now()->toDateTimeString(), 'posted_by' => $actor->getKey(), 'idempotency_key' => $data['idempotency_key'], 'payload_hash' => $hash]);
             $this->ledger->customer((int) $company->getKey(), (int) $source->getAttribute('customer_id'));
+
+            $this->finance->complete($actor, (int) $company->getKey(), 'customer_credit_allocation', (int) $row->getKey(), 'created', true);
 
             return $row;
         }, 3);
@@ -70,9 +73,9 @@ return $existing;
             if ($existing !== null) {
                 if ($existing->getAttribute('idempotency_key') !== $data['idempotency_key'] || ! hash_equals((string) $existing->getAttribute('payload_hash'), $hash)) {
                     $this->math->fail('Allocation already has a different reversal.');
-                }
+                } $this->finance->complete($actor, (int) $company->getKey(), 'customer_credit_allocation', (int) $existing->getKey(), $existing->getAttribute('reverses_allocation_id') === null ? 'created' : 'reversed', false);
 
-return $existing;
+                return $existing;
             }
             if (CustomerCreditAllocation::query()->where('company_id', $company->getKey())->where('idempotency_key', $data['idempotency_key'])->exists()) {
                 $this->math->fail('Credit operation key already used.');
@@ -83,6 +86,8 @@ return $existing;
             $this->ledger->customer((int) $company->getKey(), (int) $source->getAttribute('customer_id'));
             $undo = CustomerCreditAllocation::query()->create([...$row->only(['company_id', 'source_sales_invoice_id', 'sales_invoice_id', 'amount']), 'reverses_allocation_id' => $id, 'reason' => trim((string) $data['reason']), 'posted_at' => now()->toDateTimeString(), 'posted_by' => $actor->getKey(), 'idempotency_key' => $data['idempotency_key'], 'payload_hash' => $hash]);
             $this->ledger->customer((int) $company->getKey(), (int) $source->getAttribute('customer_id'));
+
+            $this->finance->complete($actor, (int) $company->getKey(), 'customer_credit_allocation', (int) $undo->getKey(), 'reversed', true);
 
             return $undo;
         }, 3);

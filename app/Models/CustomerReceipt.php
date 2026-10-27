@@ -15,6 +15,15 @@ final class CustomerReceipt extends Model
     // Internal foundation model. Later services whitelist request input explicitly.
     protected $guarded = ['id'];
 
+    protected static function booted(): void
+    {
+        self::updating(static function (self $receipt): void {
+            if ($receipt->getRawOriginal('status') === 'posted' && $receipt->isDirty('cash_account_id')) {
+                throw new \LogicException('A posted receipt cannot change its original finance cash account.');
+            }
+        });
+    }
+
     protected function casts(): array
     {
         return [

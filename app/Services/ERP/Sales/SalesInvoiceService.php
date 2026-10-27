@@ -12,6 +12,8 @@ use App\Models\SalesInvoiceItem;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\User;
+use App\Services\ERP\Accounting\Source\Sales\AccountingSalesPosting;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -33,6 +35,7 @@ final class SalesInvoiceService
         private readonly SalesDocumentNumberService $numbers,
         private readonly SalesAuditService $audit,
         private readonly SalesReturnLedger $returns,
+        private readonly AccountingSalesPosting $accounting,
     ) {}
 
     public function find(User $actor, int $id, string $permission = 'erp.sales-invoices.view'): SalesInvoice
@@ -101,13 +104,21 @@ final class SalesInvoiceService
         Validator::make(['revision' => $revision, 'key' => $key], ['revision' => ['required', 'integer', 'min:1'], 'key' => ['required', 'regex:/\A[a-zA-Z0-9_-]{16,100}\z/']])->validate();
 
         return DB::transaction(function () use ($actor, $id, $revision, $key): SalesInvoice {
-            [$order, $invoice] = $this->locked($actor, $id, 'erp.sales-invoices.issue');
+            $documents = $this->locked($actor, $id, 'erp.sales-invoices.issue');
+            /** @var SalesOrder $order */
+            $order = $documents[0];
+            /** @var SalesInvoice $invoice */
+            $invoice = $documents[1];
+            $this->accounting->before((int) $invoice->getAttribute('company_id'));
+            /** @var EloquentCollection<int, SalesInvoiceItem> $items */
             $items = SalesInvoiceItem::query()->where('sales_invoice_id', $id)->orderBy('line_number')->lockForUpdate()->get();
             $hash = $this->fingerprint($invoice, $items->all());
             if ($invoice->getAttribute('status') === 'issued') {
                 if ($invoice->getAttribute('issued_at') === null || $invoice->getAttribute('idempotency_key') !== $key || ! hash_equals((string) $invoice->getAttribute('payload_hash'), $hash)) {
                     $this->fail('idempotency_key', 'The issued invoice does not match this issue retry.');
                 }
+
+                $this->accounting->complete($actor, (int) $invoice->getAttribute('company_id'), 'sales_invoice', $id, false);
 
                 return $invoice;
             }
@@ -158,6 +169,8 @@ final class SalesInvoiceService
             $invoice->forceFill(['status' => 'issued', 'revision' => $revision + 1, 'issued_at' => now()->toDateTimeString(), 'issued_by' => $actor->getKey(), 'updated_by' => $actor->getKey(), 'idempotency_key' => $key, 'payload_hash' => $hash])->save();
             $this->audit->record($actor, (int) $company->getKey(), 'invoice', $id, 'issue', ['status' => 'draft', 'revision' => $revision], ['status' => 'issued', 'revision' => $revision + 1, 'grand_total' => $invoice->getAttribute('grand_total')]);
 
+            $this->accounting->complete($actor, (int) $invoice->getAttribute('company_id'), 'sales_invoice', $id, true);
+
             return $invoice;
         }, 3);
     }
@@ -165,7 +178,9 @@ final class SalesInvoiceService
     public function cancel(User $actor, int $id, int $revision, string $reason): SalesInvoice
     {
         return DB::transaction(function () use ($actor, $id, $revision, $reason): SalesInvoice {
-            [, $invoice] = $this->locked($actor, $id, 'erp.sales-invoices.cancel');
+            $documents = $this->locked($actor, $id, 'erp.sales-invoices.cancel');
+            /** @var SalesInvoice $invoice */
+            $invoice = $documents[1];
             $this->draft($invoice);
             $this->guard->assertRevision($invoice, $revision);
             $invoice->forceFill(['status' => 'cancelled', 'revision' => $revision + 1, 'updated_by' => $actor->getKey()])->save();
@@ -175,7 +190,7 @@ final class SalesInvoiceService
         }, 3);
     }
 
-    /** @return array{SalesOrder, SalesInvoice} */
+    /** @return array{0: SalesOrder, 1: SalesInvoice} */
     private function locked(User $actor, int $id, string $permission): array
     {
         $found = $this->find($actor, $id, $permission);

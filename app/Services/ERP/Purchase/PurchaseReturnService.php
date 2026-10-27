@@ -18,6 +18,8 @@ use App\Models\StockMovement;
 use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingInventoryContext;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingPurchasePosting;
 use App\Services\Inventory\InventoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +32,7 @@ final class PurchaseReturnService
         private readonly PurchaseRequisitionService $requisitions,
         private readonly PurchaseDocumentNumberService $numbers,
         private readonly InventoryService $inventory,
+        private readonly AccountingPurchasePosting $accounting,
     ) {}
 
     /** @return Builder<Company> */
@@ -101,6 +104,7 @@ final class PurchaseReturnService
         $record = $this->find($actor, $id, 'erp.purchase-returns.edit');
 
         return DB::transaction(function () use ($actor, $record, $data): PurchaseReturn {
+            Company::query()->whereKey($record->company_id)->lockForUpdate()->firstOrFail();
             $receipt = $this->lockSource(GoodsReceipt::query()->where('company_id', $record->company_id)->where('purchase_order_id', $record->purchase_order_id)->where('warehouse_id', $record->warehouse_id)->findOrFail($record->goods_receipt_id));
             $record = PurchaseReturn::query()->whereKey($record->getKey())->lockForUpdate()->firstOrFail();
             $this->state($record, (int) $data['revision'], ['draft']);
@@ -123,6 +127,7 @@ final class PurchaseReturnService
         $record = $this->find($actor, $id, 'erp.purchase-returns.approve');
 
         return DB::transaction(function () use ($actor, $record, $revision): PurchaseReturn {
+            Company::query()->whereKey($record->company_id)->lockForUpdate()->firstOrFail();
             $receipt = $this->lockSource(GoodsReceipt::query()->where('company_id', $record->company_id)->where('purchase_order_id', $record->purchase_order_id)->where('warehouse_id', $record->warehouse_id)->findOrFail($record->goods_receipt_id));
             $record = PurchaseReturn::query()->whereKey($record->getKey())->lockForUpdate()->firstOrFail();
             $this->state($record, $revision, ['draft']);
@@ -144,6 +149,7 @@ final class PurchaseReturnService
         $record = $this->find($actor, $id, 'erp.purchase-returns.cancel');
 
         return DB::transaction(function () use ($record, $actor, $revision, $reason): PurchaseReturn {
+            Company::query()->whereKey($record->company_id)->lockForUpdate()->firstOrFail();
             $record = PurchaseReturn::query()->whereKey($record->getKey())->lockForUpdate()->firstOrFail();
             $this->state($record, $revision, ['draft', 'approved']);
             if (trim($reason) === '' || mb_strlen($reason) > 2000) {
@@ -162,56 +168,64 @@ final class PurchaseReturnService
         $record = $this->find($actor, $id, 'erp.purchase-returns.post');
 
         return DB::transaction(function () use ($record, $actor, $revision): PurchaseReturn {
-            $receipt = $this->lockSource(GoodsReceipt::query()->where('company_id', $record->company_id)->where('purchase_order_id', $record->purchase_order_id)->where('warehouse_id', $record->warehouse_id)->findOrFail($record->goods_receipt_id));
-            $record = PurchaseReturn::query()->whereKey($record->getKey())->lockForUpdate()->firstOrFail();
-            if ($record->status === 'posted') {
-                return $record; // Safe retry: no second ledger entry, even with the old revision.
-            }
-            $this->state($record, $revision, ['approved']);
-            $this->checkHeader($record, $receipt);
-            if ($record->getAttribute('approved_by') === null || (int) $record->getAttribute('approved_by') === (int) $record->created_by || $record->getAttribute('approved_at') === null) {
-                $this->fail('approval', 'Independent approval is required before posting.');
-            }
-            $this->validateStored($record, $receipt);
-            $order = PurchaseOrder::query()->findOrFail($receipt->purchase_order_id);
-            $company = Company::query()->findOrFail($receipt->company_id);
-            if (strtoupper((string) $order->currency_code) !== strtoupper((string) $company->currency_code)) {
-                $this->fail('currency', 'Return stock valuation requires the order and company currencies to match.');
-            }
-            $warehouse = Warehouse::query()->where('company_id', $receipt->company_id)->where('is_active', true)->whereKey($receipt->warehouse_id)->lockForUpdate()->firstOrFail();
-            $items = PurchaseReturnItem::query()->where('purchase_return_id', $record->getKey())->get();
-            // Stable product/variant order matches receiving and stock-transfer locking.
-            $ordered = $items->sortBy(function (PurchaseReturnItem $line): string {
-                $source = GoodsReceiptItem::query()->findOrFail($line->goods_receipt_item_id);
-                $poLine = PurchaseOrderItem::query()->findOrFail($source->purchase_order_item_id);
+            $this->accounting->before((int) $record->company_id);
 
-                return sprintf('%020d-%020d-%020d', $poLine->product_id, $poLine->product_variant_id ?? 0, $line->getKey());
+            return AccountingInventoryContext::run((int) $record->company_id, 'purchase_return', (int) $record->getKey(), (int) $actor->getKey(), function () use ($record, $actor, $revision): PurchaseReturn {
+                $receipt = $this->lockSource(GoodsReceipt::query()->where('company_id', $record->company_id)->where('purchase_order_id', $record->purchase_order_id)->where('warehouse_id', $record->warehouse_id)->findOrFail($record->goods_receipt_id));
+                $record = PurchaseReturn::query()->whereKey($record->getKey())->lockForUpdate()->firstOrFail();
+                if ($record->status === 'posted') {
+                    $this->accounting->complete($actor, (int) $record->company_id, 'purchase_return', (int) $record->getKey(), false);
+
+                    return $record; // Safe retry: no second ledger entry, even with the old revision.
+                }
+                $this->state($record, $revision, ['approved']);
+                $this->checkHeader($record, $receipt);
+                if ($record->getAttribute('approved_by') === null || (int) $record->getAttribute('approved_by') === (int) $record->created_by || $record->getAttribute('approved_at') === null) {
+                    $this->fail('approval', 'Independent approval is required before posting.');
+                }
+                $this->validateStored($record, $receipt);
+                $order = PurchaseOrder::query()->findOrFail($receipt->purchase_order_id);
+                $company = Company::query()->findOrFail($receipt->company_id);
+                if (strtoupper((string) $order->currency_code) !== strtoupper((string) $company->currency_code)) {
+                    $this->fail('currency', 'Return stock valuation requires the order and company currencies to match.');
+                }
+                $warehouse = Warehouse::query()->where('company_id', $receipt->company_id)->where('is_active', true)->whereKey($receipt->warehouse_id)->lockForUpdate()->firstOrFail();
+                $items = PurchaseReturnItem::query()->where('purchase_return_id', $record->getKey())->get();
+                // Stable product/variant order matches receiving and stock-transfer locking.
+                $ordered = $items->sortBy(function (PurchaseReturnItem $line): string {
+                    $source = GoodsReceiptItem::query()->findOrFail($line->goods_receipt_item_id);
+                    $poLine = PurchaseOrderItem::query()->findOrFail($source->purchase_order_item_id);
+
+                    return sprintf('%020d-%020d-%020d', $poLine->product_id, $poLine->product_variant_id ?? 0, $line->getKey());
+                });
+                $old = $this->snapshot($record);
+                foreach ($ordered as $line) {
+                    $source = GoodsReceiptItem::query()->where('goods_receipt_id', $receipt->getKey())->findOrFail($line->goods_receipt_item_id);
+                    $poLine = PurchaseOrderItem::query()->where('purchase_order_id', $receipt->purchase_order_id)->findOrFail($source->purchase_order_item_id);
+                    $product = Product::query()->where('company_id', $receipt->company_id)->whereKey($poLine->product_id)->lockForUpdate()->firstOrFail();
+                    $variant = $poLine->product_variant_id === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->whereKey($poLine->product_variant_id)->lockForUpdate()->firstOrFail();
+                    if (! $product->is_active || ($variant !== null && ! $variant->is_active) || (bool) $product->has_variants !== ($variant !== null) || $product->isStockItem() !== (bool) $line->getAttribute('is_stock_item')) {
+                        $this->fail('items', 'Source product or variant is inactive, or its inventory configuration has changed.');
+                    }
+                    if (! $product->isStockItem()) {
+                        continue; // Non-stock acceptance is operational only, with no inventory ledger.
+                    }
+                    $balance = InventoryBalance::query()->where('company_id', $receipt->company_id)->where('warehouse_id', $warehouse->getKey())
+                        ->where('product_id', $product->getKey())->where('variant_key', $variant?->getKey() ?? 0)->lockForUpdate()->first();
+                    if ($balance === null || bccomp(bcsub((string) $balance->quantity_on_hand, (string) $balance->quantity_reserved, 4), (string) $line->quantity, 4) < 0) {
+                        $this->fail('stock', 'Insufficient unreserved stock in the original receiving warehouse.');
+                    }
+                    $movement = $this->inventory->stockOut($warehouse, $product, (string) $line->quantity, StockMovement::TYPE_PURCHASE_RETURN,
+                        (string) $balance->average_cost, $variant, PurchaseReturn::class, (int) $record->getKey(), (string) $record->number, now(), (int) $actor->getKey(), (string) $record->reason);
+                    $line->fill(['unit_cost' => (string) $movement->unit_cost, 'stock_movement_id' => $movement->getKey()])->save();
+                }
+                $record->fill(['status' => 'posted', 'posted_by' => $actor->getKey(), 'posted_at' => now()->toDateTimeString(), 'revision' => $revision + 1])->save();
+                $this->audit($record, $actor, 'posted', $old, (string) $record->reason);
+
+                $this->accounting->complete($actor, (int) $record->company_id, 'purchase_return', (int) $record->getKey(), true);
+
+                return $record;
             });
-            $old = $this->snapshot($record);
-            foreach ($ordered as $line) {
-                $source = GoodsReceiptItem::query()->where('goods_receipt_id', $receipt->getKey())->findOrFail($line->goods_receipt_item_id);
-                $poLine = PurchaseOrderItem::query()->where('purchase_order_id', $receipt->purchase_order_id)->findOrFail($source->purchase_order_item_id);
-                $product = Product::query()->where('company_id', $receipt->company_id)->whereKey($poLine->product_id)->lockForUpdate()->firstOrFail();
-                $variant = $poLine->product_variant_id === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->whereKey($poLine->product_variant_id)->lockForUpdate()->firstOrFail();
-                if (! $product->is_active || ($variant !== null && ! $variant->is_active) || (bool) $product->has_variants !== ($variant !== null) || $product->isStockItem() !== (bool) $line->getAttribute('is_stock_item')) {
-                    $this->fail('items', 'Source product or variant is inactive, or its inventory configuration has changed.');
-                }
-                if (! $product->isStockItem()) {
-                    continue; // Non-stock acceptance is operational only, with no inventory ledger.
-                }
-                $balance = InventoryBalance::query()->where('company_id', $receipt->company_id)->where('warehouse_id', $warehouse->getKey())
-                    ->where('product_id', $product->getKey())->where('variant_key', $variant?->getKey() ?? 0)->lockForUpdate()->first();
-                if ($balance === null || bccomp(bcsub((string) $balance->quantity_on_hand, (string) $balance->quantity_reserved, 4), (string) $line->quantity, 4) < 0) {
-                    $this->fail('stock', 'Insufficient unreserved stock in the original receiving warehouse.');
-                }
-                $movement = $this->inventory->stockOut($warehouse, $product, (string) $line->quantity, StockMovement::TYPE_PURCHASE_RETURN,
-                    (string) $balance->average_cost, $variant, PurchaseReturn::class, (int) $record->getKey(), (string) $record->number, now(), (int) $actor->getKey(), (string) $record->reason);
-                $line->fill(['unit_cost' => (string) $movement->unit_cost, 'stock_movement_id' => $movement->getKey()])->save();
-            }
-            $record->fill(['status' => 'posted', 'posted_by' => $actor->getKey(), 'posted_at' => now()->toDateTimeString(), 'revision' => $revision + 1])->save();
-            $this->audit($record, $actor, 'posted', $old, (string) $record->reason);
-
-            return $record;
         }, 5);
     }
 

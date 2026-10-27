@@ -15,13 +15,16 @@ use App\Models\SalesReturnItem;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingInventoryContext;
+use App\Services\ERP\Accounting\Source\Sales\AccountingSalesCorrectionPosting;
 use App\Services\Inventory\InventoryService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 
 final class SalesReturnService
 {
-    public function __construct(private readonly SalesCompanyAccess $access, private readonly SalesOrderService $orders, private readonly SalesDeliveryService $deliveries, private readonly SalesReturnLedger $ledger, private readonly SalesDocumentGuard $guard, private readonly SalesDocumentNumberService $numbers, private readonly SalesAuditService $audit, private readonly InventoryService $inventory) {}
+    public function __construct(private readonly SalesCompanyAccess $access, private readonly SalesOrderService $orders, private readonly SalesDeliveryService $deliveries, private readonly SalesReturnLedger $ledger, private readonly SalesDocumentGuard $guard, private readonly SalesDocumentNumberService $numbers, private readonly SalesAuditService $audit, private readonly InventoryService $inventory, private readonly AccountingSalesCorrectionPosting $finance) {}
 
     public function find(User $actor, int $id, string $permission = 'erp.sales-returns.view'): SalesReturn
     {
@@ -90,7 +93,10 @@ final class SalesReturnService
         $data = Validator::make($input, ['revision' => ['required', 'integer', 'min:1'], 'reason' => ['required', 'string', 'max:2000', 'regex:/\S/u'], 'items' => ['required', 'array', 'min:1', 'max:100'], 'items.*.id' => ['required', 'integer', 'min:1', 'distinct'], 'items.*.accepted_quantity' => ['required', 'regex:/\A[0-9]{1,5}(?:\.[0-9]{1,4})?\z/'], 'items.*.restocked_quantity' => ['required', 'regex:/\A[0-9]{1,5}(?:\.[0-9]{1,4})?\z/']])->validate();
 
         return DB::transaction(function () use ($actor, $id, $data): SalesReturn {
-            [$delivery, $row] = $this->locked($actor, $id, 'erp.sales-returns.inspect');
+            /** @var array{0: SalesDelivery, 1: SalesReturn} $locked */
+            $locked = $this->locked($actor, $id, 'erp.sales-returns.inspect');
+            $delivery = $locked[0];
+            $row = $locked[1];
             if (! in_array($row->getAttribute('status'), ['draft', 'inspected'], true) || $row->getAttribute('posted_at') !== null) {
                 $this->ledger->fail('Only unposted returns can be inspected.');
             }
@@ -122,85 +128,105 @@ final class SalesReturnService
     {
         Validator::make(['revision' => $revision, 'key' => $key], ['revision' => ['required', 'integer', 'min:1'], 'key' => ['required', 'regex:/\A[a-zA-Z0-9_-]{16,100}\z/']])->validate();
 
-        return DB::transaction(function () use ($actor, $id, $revision, $key): SalesReturn {
-            [$delivery, $row] = $this->locked($actor, $id, 'erp.sales-returns.post');
-            $items = SalesReturnItem::query()->where('sales_return_id', $id)->orderBy('line_number')->lockForUpdate()->get();
-            $hash = $this->fingerprint($row, $items->all());
-            if ($row->getAttribute('status') === 'posted') {
-                if ($row->getAttribute('idempotency_key') !== $key || ! hash_equals((string) $row->getAttribute('payload_hash'), $hash)) {
-                    $this->ledger->fail('Posted return retry differs from the original operation.');
-                }
-                $this->deliveries->assertInvoiceSource($delivery);
-                $this->ledger->progress($delivery);
+        return DB::transaction(fn (): SalesReturn => $this->postLocked($actor, $id, $revision, $key), 3);
+    }
 
-                return $row;
+    /** Runs inside postReturn's caller-owned transaction. */
+    private function postLocked(User $actor, int $id, int $revision, string $key): SalesReturn
+    {
+        /** @var array{0: SalesDelivery, 1: SalesReturn} $locked */
+        $locked = $this->locked($actor, $id, 'erp.sales-returns.post');
+        $delivery = $locked[0];
+        $row = $locked[1];
+        /** @var Collection<int, SalesReturnItem> $items */
+        $items = SalesReturnItem::query()->where('sales_return_id', $id)->orderBy('line_number')->lockForUpdate()->get();
+        $hash = $this->fingerprint($row, $items->all());
+        if ($row->getAttribute('status') === 'posted') {
+            if ($row->getAttribute('idempotency_key') !== $key || ! hash_equals((string) $row->getAttribute('payload_hash'), $hash)) {
+                $this->ledger->fail('Posted return retry differs from the original operation.');
             }
-            if ($row->getAttribute('status') !== 'inspected' || $row->getAttribute('inspected_at') === null || $row->getAttribute('posted_at') !== null || $items->isEmpty()) {
-                $this->ledger->fail('Inspect the complete return before posting.');
-            }
-            $this->guard->assertRevision($row, $revision);
-            $company = $this->access->authorize($actor, (int) $row->getAttribute('company_id'), 'erp.sales-returns.post', true);
-            $this->date($delivery, $row->getAttribute('document_date')->format('Y-m-d'), (string) $company->getAttribute('timezone'));
             $this->deliveries->assertInvoiceSource($delivery);
-            $progress = $this->ledger->progress($delivery);
-            if (SalesReturn::query()->where('company_id', $company->getKey())->where('idempotency_key', $key)->exists()) {
-                $this->ledger->fail('Operation key already belongs to another return.');
-            }
-            foreach (['company_id', 'customer_id', 'currency_code', 'customer_snapshot', 'billing_address_snapshot', 'shipping_address_snapshot'] as $field) {
-                if ($this->canonical($row->getAttribute($field)) !== $this->canonical($delivery->getAttribute($field))) {
-                    $this->ledger->fail('Return party or currency snapshots differ from the posted delivery.');
-                }
-            }
-            $terms = $row->getAttribute('terms_snapshot') ?? [];
-            $source = $terms['return_source'] ?? [];
-            if ((int) ($source['id'] ?? 0) !== (int) $delivery->getKey() || ($source['number'] ?? null) !== $delivery->getAttribute('number') || trim((string) ($terms['return_reason'] ?? '')) === '' || trim((string) ($terms['inspection_reason'] ?? '')) === '') {
-                $this->ledger->fail('Return source and inspection trace require review.');
-            }
-            $seen = [];
-            foreach ($items as $item) {
-                $di = SalesDeliveryItem::query()->where('sales_delivery_id', $delivery->getKey())->lockForUpdate()->findOrFail($item->getAttribute('sales_delivery_item_id'));
-                if (isset($seen[(int) $di->getKey()]) || $di->getAttribute('fulfillment_type') !== 'physical') {
-                    $this->ledger->fail('Only unique physical delivery lines can be returned.');
-                } $seen[(int) $di->getKey()] = true;
-                foreach (['product_id', 'product_variant_id', 'unit_id', 'warehouse_id', 'product_snapshot', 'description', 'unit_cost'] as $field) {
-                    if ($this->canonical($item->getAttribute($field)) !== $this->canonical($di->getAttribute($field))) {
-                        $this->ledger->fail('Return source identity, original warehouse or cost changed.');
-                    }
-                }
-                $requested = $this->ledger->quantity((string) $item->getAttribute('quantity'), true);
-                $accepted = $this->ledger->quantity((string) $item->getAttribute('accepted_quantity'));
-                $restocked = $this->ledger->quantity((string) $item->getAttribute('restocked_quantity'));
-                if (bccomp($accepted, $requested, 4) > 0 || bccomp($restocked, $accepted, 4) > 0 || bccomp(bcadd($progress[(int) $di->getKey()]['accepted'], $accepted, 4), (string) $di->getAttribute('quantity'), 4) > 0 || $item->getAttribute('stock_movement_id') !== null || $item->getAttribute('disposition') !== $this->ledger->disposition($accepted, $restocked)) {
-                    $this->ledger->fail('Inspection quantities, disposition or cumulative accepted returns require review.');
-                }
-                $unbilled = bccomp($accepted, $progress[(int) $di->getKey()]['available'], 4) > 0 ? $progress[(int) $di->getKey()]['available'] : $accepted;
-                if (bccomp($restocked, '0', 4) > 0) {
-                    $warehouse = Warehouse::query()->where('company_id', $company->getKey())->where('is_active', true)->findOrFail($di->getAttribute('warehouse_id'));
-                    $product = Product::query()->where('company_id', $company->getKey())->where('is_active', true)->findOrFail($di->getAttribute('product_id'));
-                    $variantId = $di->getAttribute('product_variant_id');
-                    $variant = $variantId === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->where('is_active', true)->findOrFail($variantId);
-                    $movement = $this->inventory->stockIn($warehouse, $product, $restocked, StockMovement::TYPE_SALE_RETURN, unitCost: (string) $di->getAttribute('unit_cost'), variant: $variant, referenceType: SalesReturn::class, referenceId: $id, referenceNumber: (string) $row->getAttribute('number'), createdBy: (int) $actor->getKey(), notes: 'Accepted customer return');
-                    $item->setAttribute('stock_movement_id', $movement->getKey());
-                }
-                $item->forceFill(['unbilled_quantity' => $unbilled, 'credit_review_quantity' => bcsub($accepted, $unbilled, 4)])->save();
-                $di->setAttribute('returned_quantity', bcadd((string) $di->getAttribute('returned_quantity'), $accepted, 4));
-                $di->save();
-            }
-            $row->forceFill(['status' => 'posted', 'revision' => $revision + 1, 'posted_by' => $actor->getKey(), 'posted_at' => now()->toDateTimeString(), 'updated_by' => $actor->getKey(), 'idempotency_key' => $key, 'payload_hash' => $hash])->save();
             $this->ledger->progress($delivery);
-            // Preserve original fulfillment; invalidate stale open document screens by advancing order revision.
-            $order = SalesOrder::query()->where('company_id', $company->getKey())->lockForUpdate()->findOrFail($delivery->getAttribute('sales_order_id'));
-            $order->forceFill(['revision' => (int) $order->getAttribute('revision') + 1, 'updated_by' => $actor->getKey()])->save();
-            $this->audit->record($actor, (int) $company->getKey(), 'return', $id, 'post', ['status' => 'inspected', 'revision' => $revision], ['status' => 'posted', 'revision' => $revision + 1, 'movement_ids' => SalesReturnItem::query()->where('sales_return_id', $id)->pluck('stock_movement_id')->filter()->values()->all()]);
+
+            $this->finance->complete($actor, (int) $row->getAttribute('company_id'), 'sales_return', $id, 'posted', false);
 
             return $row;
-        }, 3);
+        }
+        if ($row->getAttribute('status') !== 'inspected' || $row->getAttribute('inspected_at') === null || $row->getAttribute('posted_at') !== null || $items->isEmpty()) {
+            $this->ledger->fail('Inspect the complete return before posting.');
+        }
+        $this->guard->assertRevision($row, $revision);
+        $company = $this->access->authorize($actor, (int) $row->getAttribute('company_id'), 'erp.sales-returns.post', true);
+        $this->date($delivery, $row->getAttribute('document_date')->format('Y-m-d'), (string) $company->getAttribute('timezone'));
+        $this->deliveries->assertInvoiceSource($delivery);
+        $progress = $this->ledger->progress($delivery);
+        if (SalesReturn::query()->where('company_id', $company->getKey())->where('idempotency_key', $key)->exists()) {
+            $this->ledger->fail('Operation key already belongs to another return.');
+        }
+        foreach (['company_id', 'customer_id', 'currency_code', 'customer_snapshot', 'billing_address_snapshot', 'shipping_address_snapshot'] as $field) {
+            if ($this->canonical($row->getAttribute($field)) !== $this->canonical($delivery->getAttribute($field))) {
+                $this->ledger->fail('Return party or currency snapshots differ from the posted delivery.');
+            }
+        }
+        $terms = $row->getAttribute('terms_snapshot') ?? [];
+        $source = $terms['return_source'] ?? [];
+        if ((int) ($source['id'] ?? 0) !== (int) $delivery->getKey() || ($source['number'] ?? null) !== $delivery->getAttribute('number') || trim((string) ($terms['return_reason'] ?? '')) === '' || trim((string) ($terms['inspection_reason'] ?? '')) === '') {
+            $this->ledger->fail('Return source and inspection trace require review.');
+        }
+        $seen = [];
+        foreach ($items as $item) {
+            $di = SalesDeliveryItem::query()->where('sales_delivery_id', $delivery->getKey())->lockForUpdate()->findOrFail($item->getAttribute('sales_delivery_item_id'));
+            if (isset($seen[(int) $di->getKey()]) || $di->getAttribute('fulfillment_type') !== 'physical') {
+                $this->ledger->fail('Only unique physical delivery lines can be returned.');
+            } $seen[(int) $di->getKey()] = true;
+            foreach (['product_id', 'product_variant_id', 'unit_id', 'warehouse_id', 'product_snapshot', 'description', 'unit_cost'] as $field) {
+                if ($this->canonical($item->getAttribute($field)) !== $this->canonical($di->getAttribute($field))) {
+                    $this->ledger->fail('Return source identity, original warehouse or cost changed.');
+                }
+            }
+            $this->postItem($actor, $company, $row, $item, $di, $progress[(int) $di->getKey()]);
+        }
+        $row->forceFill(['status' => 'posted', 'revision' => $revision + 1, 'posted_by' => $actor->getKey(), 'posted_at' => now()->toDateTimeString(), 'updated_by' => $actor->getKey(), 'idempotency_key' => $key, 'payload_hash' => $hash])->save();
+        $this->ledger->progress($delivery);
+        // Preserve original fulfillment; invalidate stale open document screens by advancing order revision.
+        $order = SalesOrder::query()->where('company_id', $company->getKey())->lockForUpdate()->findOrFail($delivery->getAttribute('sales_order_id'));
+        $order->forceFill(['revision' => (int) $order->getAttribute('revision') + 1, 'updated_by' => $actor->getKey()])->save();
+        $this->audit->record($actor, (int) $company->getKey(), 'return', $id, 'post', ['status' => 'inspected', 'revision' => $revision], ['status' => 'posted', 'revision' => $revision + 1, 'movement_ids' => SalesReturnItem::query()->where('sales_return_id', $id)->pluck('stock_movement_id')->filter()->values()->all()]);
+
+        $this->finance->complete($actor, (int) $row->getAttribute('company_id'), 'sales_return', $id, 'posted', true);
+
+        return $row;
+    }
+
+    /** @param array{accepted: string, unbilled: string, credit_review: string, available: string} $progress */
+    private function postItem(User $actor, Company $company, SalesReturn $row, SalesReturnItem $item, SalesDeliveryItem $di, array $progress): void
+    {
+        $requested = $this->ledger->quantity((string) $item->getAttribute('quantity'), true);
+        $accepted = $this->ledger->quantity((string) $item->getAttribute('accepted_quantity'));
+        $restocked = $this->ledger->quantity((string) $item->getAttribute('restocked_quantity'));
+        if (bccomp($accepted, $requested, 4) > 0 || bccomp($restocked, $accepted, 4) > 0 || bccomp(bcadd($progress['accepted'], $accepted, 4), (string) $di->getAttribute('quantity'), 4) > 0 || $item->getAttribute('stock_movement_id') !== null || $item->getAttribute('disposition') !== $this->ledger->disposition($accepted, $restocked)) {
+            $this->ledger->fail('Inspection quantities, disposition or cumulative accepted returns require review.');
+        }
+        $unbilled = bccomp($accepted, $progress['available'], 4) > 0 ? $progress['available'] : $accepted;
+        if (bccomp($restocked, '0', 4) > 0) {
+            $warehouse = Warehouse::query()->where('company_id', $company->getKey())->where('is_active', true)->findOrFail($di->getAttribute('warehouse_id'));
+            $product = Product::query()->where('company_id', $company->getKey())->where('is_active', true)->findOrFail($di->getAttribute('product_id'));
+            $variantId = $di->getAttribute('product_variant_id');
+            $variant = $variantId === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->where('is_active', true)->findOrFail($variantId);
+            $movement = AccountingInventoryContext::run((int) $company->getKey(), 'sales_return', (int) $row->getKey(), (int) $actor->getKey(), fn () => $this->inventory->stockIn($warehouse, $product, $restocked, StockMovement::TYPE_SALE_RETURN, unitCost: (string) $di->getAttribute('unit_cost'), variant: $variant, referenceType: SalesReturn::class, referenceId: (int) $row->getKey(), referenceNumber: (string) $row->getAttribute('number'), createdBy: (int) $actor->getKey(), notes: 'Accepted customer return'));
+            $item->setAttribute('stock_movement_id', $movement->getKey());
+        }
+        $item->forceFill(['unbilled_quantity' => $unbilled, 'credit_review_quantity' => bcsub($accepted, $unbilled, 4)])->save();
+        $di->setAttribute('returned_quantity', bcadd((string) $di->getAttribute('returned_quantity'), $accepted, 4));
+        $di->save();
     }
 
     public function cancel(User $actor, int $id, int $revision, string $reason): SalesReturn
     {
         return DB::transaction(function () use ($actor, $id, $revision, $reason): SalesReturn {
-            [, $row] = $this->locked($actor, $id, 'erp.sales-returns.cancel');
+            /** @var array{0: SalesDelivery, 1: SalesReturn} $locked */
+            $locked = $this->locked($actor, $id, 'erp.sales-returns.cancel');
+            $row = $locked[1];
             if (! in_array($row->getAttribute('status'), ['draft', 'inspected'], true) || $row->getAttribute('posted_at') !== null) {
                 $this->ledger->fail('Only unposted returns can be cancelled.');
             }
@@ -226,7 +252,7 @@ final class SalesReturnService
         }, 3);
     }
 
-    /** @return array{SalesDelivery, SalesReturn} */
+    /** @return array{0: SalesDelivery, 1: SalesReturn} */
     private function locked(User $actor, int $id, string $permission): array
     {
         $found = $this->find($actor, $id, $permission);

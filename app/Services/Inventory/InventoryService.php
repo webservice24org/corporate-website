@@ -2,11 +2,14 @@
 
 namespace App\Services\Inventory;
 
+use App\Models\Accounting\AccountingSetting;
+use App\Models\Company;
 use App\Models\InventoryBalance;
 use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingInventoryContext;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -140,6 +143,18 @@ class InventoryService
 
         return DB::transaction(
             function () use ($warehouse, $product, $variant, $quantity, $movementType, $direction, $unitCost, $referenceType, $referenceId, $referenceNumber, $occurredAt, $createdBy, $notes): StockMovement {
+                // Serialize enabled inventory with source accounting before warehouse/product locks.
+                Company::query()->whereKey($warehouse->company_id)->lockForUpdate()->firstOrFail();
+                $accountingSetting = AccountingSetting::query()->where('company_id', $warehouse->company_id)->lockForUpdate()->first();
+                if ($accountingSetting !== null) {
+                    if ($accountingSetting->getAttribute('cutover_locked_at') !== null || ! in_array($accountingSetting->getAttribute('state'), ['disabled', 'ready', 'enabled'], true)) {
+                        throw ValidationException::withMessages(['accounting_source' => 'Inventory posting is blocked by accounting configuration or the cutover lock.']);
+                    }
+                    if ($accountingSetting->getAttribute('state') === 'enabled') {
+                        AccountingInventoryContext::check((int) $warehouse->company_id, $movementType, $direction, $referenceType, $referenceId, $createdBy);
+                    }
+                }
+
                 /*
                  * Re-fetch and lock the Warehouse.
                  *

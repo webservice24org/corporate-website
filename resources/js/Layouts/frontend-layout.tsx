@@ -54,7 +54,7 @@ export default function FrontendLayout({
         .props;
 
     return (
-        <div className="flex min-h-screen flex-col bg-white text-slate-900">
+        <div className="erp-light-theme flex min-h-screen flex-col bg-white text-slate-900">
             <FlashMessages />
 
             <GlobalSectionRenderer

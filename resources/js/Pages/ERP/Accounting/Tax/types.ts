@@ -1,0 +1,13 @@
+export type Company = { id: number; code: string; name: string; status?: string };
+export type Filters = { from: string; to: string };
+export type Role = 'input_tax' | 'output_tax';
+export type Balance = { opening: string; period_debit: string; period_credit: string; closing: string };
+export type Issue = { issue: string; source_kind?: string; source_id?: number; journal_id?: number; account_id?: number; role?: string };
+export type Report = { complete: boolean; confirmed_balances: Record<Role, Balance> | null; gl: Record<Role, Balance>; source: Record<Role, Balance>; difference: Record<Role, Balance>; accounts: (Balance & { account_id: number; code: string; name: string; status: string; role: Role })[]; rows: { date: string; journal_id: number; number: string; account_id: number; account_code: string; role: string; debit: string; credit: string; native_recipe_matched: boolean }[]; sources: { source_kind: string; source_id: number; number: string; date: string; tax_debit: string; tax_credit: string; tax_line_count: number; date_scope: string }[]; issues: Issue[]; currency: string; unclassified_lines: { count: number; debit: string; credit: string }; arithmetic_output_less_input: string; coverage_basis: string };
+export type Props = { companies: Company[]; company: Company | null; today: string | null; filters: Filters; report: Report | null; canExport: boolean; canLedger: boolean; canTrial: boolean; errors?: Record<string, string> };
+export const path = '/erp/accounting/tax-reconciliation';
+export const panel = 'rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900';
+export const input = 'mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 dark:border-slate-600 dark:bg-slate-950';
+export function reportUrl(company: number, filters: Filters, format?: 'csv' | 'print'): string { const q = new URLSearchParams({ company_id: String(company), from: filters.from, to: filters.to }); if (format) q.set('format', format); return `${path}${format ? '/export' : ''}?${q.toString()}`; }
+export function ledgerUrl(company: number, account: number, filters: Filters): string { return `/erp/accounting/general-ledger?${new URLSearchParams({ company_id: String(company), account_id: String(account), from: filters.from, to: filters.to }).toString()}`; }
+export function pageRows<T>(rows: T[], page: number): { current: number; last: number; rows: T[] } { const last = Math.max(1, Math.ceil(rows.length / 25)); const current = Math.min(Math.max(1, page), last); return { current, last, rows: rows.slice((current - 1) * 25, current * 25) }; }

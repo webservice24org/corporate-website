@@ -1,6 +1,8 @@
 <?php
 
 declare(strict_types=1);
+use Illuminate\Contracts\Console\Kernel;
+use Illuminate\Support\Facades\Schema;
 
 // Optional development CLI probe. Metadata only; no routes or business writes.
 if (PHP_SAPI !== 'cli') {
@@ -46,7 +48,7 @@ $futureTables = [
 
 try {
     $app = require $projectRoot.'/bootstrap/app.php';
-    $app->make(\Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+    $app->make(Kernel::class)->bootstrap();
     $result = [
         'audit' => 'phase-6.1A-installed-schema',
         'generated_at_utc' => gmdate('c'),
@@ -56,14 +58,15 @@ try {
         'missing_operational' => [],
     ];
     foreach ($required as $table => $columns) {
-        $present = \Illuminate\Support\Facades\Schema::hasTable($table);
+        $present = Schema::hasTable($table);
         $result['operational'][$table] = ['present' => $present, 'columns' => []];
         if (! $present) {
             $result['missing_operational'][] = $table;
+
             continue;
         }
         foreach ($columns as $column) {
-            $exists = \Illuminate\Support\Facades\Schema::hasColumn($table, $column);
+            $exists = Schema::hasColumn($table, $column);
             $result['operational'][$table]['columns'][$column] = $exists;
             if (! $exists) {
                 $result['missing_operational'][] = $table.'.'.$column;
@@ -71,14 +74,14 @@ try {
         }
     }
     foreach ($futureTables as $table) {
-        $result['future_discovery'][$table] = \Illuminate\Support\Facades\Schema::hasTable($table);
+        $result['future_discovery'][$table] = Schema::hasTable($table);
     }
     $result['operational_prerequisites_present'] = $result['missing_operational'] === [];
     $result['accounting_readiness'] = 'Not determined by this metadata probe';
     fwrite(STDOUT, json_encode($result, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR)."\n");
     exit($result['operational_prerequisites_present'] ? 0 : 1);
-} catch (\Throwable $exception) {
+} catch (Throwable $exception) {
     // Do not print SQL, connection details, credentials or business values.
-    fwrite(STDERR, "Schema inspection failed (".$exception::class."). Check Laravel configuration locally.\n");
+    fwrite(STDERR, 'Schema inspection failed ('.$exception::class."). Check Laravel configuration locally.\n");
     exit(2);
 }

@@ -1,3 +1,4 @@
+import AccountingLayout from "@/Layouts/accounting-layout";
 import type {
     PropsWithChildren,
 } from "react";
@@ -38,6 +39,10 @@ export default function ERPLayout({
 
     const user =
         page.props.auth?.user;
+
+    if (page.component.startsWith("ERP/Accounting/")) {
+        return <AccountingLayout>{children}</AccountingLayout>;
+    }
 
     return (
         <div className="erp-light-theme min-h-screen bg-slate-100 text-slate-900">

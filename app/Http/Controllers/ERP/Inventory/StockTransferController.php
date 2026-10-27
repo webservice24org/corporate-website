@@ -98,6 +98,7 @@ class StockTransferController extends Controller
         $data = $request->validated();
         $this->authorizeCompany((int) $data['company_id']);
         $transfer = DB::transaction(function () use ($data, $service) {
+            Company::query()->whereKey($data['company_id'])->lockForUpdate()->firstOrFail();
             $transfer = StockTransfer::create([
                 'company_id' => $data['company_id'],
                 'document_number' => 'ST-'.now()->format('Y').'-'.strtoupper((string) Str::ulid()),
@@ -143,7 +144,13 @@ class StockTransferController extends Controller
         $data = $request->validated();
         $this->authorizeCompany((int) $data['company_id']);
         DB::transaction(function () use ($stockTransfer, $data, $service) {
+            $companyIds = [(int) $stockTransfer->company_id, (int) $data['company_id']];
+            sort($companyIds, SORT_NUMERIC);
+            Company::query()->whereIn('id', $companyIds)->orderBy('id')->lockForUpdate()->get();
             $locked = StockTransfer::query()->lockForUpdate()->findOrFail($stockTransfer->id);
+            if ((int) $locked->company_id !== (int) $stockTransfer->company_id) {
+                throw ValidationException::withMessages(['company_id' => 'Transfer company changed; reload before editing.']);
+            }
             $this->ensureDraft($locked);
             $locked->update([
                 'company_id' => $data['company_id'],
@@ -163,7 +170,11 @@ class StockTransferController extends Controller
     {
         $this->authorizeCompany((int) $stockTransfer->company_id);
         DB::transaction(function () use ($stockTransfer) {
+            Company::query()->whereKey($stockTransfer->company_id)->lockForUpdate()->firstOrFail();
             $locked = StockTransfer::query()->lockForUpdate()->findOrFail($stockTransfer->id);
+            if ((int) $locked->company_id !== (int) $stockTransfer->company_id) {
+                throw ValidationException::withMessages(['company_id' => 'Transfer company changed; reload before editing.']);
+            }
             $this->ensureDraft($locked);
             $locked->delete();
         }, 5);

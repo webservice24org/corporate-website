@@ -382,17 +382,17 @@ class UpazilaController extends Controller
                     'upazilas',
                     'name'
                 )
-                ->where(
-                    fn ($query) => $query->where(
-                        'district_id',
-                        $request->integer(
-                            'district_id'
+                    ->where(
+                        fn ($query) => $query->where(
+                            'district_id',
+                            $request->integer(
+                                'district_id'
+                            )
                         )
                     )
-                )
-                ->ignore(
-                    $upazila?->id
-                ),
+                    ->ignore(
+                        $upazila?->id
+                    ),
             ],
 
             'name_bn' => [

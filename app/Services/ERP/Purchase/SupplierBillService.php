@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services\ERP\Purchase;
 
+use App\Models\Accounting\AccountingExpense;
 use App\Models\Company;
 use App\Models\GoodsReceipt;
 use App\Models\GoodsReceiptItem;
@@ -13,6 +14,8 @@ use App\Models\Supplier;
 use App\Models\SupplierBill;
 use App\Models\SupplierBillItem;
 use App\Models\User;
+use App\Services\ERP\Accounting\Expenses\AccountingExpenseContract;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingPurchasePosting;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -24,6 +27,7 @@ final class SupplierBillService
         private readonly PurchaseRequisitionService $requisitions,
         private readonly PurchaseDocumentNumberService $numbers,
         private readonly PurchaseQuoteMath $math,
+        private readonly AccountingPurchasePosting $accounting,
     ) {}
 
     /** @return Builder<Company> */
@@ -115,7 +119,7 @@ final class SupplierBillService
         $bill = $this->find($actor, $id, 'erp.supplier-bills.approve');
 
         return DB::transaction(function () use ($bill, $actor, $revision): SupplierBill {
-            Company::query()->whereKey($bill->company_id)->lockForUpdate()->firstOrFail();
+            $this->accounting->before((int) $bill->company_id);
             [$receipt, $order] = $this->lockSource(GoodsReceipt::query()->where('company_id', $bill->company_id)->where('purchase_order_id', $bill->purchase_order_id)->findOrFail($bill->goods_receipt_id));
             $bill = SupplierBill::query()->whereKey($bill->getKey())->lockForUpdate()->firstOrFail();
             if ($bill->status === 'approved') {
@@ -124,6 +128,8 @@ final class SupplierBillService
                     || $payable->currency_code !== $bill->currency_code || bccomp((string) $payable->amount, (string) $bill->grand_total, 2) !== 0) {
                     $this->fail('payable', 'Approved bill payable is missing or inconsistent. Legacy bills require reconciliation.');
                 }
+
+                $this->accounting->complete($actor, (int) $bill->company_id, 'supplier_bill', (int) $bill->getKey(), false);
 
                 return $bill; // Retry creates no duplicate liability or audit event.
             }
@@ -164,6 +170,8 @@ final class SupplierBillService
                 'created_by' => $actor->getKey(), 'created_at' => now()]);
             $this->audit($bill, $actor, 'approved', $old, 'Payable created from approved supplier bill.');
 
+            $this->accounting->complete($actor, (int) $bill->company_id, 'supplier_bill', (int) $bill->getKey(), true);
+
             return $bill;
         }, 5);
     }
@@ -173,6 +181,7 @@ final class SupplierBillService
         $bill = $this->find($actor, $id, 'erp.supplier-bills.cancel');
 
         return DB::transaction(function () use ($bill, $actor, $revision, $reason): SupplierBill {
+            Company::query()->whereKey($bill->company_id)->lockForUpdate()->firstOrFail();
             $bill = SupplierBill::query()->whereKey($bill->getKey())->lockForUpdate()->firstOrFail();
             $this->state($bill, $revision, 'draft');
             if (trim($reason) === '' || mb_strlen($reason) > 2000) {
@@ -219,6 +228,10 @@ final class SupplierBillService
         $invoice = mb_strtoupper((string) preg_replace('/\s+/u', ' ', trim((string) $data['supplier_invoice_number'])));
         if ($invoice === '' || mb_strlen($invoice) > 100) {
             $this->fail('supplier_invoice_number', 'Enter a supplier invoice number of up to 100 characters.');
+        }
+        $claim = app(AccountingExpenseContract::class)->claim(['company_id' => $companyId, 'payee_type' => 'supplier', 'supplier_id' => $supplierId, 'document_reference' => $invoice]);
+        if (AccountingExpense::query()->where('company_id', $companyId)->where('active_claim_hash', $claim)->exists()) {
+            $this->fail('supplier_invoice_number', 'This supplier invoice is already reserved by a standalone expense. Use its existing finance/settlement path.');
         }
         $duplicate = SupplierBill::query()->where('company_id', $companyId)->where('supplier_id', $supplierId);
         if ($except !== null) {
@@ -333,6 +346,14 @@ final class SupplierBillService
     public function creditReviewQuantity(GoodsReceiptItem $source): string
     {
         $excess = bcsub(bcadd($this->billed((int) $source->getKey()), $this->returned((int) $source->getKey()), 4), (string) $source->quantity_received, 4);
+
+        $credited = '0.0000';
+        $companyId = GoodsReceipt::query()->findOrFail($source->goods_receipt_id)->company_id;
+        foreach (DB::table('accounting_supplier_credit_lines as cl')->join('accounting_supplier_credits as c', 'c.id', '=', 'cl.supplier_credit_id')->join('purchase_return_items as ri', 'ri.id', '=', 'cl.purchase_return_item_id')
+            ->where('c.company_id', $companyId)->whereColumn('cl.company_id', 'c.company_id')->where('c.status', 'issued')->where('ri.goods_receipt_item_id', $source->getKey())->pluck('cl.quantity') as $quantity) {
+            $credited = bcadd($credited, (string) $quantity, 4);
+        }
+        $excess = bcsub($excess, $credited, 4);
 
         return bccomp($excess, '0', 4) > 0 ? $excess : '0.0000';
     }

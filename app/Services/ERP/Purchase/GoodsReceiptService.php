@@ -14,6 +14,8 @@ use App\Models\PurchaseOrderItem;
 use App\Models\StockMovement;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingInventoryContext;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingPurchasePosting;
 use App\Services\Inventory\InventoryService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
@@ -28,6 +30,7 @@ final class GoodsReceiptService
         private readonly PurchaseDocumentNumberService $numbers,
         private readonly PurchaseQuoteMath $math,
         private readonly InventoryService $inventory,
+        private readonly AccountingPurchasePosting $accounting,
     ) {}
 
     /** @return Builder<Company> */
@@ -80,6 +83,7 @@ final class GoodsReceiptService
         $peek = $this->find($actor, $id, 'erp.goods-receipts.edit');
 
         return DB::transaction(function () use ($actor, $id, $data, $peek): GoodsReceipt {
+            Company::query()->whereKey($peek->company_id)->lockForUpdate()->firstOrFail();
             $order = PurchaseOrder::query()->where('company_id', $peek->company_id)->lockForUpdate()->findOrFail($peek->purchase_order_id);
             $receipt = $this->visible($actor, 'erp.goods-receipts.edit')->lockForUpdate()->findOrFail($id);
             $this->draft($receipt, (int) $data['revision']);
@@ -102,79 +106,87 @@ final class GoodsReceiptService
         $peek = $this->find($actor, $id, 'erp.goods-receipts.post');
 
         return DB::transaction(function () use ($actor, $id, $revision, $peek): GoodsReceipt {
-            // All receipt writers use order -> receipt -> warehouse -> sorted product/variant locks.
-            $order = PurchaseOrder::query()->where('company_id', $peek->company_id)->lockForUpdate()->findOrFail($peek->purchase_order_id);
-            $receipt = $this->visible($actor, 'erp.goods-receipts.post')->lockForUpdate()->findOrFail($id);
-            if ((int) $receipt->purchase_order_id !== (int) $order->getKey()) {
-                throw ValidationException::withMessages(['purchase_order_id' => 'The receipt source order changed. Reload before posting.']);
-            }
-            if ($receipt->status === 'posted') {
-                return $receipt; // Successful retry: never append stock twice.
-            }
-            $this->draft($receipt, $revision);
-            $this->receivable($order);
-            $warehouse = Warehouse::query()->where('company_id', $receipt->company_id)->where('is_active', true)->lockForUpdate()->findOrFail($receipt->warehouse_id);
-            $company = Company::query()->findOrFail($receipt->company_id);
-            if (strtoupper((string) $company->currency_code) !== strtoupper((string) $order->currency_code)) {
-                throw ValidationException::withMessages(['currency' => 'Inventory valuation requires the order and current company currency to match.']);
-            }
-            $stored = GoodsReceiptItem::query()->where('goods_receipt_id', $id)->get();
-            $input = $stored->map(fn (GoodsReceiptItem $item): array => $item->only(['purchase_order_item_id', 'quantity_received', 'quantity_rejected']))->all();
-            $prepared = $this->prepare($order, $input);
-            $byLine = $stored->keyBy('purchase_order_item_id');
-            $old = $this->snapshot($receipt);
-            $beforeStatus = (string) $order->status;
-            $oldOrder = $order->attributesToArray();
-            $rawReceivedAt = $receipt->getRawOriginal('received_at');
-            if (! is_string($rawReceivedAt) || $rawReceivedAt === '') {
-                throw ValidationException::withMessages(['received_at' => 'Record an actual received date and time before posting.']);
-            }
-            $occurredAt = Carbon::parse($rawReceivedAt);
-            if ($occurredAt->isFuture()) {
-                throw ValidationException::withMessages(['received_at' => 'Received time cannot be in the future.']);
-            }
-            foreach ($prepared as $line) {
-                $item = $byLine->get($line['purchase_order_item_id']);
-                if (! $item instanceof GoodsReceiptItem || $item->stock_movement_id !== null
-                    || (bool) $item->getAttribute('is_stock_item') !== $line['is_stock_item']
-                    || bccomp((string) $item->unit_cost, $line['unit_cost'], 4) !== 0) {
-                    throw ValidationException::withMessages(['items' => 'Receipt cost, inventory classification or movement links changed. Refresh the draft before posting.']);
-                }
-                $poItem = PurchaseOrderItem::query()->where('purchase_order_id', $order->getKey())->lockForUpdate()->findOrFail($line['purchase_order_item_id']);
-                $product = Product::query()->where('company_id', $order->company_id)->where('is_active', true)->lockForUpdate()->findOrFail($poItem->product_id);
-                $variant = $poItem->product_variant_id === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->where('is_active', true)->lockForUpdate()->findOrFail($poItem->product_variant_id);
-                if ($product->isStockItem() !== $line['is_stock_item'] || (bool) $product->has_variants !== ($variant !== null)) {
-                    throw ValidationException::withMessages(['items' => 'The product inventory/variant configuration changed. Refresh the receipt draft.']);
-                }
-                if ($line['is_stock_item'] && bccomp($line['quantity_received'], '0', 4) > 0) {
-                    $movement = $this->inventory->stockIn(
-                        warehouse: $warehouse, product: $product, quantity: $line['quantity_received'], movementType: StockMovement::TYPE_PURCHASE_RECEIPT,
-                        unitCost: $line['unit_cost'], variant: $variant, referenceType: GoodsReceipt::class, referenceId: (int) $receipt->getKey(),
-                        referenceNumber: (string) $receipt->number, occurredAt: $occurredAt, createdBy: (int) $actor->getKey(), notes: $receipt->notes,
-                    );
-                    $item->setAttribute('stock_movement_id', $movement->getKey());
-                    $item->save();
-                }
-                $poItem->setAttribute('received_quantity', bcadd((string) $poItem->received_quantity, $line['quantity_received'], 4));
-                $poItem->save();
-            }
-            $all = PurchaseOrderItem::query()->where('purchase_order_id', $order->getKey())->get();
-            $complete = $all->every(fn (PurchaseOrderItem $item): bool => bccomp((string) $item->received_quantity, (string) $item->quantity, 4) === 0);
-            $any = $all->contains(fn (PurchaseOrderItem $item): bool => bccomp((string) $item->received_quantity, '0', 4) > 0);
-            $newStatus = $complete ? 'received' : ($any ? 'partially_received' : 'ordered');
-            $order->fill(['status' => $newStatus, 'revision' => (int) $order->getAttribute('revision') + 1]);
-            $order->save();
-            $receipt->fill(['status' => 'posted', 'posted_by' => $actor->getKey(), 'posted_at' => now()->toDateTimeString(), 'revision' => $revision + 1]);
-            $receipt->save();
-            if ($beforeStatus !== $newStatus) {
-                DB::table('purchase_workflow_events')->insert(['company_id' => $order->company_id, 'actor_id' => $actor->getKey(), 'document_type' => 'order', 'document_id' => $order->getKey(),
-                    'from_status' => $beforeStatus, 'to_status' => $newStatus, 'comment' => 'Goods receipt '.$receipt->number, 'created_at' => now()]);
-            }
-            DB::table('purchase_order_audit_logs')->insert(['company_id' => $order->company_id, 'purchase_order_id' => $order->getKey(), 'actor_id' => $actor->getKey(), 'action' => 'goods_receipt',
-                'old_values' => json_encode($oldOrder, JSON_THROW_ON_ERROR), 'new_values' => json_encode([...$order->attributesToArray(), 'goods_receipt_id' => $id], JSON_THROW_ON_ERROR), 'comment' => (string) $receipt->number, 'created_at' => now()]);
-            $this->audit($actor, $receipt, 'posted', $old);
+            $this->accounting->before((int) $peek->company_id);
 
-            return $receipt->refresh();
+            return AccountingInventoryContext::run((int) $peek->company_id, 'goods_receipt', $id, (int) $actor->getKey(), function () use ($actor, $id, $revision, $peek): GoodsReceipt {
+                // Company lock is held; continue with order -> receipt -> warehouse -> sorted product/variant locks.
+                $order = PurchaseOrder::query()->where('company_id', $peek->company_id)->lockForUpdate()->findOrFail($peek->purchase_order_id);
+                $receipt = $this->visible($actor, 'erp.goods-receipts.post')->lockForUpdate()->findOrFail($id);
+                if ((int) $receipt->purchase_order_id !== (int) $order->getKey()) {
+                    throw ValidationException::withMessages(['purchase_order_id' => 'The receipt source order changed. Reload before posting.']);
+                }
+                if ($receipt->status === 'posted') {
+                    $this->accounting->complete($actor, (int) $receipt->company_id, 'goods_receipt', (int) $receipt->getKey(), false);
+
+                    return $receipt; // Successful retry: never append stock twice.
+                }
+                $this->draft($receipt, $revision);
+                $this->receivable($order);
+                $warehouse = Warehouse::query()->where('company_id', $receipt->company_id)->where('is_active', true)->lockForUpdate()->findOrFail($receipt->warehouse_id);
+                $company = Company::query()->findOrFail($receipt->company_id);
+                if (strtoupper((string) $company->currency_code) !== strtoupper((string) $order->currency_code)) {
+                    throw ValidationException::withMessages(['currency' => 'Inventory valuation requires the order and current company currency to match.']);
+                }
+                $stored = GoodsReceiptItem::query()->where('goods_receipt_id', $id)->get();
+                $input = $stored->map(fn (GoodsReceiptItem $item): array => $item->only(['purchase_order_item_id', 'quantity_received', 'quantity_rejected']))->all();
+                $prepared = $this->prepare($order, $input);
+                $byLine = $stored->keyBy('purchase_order_item_id');
+                $old = $this->snapshot($receipt);
+                $beforeStatus = (string) $order->status;
+                $oldOrder = $order->attributesToArray();
+                $rawReceivedAt = $receipt->getRawOriginal('received_at');
+                if (! is_string($rawReceivedAt) || $rawReceivedAt === '') {
+                    throw ValidationException::withMessages(['received_at' => 'Record an actual received date and time before posting.']);
+                }
+                $occurredAt = Carbon::parse($rawReceivedAt);
+                if ($occurredAt->isFuture()) {
+                    throw ValidationException::withMessages(['received_at' => 'Received time cannot be in the future.']);
+                }
+                foreach ($prepared as $line) {
+                    $item = $byLine->get($line['purchase_order_item_id']);
+                    if (! $item instanceof GoodsReceiptItem || $item->stock_movement_id !== null
+                        || (bool) $item->getAttribute('is_stock_item') !== $line['is_stock_item']
+                        || bccomp((string) $item->unit_cost, $line['unit_cost'], 4) !== 0) {
+                        throw ValidationException::withMessages(['items' => 'Receipt cost, inventory classification or movement links changed. Refresh the draft before posting.']);
+                    }
+                    $poItem = PurchaseOrderItem::query()->where('purchase_order_id', $order->getKey())->lockForUpdate()->findOrFail($line['purchase_order_item_id']);
+                    $product = Product::query()->where('company_id', $order->company_id)->where('is_active', true)->lockForUpdate()->findOrFail($poItem->product_id);
+                    $variant = $poItem->product_variant_id === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->where('is_active', true)->lockForUpdate()->findOrFail($poItem->product_variant_id);
+                    if ($product->isStockItem() !== $line['is_stock_item'] || (bool) $product->has_variants !== ($variant !== null)) {
+                        throw ValidationException::withMessages(['items' => 'The product inventory/variant configuration changed. Refresh the receipt draft.']);
+                    }
+                    if ($line['is_stock_item'] && bccomp($line['quantity_received'], '0', 4) > 0) {
+                        $movement = $this->inventory->stockIn(
+                            warehouse: $warehouse, product: $product, quantity: $line['quantity_received'], movementType: StockMovement::TYPE_PURCHASE_RECEIPT,
+                            unitCost: $line['unit_cost'], variant: $variant, referenceType: GoodsReceipt::class, referenceId: (int) $receipt->getKey(),
+                            referenceNumber: (string) $receipt->number, occurredAt: $occurredAt, createdBy: (int) $actor->getKey(), notes: $receipt->notes,
+                        );
+                        $item->setAttribute('stock_movement_id', $movement->getKey());
+                        $item->save();
+                    }
+                    $poItem->setAttribute('received_quantity', bcadd((string) $poItem->received_quantity, $line['quantity_received'], 4));
+                    $poItem->save();
+                }
+                $all = PurchaseOrderItem::query()->where('purchase_order_id', $order->getKey())->get();
+                $complete = $all->every(fn (PurchaseOrderItem $item): bool => bccomp((string) $item->received_quantity, (string) $item->quantity, 4) === 0);
+                $any = $all->contains(fn (PurchaseOrderItem $item): bool => bccomp((string) $item->received_quantity, '0', 4) > 0);
+                $newStatus = $complete ? 'received' : ($any ? 'partially_received' : 'ordered');
+                $order->fill(['status' => $newStatus, 'revision' => (int) $order->getAttribute('revision') + 1]);
+                $order->save();
+                $receipt->fill(['status' => 'posted', 'posted_by' => $actor->getKey(), 'posted_at' => now()->toDateTimeString(), 'revision' => $revision + 1]);
+                $receipt->save();
+                if ($beforeStatus !== $newStatus) {
+                    DB::table('purchase_workflow_events')->insert(['company_id' => $order->company_id, 'actor_id' => $actor->getKey(), 'document_type' => 'order', 'document_id' => $order->getKey(),
+                        'from_status' => $beforeStatus, 'to_status' => $newStatus, 'comment' => 'Goods receipt '.$receipt->number, 'created_at' => now()]);
+                }
+                DB::table('purchase_order_audit_logs')->insert(['company_id' => $order->company_id, 'purchase_order_id' => $order->getKey(), 'actor_id' => $actor->getKey(), 'action' => 'goods_receipt',
+                    'old_values' => json_encode($oldOrder, JSON_THROW_ON_ERROR), 'new_values' => json_encode([...$order->attributesToArray(), 'goods_receipt_id' => $id], JSON_THROW_ON_ERROR), 'comment' => (string) $receipt->number, 'created_at' => now()]);
+                $this->audit($actor, $receipt, 'posted', $old);
+
+                $this->accounting->complete($actor, (int) $receipt->company_id, 'goods_receipt', (int) $receipt->getKey(), true);
+
+                return $receipt->refresh();
+            });
         }, 5);
     }
 
@@ -183,6 +195,7 @@ final class GoodsReceiptService
         $peek = $this->find($actor, $id, 'erp.goods-receipts.cancel');
 
         return DB::transaction(function () use ($actor, $id, $revision, $reason, $peek): GoodsReceipt {
+            Company::query()->whereKey($peek->company_id)->lockForUpdate()->firstOrFail();
             PurchaseOrder::query()->where('company_id', $peek->company_id)->lockForUpdate()->findOrFail($peek->purchase_order_id);
             $receipt = $this->visible($actor, 'erp.goods-receipts.cancel')->lockForUpdate()->findOrFail($id);
             $this->draft($receipt, $revision);
@@ -208,6 +221,7 @@ final class GoodsReceiptService
         }
 
         return DB::transaction(function () use ($actor, $id, $revision, $comment, $peek): PurchaseOrder {
+            Company::query()->whereKey($peek->company_id)->lockForUpdate()->firstOrFail();
             $order = PurchaseOrder::query()->where('company_id', $peek->company_id)->lockForUpdate()->findOrFail($id);
             if ($order->status !== 'received') {
                 throw ValidationException::withMessages(['status' => 'Only fully received orders can be closed.']);

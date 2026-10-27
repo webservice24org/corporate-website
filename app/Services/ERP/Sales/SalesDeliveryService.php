@@ -16,6 +16,8 @@ use App\Models\StockMovement;
 use App\Models\Unit;
 use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingInventoryContext;
+use App\Services\ERP\Accounting\Source\Sales\AccountingSalesPosting;
 use App\Services\Inventory\InventoryService;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
@@ -34,6 +36,7 @@ final class SalesDeliveryService
         private readonly InventoryService $inventory,
         private readonly SalesDocumentNumberService $numbers,
         private readonly SalesAuditService $audit,
+        private readonly AccountingSalesPosting $accounting,
     ) {}
 
     public function find(User $actor, int $id, string $permission = 'erp.sales-deliveries.view'): SalesDelivery
@@ -146,118 +149,132 @@ final class SalesDeliveryService
         Validator::make(['revision' => $revision, 'idempotency_key' => $key], ['revision' => ['required', 'integer', 'min:1'], 'idempotency_key' => ['required', 'string', 'regex:/\A[a-zA-Z0-9_-]{16,100}\z/']])->validate();
 
         return DB::transaction(function () use ($actor, $id, $revision, $key): SalesDelivery {
-            [$order, $delivery] = $this->locked($actor, $id, 'erp.sales-deliveries.post');
-            $items = SalesDeliveryItem::query()->where('sales_delivery_id', $id)->orderBy('line_number')->lockForUpdate()->get();
-            $hash = $this->fingerprint($delivery, $items);
-            if ($delivery->getAttribute('status') === 'posted') {
-                if ($delivery->getAttribute('posted_at') === null || $delivery->getAttribute('idempotency_key') !== $key || ! hash_equals((string) $delivery->getAttribute('payload_hash'), $hash)) {
-                    $this->fail('idempotency_key', 'The posted delivery does not match this posting retry.');
-                }
+            $documents = $this->locked($actor, $id, 'erp.sales-deliveries.post');
+            /** @var SalesOrder $order */
+            $order = $documents[0];
+            /** @var SalesDelivery $delivery */
+            $delivery = $documents[1];
+            $this->accounting->before((int) $delivery->getAttribute('company_id'));
 
-                $this->assertPosted($delivery, $items);
+            return AccountingInventoryContext::run((int) $delivery->getAttribute('company_id'), 'sales_delivery', $id, (int) $actor->getKey(), function () use ($actor, $id, $revision, $key, $order, $delivery): SalesDelivery {
+
+                /** @var Collection<int, SalesDeliveryItem> $items */
+                $items = SalesDeliveryItem::query()->where('sales_delivery_id', $id)->orderBy('line_number')->lockForUpdate()->get();
+                $hash = $this->fingerprint($delivery, $items);
+                if ($delivery->getAttribute('status') === 'posted') {
+                    if ($delivery->getAttribute('posted_at') === null || $delivery->getAttribute('idempotency_key') !== $key || ! hash_equals((string) $delivery->getAttribute('payload_hash'), $hash)) {
+                        $this->fail('idempotency_key', 'The posted delivery does not match this posting retry.');
+                    }
+
+                    $this->assertPosted($delivery, $items);
+
+                    $this->accounting->complete($actor, (int) $delivery->getAttribute('company_id'), 'sales_delivery', $id, false);
+
+                    return $delivery;
+                }
+                $this->assertDraft($delivery);
+                $this->guard->assertRevision($delivery, $revision);
+                $this->assertOrder($order);
+                $companyId = (int) $order->getAttribute('company_id');
+                if (SalesDelivery::query()->where('company_id', $companyId)->where('idempotency_key', $key)->where('id', '<>', $id)->exists()) {
+                    $this->fail('idempotency_key', 'This posting key already belongs to another delivery.');
+                }
+                $company = $this->access->authorize($actor, $companyId, 'erp.sales-deliveries.post', true);
+                $date = $delivery->getAttribute('document_date')->format('Y-m-d');
+                if ($date < $order->getAttribute('document_date')->format('Y-m-d') || $date > now((string) $company->getAttribute('timezone'))->toDateString()) {
+                    $this->fail('document_date', 'Review the delivery date before posting.');
+                }
+                $this->sources->currency((string) $company->getAttribute('currency_code'), (string) $order->getAttribute('currency_code'));
+                $this->sources->customer($companyId, (int) $order->getAttribute('customer_id'));
+                foreach (['customer_id', 'currency_code', 'customer_snapshot', 'billing_address_snapshot', 'shipping_address_snapshot'] as $field) {
+                    if ($this->canonical($delivery->getAttribute($field)) !== $this->canonical($order->getAttribute($field))) {
+                        $this->fail('source', 'Delivery customer and commercial snapshots must match its order.');
+                    }
+                }
+                $terms = $delivery->getAttribute('terms_snapshot') ?? [];
+                $source = $terms['sales_delivery_source'] ?? [];
+                if ((int) ($source['id'] ?? 0) !== (int) $order->getKey() || ($source['number'] ?? null) !== $order->getAttribute('number')) {
+                    $this->fail('source', 'Delivery order trace is inconsistent.');
+                }
+                $warehouseTrace = $terms['delivery_warehouse'] ?? null;
+                unset($terms['sales_delivery_source'], $terms['delivery_warehouse']);
+                if ($this->canonical($terms) !== $this->canonical($order->getAttribute('terms_snapshot') ?? [])) {
+                    $this->fail('source', 'Delivery terms do not match its confirmed order.');
+                }
+                if ($items->isEmpty() || $items->count() > 100) {
+                    $this->fail('items', 'Delivery needs between one and 100 fulfillment lines.');
+                }
+                $lines = SalesOrderItem::query()->where('sales_order_id', $order->getKey())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+                $reservationRows = SalesStockReservation::query()->where('company_id', $companyId)->whereIn('sales_order_item_id', $lines->modelKeys())->whereIn('id', $items->pluck('sales_stock_reservation_id')->filter())->get()->keyBy('id');
+                $this->prelock($companyId, $lines->all(), $reservationRows->all());
+                $seen = [];
+                $warehouseId = null;
+                foreach ($items as $item) {
+                    $line = $lines->get((int) $item->getAttribute('sales_order_item_id'));
+                    abort_unless($line instanceof SalesOrderItem, 404);
+                    if (isset($seen[(int) $line->getKey()])) {
+                        $this->fail('items', 'Each order item may appear only once in a delivery note.');
+                    }
+                    $seen[(int) $line->getKey()] = true;
+                    $quantity = $this->quantity((string) $item->getAttribute('quantity'));
+                    if (bccomp($quantity, $this->remaining($line), 4) > 0 || $item->getAttribute('stock_movement_id') !== null || bccomp((string) $item->getAttribute('invoiced_quantity'), '0', 4) !== 0 || bccomp((string) $item->getAttribute('returned_quantity'), '0', 4) !== 0) {
+                        $this->fail('quantity', 'Delivery quantity or existing posting counters require review.');
+                    }
+                    foreach (['product_id', 'product_variant_id', 'unit_id', 'product_snapshot', 'description'] as $field) {
+                        if ($this->canonical($item->getAttribute($field)) !== $this->canonical($line->getAttribute($field))) {
+                            $this->fail('source', 'Delivery line source identity and snapshots must match the order.');
+                        }
+                    }
+                    $physical = $this->configuration($order, $line);
+                    if ($item->getAttribute('fulfillment_type') !== ($physical ? 'physical' : 'completion')) {
+                        $this->fail('items', 'The saved fulfillment type does not match the confirmed product configuration.');
+                    }
+                    if ($physical) {
+                        $reservation = $reservationRows->get((int) $item->getAttribute('sales_stock_reservation_id'));
+                        abort_unless($reservation instanceof SalesStockReservation, 404);
+                        $this->owned($order, $line, $reservation, $quantity);
+                        $itemWarehouse = (int) $reservation->getAttribute('warehouse_id');
+                        if ((int) $item->getAttribute('warehouse_id') !== $itemWarehouse || ($warehouseId !== null && $warehouseId !== $itemWarehouse)) {
+                            $this->fail('items', 'Delivery physical lines must use their owned reservation in one warehouse.');
+                        }
+                        $warehouseId = $itemWarehouse;
+                        $warehouse = Warehouse::query()->where('company_id', $companyId)->findOrFail($itemWarehouse);
+                        $product = Product::query()->where('company_id', $companyId)->findOrFail($line->getAttribute('product_id'));
+                        $variantId = $line->getAttribute('product_variant_id');
+                        $variant = $variantId === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->findOrFail($variantId);
+                        $balance = InventoryBalance::query()->where('company_id', $companyId)->where('warehouse_id', $itemWarehouse)->where('product_id', $product->getKey())->where('variant_key', (int) ($variantId ?? 0))->firstOrFail();
+                        $cost = (string) $balance->getAttribute('average_cost');
+                        $this->reservations->consumeForDelivery($actor, (int) $item->getKey());
+                        $movement = $this->inventory->stockOut($warehouse, $product, $quantity, StockMovement::TYPE_SALE, unitCost: $cost, variant: $variant, referenceType: SalesDelivery::class, referenceId: $id, referenceNumber: (string) $delivery->getAttribute('number'), createdBy: (int) $actor->getKey());
+                        if (bccomp((string) $movement->getAttribute('unit_cost'), $cost, 4) !== 0 || bccomp((string) $movement->getAttribute('quantity'), $quantity, 4) !== 0) {
+                            $this->fail('stock', 'Inventory movement decimal values require review.');
+                        }
+                        $item->forceFill(['stock_movement_id' => $movement->getKey(), 'unit_cost' => $movement->getAttribute('unit_cost'), 'total_cost' => $movement->getAttribute('total_cost')])->save();
+                    } else {
+                        if ($item->getAttribute('warehouse_id') !== null || $item->getAttribute('sales_stock_reservation_id') !== null) {
+                            $this->fail('items', 'Non-stock completion must not use a warehouse or reservation.');
+                        }
+                        $item->forceFill(['unit_cost' => '0.0000', 'total_cost' => '0.0000'])->save();
+                    }
+                    $line->setAttribute('delivered_quantity', bcadd((string) $line->getAttribute('delivered_quantity'), $quantity, 4));
+                    $line->save();
+                }
+                if (($warehouseId !== null && (! is_array($warehouseTrace) || (int) ($warehouseTrace['id'] ?? 0) !== $warehouseId)) || ($warehouseId === null && $warehouseTrace !== null)) {
+                    $this->fail('source', 'The saved dispatch warehouse trace does not match its fulfillment lines.');
+                }
+                $remaining = '0.0000';
+                foreach ($lines as $line) {
+                    $remaining = bcadd($remaining, $this->remaining($line), 4);
+                }
+                $before = ['status' => 'draft', 'revision' => $revision];
+                $order->forceFill(['status' => bccomp($remaining, '0', 4) === 0 ? 'delivered' : 'partially_delivered', 'revision' => (int) $order->getAttribute('revision') + 1, 'updated_by' => $actor->getKey()])->save();
+                $delivery->forceFill(['status' => 'posted', 'revision' => $revision + 1, 'posted_at' => now()->toDateTimeString(), 'posted_by' => $actor->getKey(), 'updated_by' => $actor->getKey(), 'idempotency_key' => $key, 'payload_hash' => $hash])->save();
+                $this->audit->record($actor, $companyId, 'delivery', $id, 'post', $before, ['status' => 'posted', 'revision' => $revision + 1, 'sales_order_id' => $order->getKey(), 'order_status' => $order->getAttribute('status'), 'movement_ids' => $items->pluck('stock_movement_id')->filter()->values()->all()]);
+
+                $this->accounting->complete($actor, (int) $delivery->getAttribute('company_id'), 'sales_delivery', $id, true);
 
                 return $delivery;
-            }
-            $this->assertDraft($delivery);
-            $this->guard->assertRevision($delivery, $revision);
-            $this->assertOrder($order);
-            $companyId = (int) $order->getAttribute('company_id');
-            if (SalesDelivery::query()->where('company_id', $companyId)->where('idempotency_key', $key)->where('id', '<>', $id)->exists()) {
-                $this->fail('idempotency_key', 'This posting key already belongs to another delivery.');
-            }
-            $company = $this->access->authorize($actor, $companyId, 'erp.sales-deliveries.post', true);
-            $date = $delivery->getAttribute('document_date')->format('Y-m-d');
-            if ($date < $order->getAttribute('document_date')->format('Y-m-d') || $date > now((string) $company->getAttribute('timezone'))->toDateString()) {
-                $this->fail('document_date', 'Review the delivery date before posting.');
-            }
-            $this->sources->currency((string) $company->getAttribute('currency_code'), (string) $order->getAttribute('currency_code'));
-            $this->sources->customer($companyId, (int) $order->getAttribute('customer_id'));
-            foreach (['customer_id', 'currency_code', 'customer_snapshot', 'billing_address_snapshot', 'shipping_address_snapshot'] as $field) {
-                if ($this->canonical($delivery->getAttribute($field)) !== $this->canonical($order->getAttribute($field))) {
-                    $this->fail('source', 'Delivery customer and commercial snapshots must match its order.');
-                }
-            }
-            $terms = $delivery->getAttribute('terms_snapshot') ?? [];
-            $source = $terms['sales_delivery_source'] ?? [];
-            if ((int) ($source['id'] ?? 0) !== (int) $order->getKey() || ($source['number'] ?? null) !== $order->getAttribute('number')) {
-                $this->fail('source', 'Delivery order trace is inconsistent.');
-            }
-            $warehouseTrace = $terms['delivery_warehouse'] ?? null;
-            unset($terms['sales_delivery_source'], $terms['delivery_warehouse']);
-            if ($this->canonical($terms) !== $this->canonical($order->getAttribute('terms_snapshot') ?? [])) {
-                $this->fail('source', 'Delivery terms do not match its confirmed order.');
-            }
-            if ($items->isEmpty() || $items->count() > 100) {
-                $this->fail('items', 'Delivery needs between one and 100 fulfillment lines.');
-            }
-            $lines = SalesOrderItem::query()->where('sales_order_id', $order->getKey())->orderBy('id')->lockForUpdate()->get()->keyBy('id');
-            $reservationRows = SalesStockReservation::query()->where('company_id', $companyId)->whereIn('sales_order_item_id', $lines->modelKeys())->whereIn('id', $items->pluck('sales_stock_reservation_id')->filter())->get()->keyBy('id');
-            $this->prelock($companyId, $lines->all(), $reservationRows->all());
-            $seen = [];
-            $warehouseId = null;
-            foreach ($items as $item) {
-                $line = $lines->get((int) $item->getAttribute('sales_order_item_id'));
-                abort_unless($line instanceof SalesOrderItem, 404);
-                if (isset($seen[(int) $line->getKey()])) {
-                    $this->fail('items', 'Each order item may appear only once in a delivery note.');
-                }
-                $seen[(int) $line->getKey()] = true;
-                $quantity = $this->quantity((string) $item->getAttribute('quantity'));
-                if (bccomp($quantity, $this->remaining($line), 4) > 0 || $item->getAttribute('stock_movement_id') !== null || bccomp((string) $item->getAttribute('invoiced_quantity'), '0', 4) !== 0 || bccomp((string) $item->getAttribute('returned_quantity'), '0', 4) !== 0) {
-                    $this->fail('quantity', 'Delivery quantity or existing posting counters require review.');
-                }
-                foreach (['product_id', 'product_variant_id', 'unit_id', 'product_snapshot', 'description'] as $field) {
-                    if ($this->canonical($item->getAttribute($field)) !== $this->canonical($line->getAttribute($field))) {
-                        $this->fail('source', 'Delivery line source identity and snapshots must match the order.');
-                    }
-                }
-                $physical = $this->configuration($order, $line);
-                if ($item->getAttribute('fulfillment_type') !== ($physical ? 'physical' : 'completion')) {
-                    $this->fail('items', 'The saved fulfillment type does not match the confirmed product configuration.');
-                }
-                if ($physical) {
-                    $reservation = $reservationRows->get((int) $item->getAttribute('sales_stock_reservation_id'));
-                    abort_unless($reservation instanceof SalesStockReservation, 404);
-                    $this->owned($order, $line, $reservation, $quantity);
-                    $itemWarehouse = (int) $reservation->getAttribute('warehouse_id');
-                    if ((int) $item->getAttribute('warehouse_id') !== $itemWarehouse || ($warehouseId !== null && $warehouseId !== $itemWarehouse)) {
-                        $this->fail('items', 'Delivery physical lines must use their owned reservation in one warehouse.');
-                    }
-                    $warehouseId = $itemWarehouse;
-                    $warehouse = Warehouse::query()->where('company_id', $companyId)->findOrFail($itemWarehouse);
-                    $product = Product::query()->where('company_id', $companyId)->findOrFail($line->getAttribute('product_id'));
-                    $variantId = $line->getAttribute('product_variant_id');
-                    $variant = $variantId === null ? null : ProductVariant::query()->where('product_id', $product->getKey())->findOrFail($variantId);
-                    $balance = InventoryBalance::query()->where('company_id', $companyId)->where('warehouse_id', $itemWarehouse)->where('product_id', $product->getKey())->where('variant_key', (int) ($variantId ?? 0))->firstOrFail();
-                    $cost = (string) $balance->getAttribute('average_cost');
-                    $this->reservations->consumeForDelivery($actor, (int) $item->getKey());
-                    $movement = $this->inventory->stockOut($warehouse, $product, $quantity, StockMovement::TYPE_SALE, unitCost: $cost, variant: $variant, referenceType: SalesDelivery::class, referenceId: $id, referenceNumber: (string) $delivery->getAttribute('number'), createdBy: (int) $actor->getKey());
-                    if (bccomp((string) $movement->getAttribute('unit_cost'), $cost, 4) !== 0 || bccomp((string) $movement->getAttribute('quantity'), $quantity, 4) !== 0) {
-                        $this->fail('stock', 'Inventory movement decimal values require review.');
-                    }
-                    $item->forceFill(['stock_movement_id' => $movement->getKey(), 'unit_cost' => $movement->getAttribute('unit_cost'), 'total_cost' => $movement->getAttribute('total_cost')])->save();
-                } else {
-                    if ($item->getAttribute('warehouse_id') !== null || $item->getAttribute('sales_stock_reservation_id') !== null) {
-                        $this->fail('items', 'Non-stock completion must not use a warehouse or reservation.');
-                    }
-                    $item->forceFill(['unit_cost' => '0.0000', 'total_cost' => '0.0000'])->save();
-                }
-                $line->setAttribute('delivered_quantity', bcadd((string) $line->getAttribute('delivered_quantity'), $quantity, 4));
-                $line->save();
-            }
-            if (($warehouseId !== null && (! is_array($warehouseTrace) || (int) ($warehouseTrace['id'] ?? 0) !== $warehouseId)) || ($warehouseId === null && $warehouseTrace !== null)) {
-                $this->fail('source', 'The saved dispatch warehouse trace does not match its fulfillment lines.');
-            }
-            $remaining = '0.0000';
-            foreach ($lines as $line) {
-                $remaining = bcadd($remaining, $this->remaining($line), 4);
-            }
-            $before = ['status' => 'draft', 'revision' => $revision];
-            $order->forceFill(['status' => bccomp($remaining, '0', 4) === 0 ? 'delivered' : 'partially_delivered', 'revision' => (int) $order->getAttribute('revision') + 1, 'updated_by' => $actor->getKey()])->save();
-            $delivery->forceFill(['status' => 'posted', 'revision' => $revision + 1, 'posted_at' => now()->toDateTimeString(), 'posted_by' => $actor->getKey(), 'updated_by' => $actor->getKey(), 'idempotency_key' => $key, 'payload_hash' => $hash])->save();
-            $this->audit->record($actor, $companyId, 'delivery', $id, 'post', $before, ['status' => 'posted', 'revision' => $revision + 1, 'sales_order_id' => $order->getKey(), 'order_status' => $order->getAttribute('status'), 'movement_ids' => $items->pluck('stock_movement_id')->filter()->values()->all()]);
-
-            return $delivery;
+            });
         }, 3);
     }
 
@@ -276,7 +293,9 @@ final class SalesDeliveryService
     public function cancel(User $actor, int $id, int $revision, string $reason): SalesDelivery
     {
         return DB::transaction(function () use ($actor, $id, $revision, $reason): SalesDelivery {
-            [, $delivery] = $this->locked($actor, $id, 'erp.sales-deliveries.cancel');
+            $documents = $this->locked($actor, $id, 'erp.sales-deliveries.cancel');
+            /** @var SalesDelivery $delivery */
+            $delivery = $documents[1];
             $this->assertDraft($delivery);
             $this->guard->assertRevision($delivery, $revision);
             $delivery->forceFill(['status' => 'cancelled', 'revision' => $revision + 1, 'updated_by' => $actor->getKey()])->save();
@@ -286,7 +305,7 @@ final class SalesDeliveryService
         }, 3);
     }
 
-    /** @return array{SalesOrder, SalesDelivery} */
+    /** @return array{0: SalesOrder, 1: SalesDelivery} */
     private function locked(User $actor, int $id, string $permission): array
     {
         $found = $this->find($actor, $id, $permission);

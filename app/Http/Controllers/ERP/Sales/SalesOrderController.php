@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Services\ERP\Sales\SalesCompanyAccess;
 use App\Services\ERP\Sales\SalesOrderService;
 use App\Services\ERP\Sales\SalesQuotationMath;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -147,13 +148,17 @@ final class SalesOrderController extends Controller
             $quotes = $quotes->merge([$selected])->unique('id')->values();
         }
 
+        /** @var EloquentCollection<int, SalesQuotation> $quotes */
         return $quotes->map(fn (SalesQuotation $quote): array => ['id' => $quote->getKey(), 'number' => $quote->getAttribute('number'), 'customer_name' => ($quote->getAttribute('customer_snapshot') ?? [])['name'] ?? '', 'currency_code' => $quote->getAttribute('currency_code'), 'grand_total' => $quote->getAttribute('grand_total'), 'valid_until' => $quote->getAttribute('valid_until')?->format('Y-m-d')])->values()->all();
     }
 
     /** @return array<int, array<string, mixed>> */
     private function items(SalesOrder $order): array
     {
-        return SalesOrderItem::query()->where('sales_order_id', $order->getKey())->orderBy('line_number')->get()->map(function (SalesOrderItem $line): array {
+        /** @var EloquentCollection<int, SalesOrderItem> $items */
+        $items = SalesOrderItem::query()->where('sales_order_id', $order->getKey())->orderBy('line_number')->get();
+
+        return $items->map(function (SalesOrderItem $line): array {
             $remaining = $this->math->scaled((string) $line->getAttribute('quantity'), 10000) - $this->math->scaled((string) $line->getAttribute('delivered_quantity'), 10000) - $this->math->scaled((string) $line->getAttribute('cancelled_quantity'), 10000);
 
             return [...$line->toArray(), 'remaining_quantity' => $this->math->format($remaining, 4)];

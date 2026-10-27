@@ -1,0 +1,14 @@
+import { Link } from '@inertiajs/react';
+import { Frame, Rows } from './Shared';
+import { base, money, panel, secondary } from './types';
+import type { DetailProps } from './types';
+export default function Show(props: DetailProps) {
+    const { statement: row, page } = props;
+    return <Frame title={`Statement ${row.statement_reference}`} context={props}>
+        <section role="status" className={`rounded-xl border p-4 text-sm ${props.evidenceState === 'verified' ? 'border-emerald-400 bg-emerald-50 text-emerald-950' : 'border-amber-400 bg-amber-50 text-amber-950'}`}><h2 className="font-semibold">{props.evidenceState === 'verified' ? 'Statement import evidence verified' : 'Evidence needs review'}</h2><p className="mt-1">{props.evidenceState === 'verified' ? 'The original source, immutable header, all rows and closing arithmetic agree. This does not establish GL or bank reconciliation.' : 'Missing or changed source/row evidence prevents verification. Reads and retries cannot rebuild it; exports are blocked.'}</p></section>
+        <section className={panel}><h2 className="font-semibold">{row.bank_name} · {row.currency_code}</h2><p className="mt-2 text-sm">{row.starts_on} → {row.ends_on} · {row.source_mode} · {row.row_count} recorded rows</p><dl className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{[['Opening bank balance', row.opening_balance], ['Money in · all rows', row.money_in], ['Money out · all rows', row.money_out], ['Closing bank balance', row.closing_balance]].map(([label, amount]) => <div key={label}><dt className="text-sm text-slate-500">{label}</dt><dd className="mt-1 break-all font-mono text-xl font-semibold">{money(amount)}</dd></div>)}</dl><p className="mt-4 text-xs text-slate-500">Recorded by User #{row.created_by} · {row.imported_at}. Figures remain provisional if evidence needs review.</p><div className="mt-4 flex flex-wrap gap-3">{props.exportUrl && <a href={props.exportUrl} className={secondary}>Download verified rows · CSV</a>}{props.bookUrl && <Link href={props.bookUrl} className={secondary}>View bankbook for this period</Link>}</div></section>
+        <nav className="flex flex-wrap gap-3" aria-label="Bank workflows">{props.workflowLinks?.map(link => <Link key={link.url} href={link.url} className={secondary}>{link.label}</Link>)}</nav>
+        <section className={panel}><Rows rows={props.rows} /></section>
+        <nav aria-label="Statement transaction pages" className="flex flex-wrap justify-between gap-3 text-sm"><span>{page.total} verified rows · Page {page.current} of {page.last}. Header totals cover the complete statement.</span><div className="flex gap-4">{page.current > 1 && <Link href={`${base}/${row.id}?page=${page.current - 1}`}>Previous</Link>}{page.current < page.last && <Link href={`${base}/${row.id}?page=${page.current + 1}`}>Next</Link>}</div></nav>
+    </Frame>;
+}

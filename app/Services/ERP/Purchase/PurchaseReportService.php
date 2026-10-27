@@ -111,7 +111,7 @@ final class PurchaseReportService
             ->join('companies as c', 'c.id', '=', 'ap.company_id')->join('suppliers as s', 's.id', '=', 'ap.supplier_id')->where('b.status', 'approved')
             ->whereColumn('b.company_id', 'ap.company_id')->whereColumn('b.supplier_id', 'ap.supplier_id')->whereColumn('b.currency_code', 'ap.currency_code')
             ->whereColumn('s.company_id', 'ap.company_id')->whereColumn('ap.amount', 'b.grand_total')->where('ap.paid_amount', '>=', 0)
-            ->whereColumn('ap.paid_amount', '<=', 'ap.amount')->whereColumn('ap.amount', '>', 'ap.paid_amount'), $actor, $filters, 'ap.company_id', 'ap.supplier_id', 'ap.currency_code');
+            ->whereColumn('ap.paid_amount', '<=', 'ap.amount')->where('ap.credited_amount', '>=', 0)->whereRaw('ap.amount > ap.paid_amount + ap.credited_amount'), $actor, $filters, 'ap.company_id', 'ap.supplier_id', 'ap.currency_code');
     }
 
     /** @param array<string, mixed> $filters */
@@ -127,12 +127,12 @@ final class PurchaseReportService
                 ->leftJoin('supplier_payables as ap', function ($join): void {
                     $join->on('ap.supplier_bill_id', '=', 'b.id')->on('ap.company_id', '=', 'b.company_id')->on('ap.supplier_id', '=', 'b.supplier_id');
                 })->select(['b.id', 'b.id as document_id', 'b.number', 'b.supplier_invoice_number', 'b.company_id', 'c.name as company_name', 'b.supplier_id', 's.name as supplier_name',
-                    'b.currency_code', 'b.approved_at as event_at', 'b.invoice_date', 'b.due_date', 'b.status', 'b.grand_total as amount', 'ap.id as payable_id', 'ap.currency_code as payable_currency', 'ap.amount as payable_amount', 'ap.paid_amount as payable_paid'])
+                    'b.currency_code', 'b.approved_at as event_at', 'b.invoice_date', 'b.due_date', 'b.status', 'b.grand_total as amount', 'ap.id as payable_id', 'ap.currency_code as payable_currency', 'ap.amount as payable_amount', 'ap.paid_amount as payable_paid', 'ap.credited_amount as payable_credited'])
                 ->orderByDesc('b.approved_at')->orderByDesc('b.id');
         }
         if ($type === 'payables') {
             return $this->payables($actor, $filters)->select(['ap.id', 'b.id as document_id', 'b.number', 'b.supplier_invoice_number', 'ap.company_id', 'c.name as company_name', 'ap.supplier_id',
-                's.name as supplier_name', 'ap.currency_code', 'ap.created_at as event_at', 'ap.due_date', 'ap.amount', 'ap.paid_amount'])->orderByDesc('ap.id');
+                's.name as supplier_name', 'ap.currency_code', 'ap.created_at as event_at', 'ap.due_date', 'ap.amount', 'ap.paid_amount', 'ap.credited_amount'])->orderByDesc('ap.id');
         }
         if ($type === 'receipts') {
             return $this->period($this->receipts($actor, $filters)->where('gr.status', 'posted'), $filters, 'gr.received_at')
@@ -194,12 +194,13 @@ final class PurchaseReportService
                 unset($data[$key]);
             }
         }
-        if ($type === 'bills' && ($row->payable_id === null || $row->payable_currency !== $row->currency_code || bccomp((string) $row->payable_amount, $data['amount'], 2) !== 0 || bccomp((string) $row->payable_paid, '0', 2) < 0 || bccomp((string) $row->payable_paid, (string) $row->payable_amount, 2) > 0)) {
+        if ($type === 'bills' && ($row->payable_id === null || $row->payable_currency !== $row->currency_code || bccomp((string) $row->payable_amount, $data['amount'], 2) !== 0 || bccomp((string) $row->payable_paid, '0', 2) < 0 || bccomp((string) $row->payable_credited, '0', 2) < 0 || bccomp(bcadd((string) $row->payable_paid, (string) $row->payable_credited, 2), (string) $row->payable_amount, 2) > 0)) {
             $data['integrity'] = 'review_payable_link';
         }
         if ($type === 'payables') {
             $data['paid_amount'] = bcadd((string) $row->paid_amount, '0', 2);
-            $data['outstanding'] = bcsub($data['amount'], $data['paid_amount'], 2);
+            $data['credited_amount'] = bcadd((string) $row->credited_amount, '0', 2);
+            $data['outstanding'] = bcsub(bcsub($data['amount'], $data['paid_amount'], 2), $data['credited_amount'], 2);
             $data['overdue'] = $row->due_date !== null && $row->due_date < now()->toDateString();
         }
 
@@ -283,7 +284,7 @@ final class PurchaseReportService
             'returns_without_posted_date' => $this->returns($actor, $filters)->where('pr.status', 'posted')->whereNull('pr.posted_at')->count(),
             'bills_without_approved_date' => $this->bills($actor, $filters)->where('b.status', 'approved')->whereNull('b.approved_at')->count(),
             'approved_bills_without_valid_payable' => $this->bills($actor, $filters)->where('b.status', 'approved')->whereNotExists(function ($query): void {
-                $query->selectRaw('1')->from('supplier_payables as ap')->whereColumn('ap.supplier_bill_id', 'b.id')->whereColumn('ap.company_id', 'b.company_id')->whereColumn('ap.supplier_id', 'b.supplier_id')->whereColumn('ap.currency_code', 'b.currency_code')->whereColumn('ap.amount', 'b.grand_total')->where('ap.paid_amount', '>=', 0)->whereColumn('ap.paid_amount', '<=', 'ap.amount');
+                $query->selectRaw('1')->from('supplier_payables as ap')->whereColumn('ap.supplier_bill_id', 'b.id')->whereColumn('ap.company_id', 'b.company_id')->whereColumn('ap.supplier_id', 'b.supplier_id')->whereColumn('ap.currency_code', 'b.currency_code')->whereColumn('ap.amount', 'b.grand_total')->where('ap.paid_amount', '>=', 0)->whereColumn('ap.paid_amount', '<=', 'ap.amount')->where('ap.credited_amount', '>=', 0)->whereRaw('ap.paid_amount + ap.credited_amount <= ap.amount');
             })->count()];
 
         return ['counts' => $counts, 'money' => array_values($money), 'supplierSummary' => array_values($suppliers), 'months' => array_values($months), 'issues' => $issues, 'current' => $current,

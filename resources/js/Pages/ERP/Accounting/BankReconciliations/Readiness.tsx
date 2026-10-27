@@ -1,0 +1,30 @@
+import Exports from './Exports';
+import { Head, Link } from '@inertiajs/react';
+import ERPLayout from '@/Layouts/erp-layout';
+import { money, panel, secondary } from '../CashTransfers/types';
+
+type Check = { code: string; label: string; state: 'pass' | 'blocked'; detail: string };
+type Props = {
+    exportLinks?: Record<string, string>; errors?: Record<string, string>;
+    review: {
+        contract: string; company_id: number; company_name: string; reconciliation_id: number;
+        statement_id: number; statement_reference: string; cash_account_id: number; bank_name: string;
+        currency_code: string; cutoff: string; revision: number; observed_at: string;
+        technical_ready: boolean; evidence_state: 'verified' | 'review'; checks: Check[];
+        counts: Record<string, number | null>; bridge: Record<string, string> | null;
+        finalized: boolean; can_finalize: boolean; approval_required: boolean; message: string;
+    };
+    exceptions: { code: string; statement_id: number | null; row_id: number | null }[];
+    exceptionPage: { current: number; last: number; total: number }; workspaceUrl: string; statementUrl: string; finalizationUrl: string;
+};
+export default function Readiness({ review, exceptions, exceptionPage, workspaceUrl, statementUrl, finalizationUrl, exportLinks, errors }: Props) {
+    const path = `${workspaceUrl}/readiness`; const blocked = review.checks.filter(check => check.state === 'blocked').length;
+    return <ERPLayout><Head title={`Reconciliation #${review.reconciliation_id} readiness`} /><div className="space-y-6">
+        <header className="flex flex-wrap justify-between gap-4"><div><p className="text-sm text-slate-500">{review.company_name} · {review.bank_name}</p><h1 className="mt-1 text-2xl font-semibold">Finalization readiness</h1><p className="mt-2 text-sm text-slate-500">Reconciliation #{review.reconciliation_id} · {review.statement_reference} · Cutoff {review.cutoff} · Revision {review.revision}</p></div><nav aria-label="Reconciliation evidence" className="flex flex-wrap gap-3"><Link className={secondary} href={workspaceUrl}>Matching workspace</Link><Link className={secondary} href={statementUrl}>Statement</Link><Link className={secondary} href={path}>Refresh checks</Link><Link className={secondary} href={finalizationUrl}>Finalization and reopen</Link></nav></header>
+        <Exports links={exportLinks} error={errors?.export} /><section role="status" className={`rounded-xl border p-5 ${review.technical_ready ? 'border-emerald-400 bg-emerald-50 text-emerald-950' : 'border-amber-400 bg-amber-50 text-amber-950'}`}><h2 className="text-lg font-semibold">{review.finalized ? 'Finalized — independent approval evidence verified' : review.technical_ready ? 'Technical checks pass — independent approval remains required' : `${blocked} coverage check${blocked === 1 ? '' : 's'} blocked`}</h2><p className="mt-2 text-sm">{review.message}</p><p className="mt-2 text-sm">{review.finalized ? 'Finalized.' : 'Unfinalized.'} This review page records no approval, lock, journal or matching operation. Refresh after source, matching or adjustment changes.</p><p className="mt-2 text-xs">Observed {review.observed_at} · Evidence {review.evidence_state}</p></section>
+        <section className={panel}><h2 className="text-lg font-semibold">Coverage gates</h2><ul className="mt-4 divide-y divide-slate-200 dark:divide-slate-700">{review.checks.map(check => <li className="flex gap-4 py-4" key={check.code}><span className={`h-fit rounded-full px-3 py-1 text-xs font-semibold ${check.state === 'pass' ? 'bg-emerald-100 text-emerald-950' : 'bg-amber-100 text-amber-950'}`}>{check.state === 'pass' ? 'Pass' : 'Blocked'}</span><div><h3 className="font-medium">{check.label}</h3><p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{check.detail}</p></div></li>)}</ul></section>
+        <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(review.counts).map(([label, count]) => <div className={panel} key={label}><dt className="text-sm text-slate-500">{label.replaceAll('_', ' ')}</dt><dd className="mt-2 font-mono text-xl">{count === null ? 'Unknown' : count}</dd></div>)}</dl>
+        {review.bridge ? <section className="space-y-3"><h2 className="text-lg font-semibold">Complete bridge · {review.currency_code}</h2><p className="text-sm text-slate-500">These totals cover all movements. Verified outstanding book items may explain a nonzero difference; a zero difference alone cannot clear missing evidence.</p><dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">{Object.entries(review.bridge).map(([label, amount]) => <div className={panel} key={label}><dt className="text-sm text-slate-500">{label.replaceAll('_', ' ')}</dt><dd className="mt-2 break-all font-mono text-xl">{money(amount)}</dd></div>)}</dl></section> : <p className={panel}>Bridge totals are unavailable while evidence requires review. Unknown figures are not shown as zero.</p>}
+        <section className={`${panel} space-y-4`}><h2 className="text-lg font-semibold">Coverage exceptions · {exceptionPage.total}</h2>{exceptions.length ? <ul className="space-y-2 text-sm">{exceptions.map((item, index) => <li key={`${exceptionPage.current}:${index}`}><span>{item.code.replaceAll('_', ' ')}</span>{item.statement_id !== null && <span> · Statement #{item.statement_id}</span>}{item.row_id !== null && <span> · Record #{item.row_id}</span>}</li>)}</ul> : <p className="text-sm text-slate-500">No row-level exceptions were collected. Review every gate above; approval and locking are separate requirements.</p>}<nav aria-label="Coverage exception pages" className="flex flex-wrap justify-between gap-3 text-sm"><span>Page {exceptionPage.current} of {exceptionPage.last}</span><div className="flex gap-4">{exceptionPage.current > 1 && <Link href={`${path}?page=${exceptionPage.current - 1}`}>Previous</Link>}{exceptionPage.current < exceptionPage.last && <Link href={`${path}?page=${exceptionPage.current + 1}`}>Next</Link>}</div></nav></section>
+    </div></ERPLayout>;
+}

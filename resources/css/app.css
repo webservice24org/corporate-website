@@ -3,6 +3,7 @@
 @import "shadcn/tailwind.css";
 @import "@fontsource-variable/geist";
 
+
 @theme inline {
     --font-sans: "Geist Variable", sans-serif;
 
@@ -217,4 +218,86 @@
 .erp-light-theme select,
 .erp-light-theme textarea {
     color-scheme: light;
+}
+ 
+
+
+/* Keep ERP pages in light mode regardless of system preference. */
+.erp-light-theme {
+    color-scheme: light;
+
+    --background: oklch(1 0 0);
+    --foreground: oklch(0.145 0 0);
+
+    --card: oklch(1 0 0);
+    --card-foreground: oklch(0.145 0 0);
+
+    --popover: oklch(1 0 0);
+    --popover-foreground: oklch(0.145 0 0);
+}
+
+/* Override system-triggered dark utilities inside ERP only. */
+@media (prefers-color-scheme: dark) {
+    .erp-light-theme .dark\:bg-slate-950 {
+        background-color: white;
+    }
+
+    .erp-light-theme .dark\:bg-slate-900 {
+        background-color: rgb(248 250 252);
+    }
+
+    .erp-light-theme .dark\:bg-slate-800 {
+        background-color: rgb(241 245 249);
+    }
+
+    .erp-light-theme .dark\:border-slate-800 {
+        border-color: rgb(226 232 240);
+    }
+
+    .erp-light-theme .dark\:text-white {
+        color: rgb(15 23 42);
+    }
+
+    .erp-light-theme .dark\:text-slate-100,
+    .erp-light-theme .dark\:text-slate-200 {
+        color: rgb(30 41 59);
+    }
+
+    .erp-light-theme .dark\:text-slate-300,
+    .erp-light-theme .dark\:text-slate-400 {
+        color: rgb(71 85 105);
+    }
+}
+
+/* Force ERP pages to remain light, regardless of OS/browser theme. */
+@media (prefers-color-scheme: dark) {
+    .erp-light-theme .dark\:bg-neutral-950 {
+        background-color: white !important;
+    }
+
+    .erp-light-theme .dark\:bg-neutral-900 {
+        background-color: rgb(248 250 252) !important;
+    }
+
+    .erp-light-theme .dark\:bg-neutral-800 {
+        background-color: rgb(241 245 249) !important;
+    }
+
+    .erp-light-theme .dark\:border-neutral-800 {
+        border-color: rgb(229 231 235) !important;
+    }
+
+    .erp-light-theme .dark\:text-white {
+        color: rgb(15 23 42) !important;
+    }
+
+    .erp-light-theme .dark\:text-neutral-100,
+    .erp-light-theme .dark\:text-neutral-200 {
+        color: rgb(30 41 59) !important;
+    }
+
+    .erp-light-theme .dark\:text-neutral-300,
+    .erp-light-theme .dark\:text-neutral-400 {
+        color: rgb(71 85 105) !important;
+    }
 }

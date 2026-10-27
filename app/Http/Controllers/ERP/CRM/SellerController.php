@@ -374,8 +374,8 @@ class SellerController extends Controller
             'seller_type' => [
                 'required',
                 Rule::in([
-                'retailer',
-                'general_seller',
+                    'retailer',
+                    'general_seller',
                 ]),
             ],
 

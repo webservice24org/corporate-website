@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Http\Controllers\ERP\Sales;
 
 use App\Http\Controllers\Controller;
+use App\Models\Accounting\AccountingCashAccount;
+use App\Models\Accounting\AccountingSetting;
 use App\Models\Customer;
 use App\Models\CustomerReceipt;
 use App\Models\CustomerReceiptAllocation;
@@ -16,6 +18,7 @@ use App\Services\ERP\Sales\CustomerStatementService;
 use App\Services\ERP\Sales\SalesCompanyAccess;
 use App\Services\ERP\Sales\SalesInvoiceBalanceService;
 use App\Services\ERP\Sales\SalesOrderService;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -146,13 +149,15 @@ final class CustomerReceiptController extends Controller
             $customers = $rows;
         }
 
-        return Inertia::render('ERP/Sales/Receipts/Form', ['receipt' => $receipt === null ? null : $this->header($receipt), 'companies' => $companies, 'customers' => $customers, 'defaultCompanyId' => $companyId === null ? null : (int) $companyId, 'defaultCustomerId' => $customerId === null ? null : (int) $customerId, 'today' => $today, 'methods' => CustomerReceiptService::METHODS, 'search' => $data['search'] ?? '']);
+        return Inertia::render('ERP/Sales/Receipts/Form', ['receipt' => $receipt === null ? null : $this->header($receipt), 'companies' => $companies, 'customers' => $customers, 'defaultCompanyId' => $companyId === null ? null : (int) $companyId, 'defaultCustomerId' => $customerId === null ? null : (int) $customerId, 'today' => $today, 'methods' => CustomerReceiptService::METHODS, 'search' => $data['search'] ?? '', 'cashAccounts' => $companyId === null ? [] : AccountingCashAccount::query()->where('company_id', $companyId)->where('status', 'active')->orderBy('name')->get(['id', 'name', 'kind', 'currency_code']), 'accountingEnabled' => $companyId !== null && AccountingSetting::query()->where('company_id', $companyId)->where('state', 'enabled')->exists()]);
     }
 
     /** @return array<string, mixed> */
     private function header(CustomerReceipt $receipt): array
     {
-        return [...$receipt->only(['id', 'company_id', 'customer_id', 'number', 'status', 'revision', 'currency_code', 'amount', 'payment_method', 'payment_reference', 'notes', 'customer_snapshot', 'reverses_receipt_id', 'reversal_reason']), 'document_date' => $receipt->getAttribute('document_date')->format('Y-m-d'), 'posted_at' => $receipt->getAttribute('posted_at')?->toIso8601String(), 'issuer' => ($receipt->getAttribute('terms_snapshot') ?? [])['issuer'] ?? null, 'reversal_source' => ($receipt->getAttribute('terms_snapshot') ?? [])['reversal_source'] ?? null];
+        $cash = $receipt->getAttribute('cash_account_id') === null ? null : AccountingCashAccount::query()->where('company_id', $receipt->getAttribute('company_id'))->find((int) $receipt->getAttribute('cash_account_id'));
+
+        return ['cash_account_id' => $receipt->getAttribute('cash_account_id') === null ? null : (int) $receipt->getAttribute('cash_account_id'), 'cash_account_name' => $cash?->getAttribute('name'), ...$receipt->only(['id', 'company_id', 'customer_id', 'number', 'status', 'revision', 'currency_code', 'amount', 'payment_method', 'payment_reference', 'notes', 'customer_snapshot', 'reverses_receipt_id', 'reversal_reason']), 'document_date' => $receipt->getAttribute('document_date')->format('Y-m-d'), 'posted_at' => $receipt->getAttribute('posted_at')?->toIso8601String(), 'issuer' => ($receipt->getAttribute('terms_snapshot') ?? [])['issuer'] ?? null, 'reversal_source' => ($receipt->getAttribute('terms_snapshot') ?? [])['reversal_source'] ?? null];
     }
 
     private function display(Request $request, int $id, bool $print): Response
@@ -160,6 +165,7 @@ final class CustomerReceiptController extends Controller
         $actor = $this->actor($request);
         $receipt = $this->receipts->find($actor, $id);
         $state = $this->receipts->snapshot($actor, $id);
+        /** @var Collection<int, CustomerReceiptAllocation> $rows */
         $rows = CustomerReceiptAllocation::query()->where('company_id', $receipt->getAttribute('company_id'))->where('customer_receipt_id', $id)->orderBy('id')->get();
         $targets = SalesInvoice::query()->where('company_id', $receipt->getAttribute('company_id'))->whereIn('id', $rows->pluck('sales_invoice_id'))->get(['id', 'number'])->keyBy('id');
         $allocations = $rows->map(fn (CustomerReceiptAllocation $row): array => ['id' => $row->getKey(), 'sales_invoice_id' => $row->getAttribute('sales_invoice_id'), 'invoice_number' => $targets->get((int) $row->getAttribute('sales_invoice_id'))?->getAttribute('number'), 'amount' => $row->getAttribute('amount'), 'reverses_allocation_id' => $row->getAttribute('reverses_allocation_id'), 'active' => in_array((int) $row->getKey(), $state['active_ids'], true), 'reason' => $row->getAttribute('reason'), 'posted_at' => $row->getAttribute('posted_at')?->toIso8601String(), 'url' => $actor->can('erp.sales-invoices.view') ? route('erp.sales.invoices.show', $row->getAttribute('sales_invoice_id')) : null])->all();
@@ -172,7 +178,7 @@ final class CustomerReceiptController extends Controller
         }
         $events = $print ? [] : SalesDocumentEvent::query()->where('company_id', $receipt->getAttribute('company_id'))->where('document_type', 'receipt')->where('document_id', $id)->orderBy('id')->get(['id', 'action', 'actor_snapshot', 'reason', 'occurred_at']);
 
-        return Inertia::render('ERP/Sales/Receipts/Show', ['receipt' => $this->header($receipt), 'state' => $state, 'allocations' => $print ? [] : $allocations, 'invoices' => $invoices, 'events' => $events, 'printMode' => $print,
+        return Inertia::render('ERP/Sales/Receipts/Show', ['receipt' => $this->header($receipt), 'state' => $state, 'allocations' => $print ? [] : $allocations, 'invoices' => $invoices, 'events' => $events, 'printMode' => $print, 'accountingEnabled' => AccountingSetting::query()->where('company_id', $receipt->getAttribute('company_id'))->where('state', 'enabled')->exists(),
             'statementUrl' => $actor->can('erp.customer-receivables.view') ? route('erp.sales.receipts.statement', ['company_id' => $receipt->getAttribute('company_id'), 'customer_id' => $receipt->getAttribute('customer_id')]) : null]);
     }
 

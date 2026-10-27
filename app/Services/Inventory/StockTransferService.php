@@ -8,14 +8,18 @@ use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\StockTransfer;
 use App\Models\StockTransferItem;
+use App\Models\User;
 use App\Models\Warehouse;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingInventoryContext;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingPurchasePosting;
+use App\Services\ERP\Purchase\PurchaseCompanyAccess;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class StockTransferService
 {
-    public function __construct(private readonly InventoryService $inventory) {}
+    public function __construct(private readonly InventoryService $inventory, private readonly AccountingPurchasePosting $accounting) {}
 
     /**
      * Validate a transfer before saving a draft. No inventory is changed.
@@ -55,113 +59,132 @@ class StockTransferService
     public function post(StockTransfer $transfer, ?int $postedBy = null): StockTransfer
     {
         return DB::transaction(function () use ($transfer, $postedBy): StockTransfer {
-            $locked = StockTransfer::query()
-                ->whereKey($transfer->getKey())
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            if (! $locked->isDraft()) {
-                $this->fail('status', 'This transfer has already been posted.');
-            }
-
-            // Lock warehouses in a stable order before inventory service operations.
-            $warehouseIds = [(int) $locked->source_warehouse_id, (int) $locked->destination_warehouse_id];
-            sort($warehouseIds, SORT_NUMERIC);
-            $warehouses = Warehouse::query()
-                ->whereIn('id', $warehouseIds)
-                ->orderBy('id')
-                ->lockForUpdate()
-                ->get()
-                ->keyBy('id');
-
-            $source = $warehouses->get((int) $locked->source_warehouse_id);
-            $destination = $warehouses->get((int) $locked->destination_warehouse_id);
-            $this->validateWarehouses($locked, $source, $destination);
-
-            /** @var EloquentCollection<int, StockTransferItem> $items */
-            $items = $locked->items()->orderBy('product_id')->orderBy('variant_key')->orderBy('id')->get();
-            if ($items->isEmpty()) {
-                $this->fail('items', 'Add at least one product before posting.');
-            }
-
-            $seen = [];
-            $occurredAt = now();
-
-            foreach ($items as $index => $item) {
-                [$product, $variant, $quantity] = $this->validateItem($locked, $item, $index);
-                $key = $product->getKey().':'.($variant?->getKey() ?? 0);
-                if (isset($seen[$key])) {
-                    $this->fail("items.$index.product_id", 'Duplicate product and variant in this transfer.');
+            $enabled = $this->accounting->before((int) $transfer->company_id);
+            $actor = $postedBy === null ? null : User::query()->find($postedBy);
+            if ($enabled) {
+                if ($actor === null) {
+                    $this->fail('posted_by', 'An authorized actor is required for enabled accounting.');
                 }
-                $seen[$key] = true;
+                app(PurchaseCompanyAccess::class)->authorize($actor, (int) $transfer->company_id, 'erp.stock-transfers.post');
+            }
 
-                // Lock the source balance before reading its cost and available quantity.
-                $balance = InventoryBalance::query()
-                    ->where('warehouse_id', $source->getKey())
-                    ->where('product_id', $product->getKey())
-                    ->where('variant_key', $variant?->getKey() ?? 0)
+            return AccountingInventoryContext::run((int) $transfer->company_id, 'stock_transfer', (int) $transfer->getKey(), $postedBy ?? 0, function () use ($transfer, $postedBy, $actor): StockTransfer {
+
+                $locked = StockTransfer::query()
+                    ->whereKey($transfer->getKey())
                     ->lockForUpdate()
-                    ->first();
+                    ->firstOrFail();
 
-                $onHand = $balance !== null
-                    ? (string) $balance->quantity_on_hand
-                    : '0.0000';
-                $reserved = $balance !== null
-                    ? (string) $balance->quantity_reserved
-                    : '0.0000';
-                $available = bcsub($onHand, $reserved, 4);
-                if (bccomp($available, $quantity, 4) < 0) {
-                    $this->fail("items.$index.quantity", 'Insufficient available stock in the source warehouse.');
+                if ((int) $locked->company_id !== (int) $transfer->company_id) {
+                    $this->fail('company_id', 'Transfer company changed; reload before posting.');
+                }
+                if (! $locked->isDraft()) {
+                    $this->fail('status', 'This transfer has already been posted.');
                 }
 
-                $cost = $balance !== null
-                    ? (string) $balance->average_cost
-                    : '0.0000';
-                $referenceType = StockTransfer::class;
-                $referenceId = (int) $locked->getKey();
-                $referenceNumber = (string) $locked->document_number;
+                // Lock warehouses in a stable order before inventory service operations.
+                $warehouseIds = [(int) $locked->source_warehouse_id, (int) $locked->destination_warehouse_id];
+                sort($warehouseIds, SORT_NUMERIC);
+                $warehouses = Warehouse::query()
+                    ->whereIn('id', $warehouseIds)
+                    ->orderBy('id')
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('id');
 
-                $this->inventory->stockOut(
-                    warehouse: $source,
-                    product: $product,
-                    quantity: $quantity,
-                    movementType: StockMovement::TYPE_TRANSFER_OUT,
-                    unitCost: $cost,
-                    variant: $variant,
-                    referenceType: $referenceType,
-                    referenceId: $referenceId,
-                    referenceNumber: $referenceNumber,
-                    occurredAt: $occurredAt,
-                    createdBy: $postedBy,
-                );
+                $source = $warehouses->get((int) $locked->source_warehouse_id);
+                $destination = $warehouses->get((int) $locked->destination_warehouse_id);
+                $this->validateWarehouses($locked, $source, $destination);
 
-                $this->inventory->stockIn(
-                    warehouse: $destination,
-                    product: $product,
-                    quantity: $quantity,
-                    movementType: StockMovement::TYPE_TRANSFER_IN,
-                    unitCost: $cost,
-                    variant: $variant,
-                    referenceType: $referenceType,
-                    referenceId: $referenceId,
-                    referenceNumber: $referenceNumber,
-                    occurredAt: $occurredAt,
-                    createdBy: $postedBy,
-                );
+                /** @var EloquentCollection<int, StockTransferItem> $items */
+                $items = $locked->items()->orderBy('product_id')->orderBy('variant_key')->orderBy('id')->get();
+                if ($items->isEmpty()) {
+                    $this->fail('items', 'Add at least one product before posting.');
+                }
 
-                $item->forceFill([
-                    'unit_cost' => $cost,
-                    'total_cost' => bcmul($quantity, $cost, 4),
+                $seen = [];
+                $occurredAt = now();
+
+                foreach ($items as $index => $item) {
+                    [$product, $variant, $quantity] = $this->validateItem($locked, $item, $index);
+                    $key = $product->getKey().':'.($variant?->getKey() ?? 0);
+                    if (isset($seen[$key])) {
+                        $this->fail("items.$index.product_id", 'Duplicate product and variant in this transfer.');
+                    }
+                    $seen[$key] = true;
+
+                    // Lock the source balance before reading its cost and available quantity.
+                    $balance = InventoryBalance::query()
+                        ->where('warehouse_id', $source->getKey())
+                        ->where('product_id', $product->getKey())
+                        ->where('variant_key', $variant?->getKey() ?? 0)
+                        ->lockForUpdate()
+                        ->first();
+
+                    $onHand = $balance !== null
+                        ? (string) $balance->quantity_on_hand
+                        : '0.0000';
+                    $reserved = $balance !== null
+                        ? (string) $balance->quantity_reserved
+                        : '0.0000';
+                    $available = bcsub($onHand, $reserved, 4);
+                    if (bccomp($available, $quantity, 4) < 0) {
+                        $this->fail("items.$index.quantity", 'Insufficient available stock in the source warehouse.');
+                    }
+
+                    $cost = $balance !== null
+                        ? (string) $balance->average_cost
+                        : '0.0000';
+                    $referenceType = StockTransfer::class;
+                    $referenceId = (int) $locked->getKey();
+                    $referenceNumber = (string) $locked->document_number;
+
+                    $this->inventory->stockOut(
+                        warehouse: $source,
+                        product: $product,
+                        quantity: $quantity,
+                        movementType: StockMovement::TYPE_TRANSFER_OUT,
+                        unitCost: $cost,
+                        variant: $variant,
+                        referenceType: $referenceType,
+                        referenceId: $referenceId,
+                        referenceNumber: $referenceNumber,
+                        occurredAt: $occurredAt,
+                        createdBy: $postedBy,
+                    );
+
+                    $this->inventory->stockIn(
+                        warehouse: $destination,
+                        product: $product,
+                        quantity: $quantity,
+                        movementType: StockMovement::TYPE_TRANSFER_IN,
+                        unitCost: $cost,
+                        variant: $variant,
+                        referenceType: $referenceType,
+                        referenceId: $referenceId,
+                        referenceNumber: $referenceNumber,
+                        occurredAt: $occurredAt,
+                        createdBy: $postedBy,
+                    );
+
+                    $item->forceFill([
+                        'unit_cost' => $cost,
+                        'total_cost' => bcmul($quantity, $cost, 4),
+                    ])->save();
+                }
+
+                $locked->forceFill([
+                    'status' => StockTransfer::STATUS_POSTED,
+                    'posted_by' => $postedBy,
+                    'posted_at' => $occurredAt,
                 ])->save();
-            }
 
-            $locked->forceFill([
-                'status' => StockTransfer::STATUS_POSTED,
-                'posted_by' => $postedBy,
-                'posted_at' => $occurredAt,
-            ])->save();
+                if ($actor !== null) {
+                    $this->accounting->complete($actor, (int) $locked->company_id, 'stock_transfer', (int) $locked->getKey(), true);
+                }
 
-            return $locked->load(['items', 'sourceWarehouse', 'destinationWarehouse']);
+                return $locked->load(['items', 'sourceWarehouse', 'destinationWarehouse']);
+            });
         }, 5);
     }
 

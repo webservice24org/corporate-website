@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services\ERP\Sales;
 
+use App\Models\Accounting\AccountingSetting;
 use App\Models\Company;
 use App\Models\Customer;
 use App\Models\CustomerReceipt;
 use App\Models\CustomerReceiptAllocation;
 use App\Models\SalesInvoice;
 use App\Models\User;
+use App\Services\ERP\Accounting\AccountingCashAccountService;
+use App\Services\ERP\Accounting\Source\Sales\AccountingReceiptPosting;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
@@ -28,6 +31,8 @@ final class CustomerReceiptService
         private readonly SalesReceiptLedger $ledger,
         private readonly SalesInvoiceBalanceService $balances,
         private readonly CustomerCreditLedger $customerCredits,
+        private readonly AccountingCashAccountService $cash,
+        private readonly AccountingReceiptPosting $accounting,
     ) {}
 
     public function find(User $actor, int $id, string $permission = 'erp.customer-receipts.view'): CustomerReceipt
@@ -42,7 +47,7 @@ final class CustomerReceiptService
     public function save(User $actor, array $input, ?int $id = null): CustomerReceipt
     {
         $data = Validator::make($input, ['company_id' => ['required', 'integer', 'min:1'], 'customer_id' => ['required', 'integer', 'min:1'], 'document_date' => ['required', 'date_format:Y-m-d'],
-            'amount' => ['required', 'regex:/\A[0-9]{1,16}(?:\.[0-9]{1,2})?\z/'], 'payment_method' => ['required', 'in:'.implode(',', self::METHODS)], 'payment_reference' => ['nullable', 'string', 'max:150'], 'notes' => ['nullable', 'string', 'max:5000'], 'revision' => [$id === null ? 'nullable' : 'required', 'integer', 'min:1']])->validate();
+            'amount' => ['required', 'regex:/\A[0-9]{1,16}(?:\.[0-9]{1,2})?\z/'], 'payment_method' => ['required', 'in:'.implode(',', self::METHODS)], 'cash_account_id' => ['nullable', 'integer', 'min:1'], 'payment_reference' => ['nullable', 'string', 'max:150'], 'notes' => ['nullable', 'string', 'max:5000'], 'revision' => [$id === null ? 'nullable' : 'required', 'integer', 'min:1']])->validate();
 
         return DB::transaction(function () use ($actor, $data, $id): CustomerReceipt {
             $permission = 'erp.customer-receipts.'.($id === null ? 'create' : 'edit');
@@ -66,7 +71,8 @@ final class CustomerReceiptService
             }
             $amount = $this->ledger->money((string) $data['amount'], true);
             $before = $receipt === null ? [] : ['revision' => $receipt->getAttribute('revision'), 'amount' => $receipt->getAttribute('amount')];
-            $attributes = ['amount' => $amount, 'payment_method' => $data['payment_method'], 'payment_reference' => $data['payment_reference'] ?? null, 'notes' => $data['notes'] ?? null, 'updated_by' => $actor->getKey()];
+            $cashId = $this->cash->selection($company, array_key_exists('cash_account_id', $data) ? $data['cash_account_id'] : $receipt?->getAttribute('cash_account_id'), (string) $data['payment_method'], AccountingSetting::query()->where('company_id', $company->getKey())->where('state', 'enabled')->exists());
+            $attributes = ['cash_account_id' => $cashId, 'amount' => $amount, 'payment_method' => $data['payment_method'], 'payment_reference' => $data['payment_reference'] ?? null, 'notes' => $data['notes'] ?? null, 'updated_by' => $actor->getKey()];
             if ($receipt === null) {
                 $receipt = CustomerReceipt::query()->create([...$attributes, 'company_id' => $company->getKey(), 'customer_id' => $customer->getKey(), 'currency_code' => $company->getAttribute('currency_code'), 'number' => $this->numbers->next((int) $company->getKey(), 'receipt', (string) $data['document_date']),
                     'document_date' => $data['document_date'], 'status' => 'draft', 'revision' => 1, 'created_by' => $actor->getKey(), 'customer_snapshot' => $customer->only(['id', 'customer_code', 'customer_type', 'name', 'business_name', 'contact_person', 'phone', 'email']), 'terms_snapshot' => ['issuer' => $company->only(['name', 'address', 'phone', 'email'])]]);
@@ -91,6 +97,8 @@ final class CustomerReceiptService
                 if ($receipt->getAttribute('reverses_receipt_id') !== null || $receipt->getAttribute('posted_at') === null || $receipt->getAttribute('idempotency_key') !== $data['idempotency_key'] || ! hash_equals((string) $receipt->getAttribute('payload_hash'), $hash)) {
                     $this->fail('idempotency_key', 'Receipt posting retry does not match the original request.');
                 }
+
+                $this->accounting->post($actor, $receipt, $data, $hash, false);
 
                 return $receipt;
             }
@@ -122,6 +130,8 @@ final class CustomerReceiptService
             $this->apply($actor, $receipt, [], $data['allocations'], (string) $data['idempotency_key'].':post', $hash, 'Initial receipt allocation');
             $this->audit->record($actor, (int) $company->getKey(), 'receipt', $id, 'post', ['status' => 'draft', 'revision' => $data['revision']], ['status' => 'posted', 'revision' => $receipt->getAttribute('revision'), 'initial_allocations' => $data['allocations']]);
 
+            $this->accounting->post($actor, $receipt, $data, $hash, true);
+
             return $receipt;
         }, 3);
     }
@@ -147,6 +157,8 @@ final class CustomerReceiptService
                     $this->fail('idempotency_key', 'Allocation operation key conflicts with another request.');
                 }
 
+                $this->accounting->change($actor, $receipt, $data, $hash, false);
+
                 return $receipt;
             }
             $this->guard->assertRevision($receipt, (int) $data['revision']);
@@ -155,6 +167,8 @@ final class CustomerReceiptService
             $receipt->forceFill(['revision' => (int) $data['revision'] + 1, 'updated_by' => $actor->getKey()])->save();
             $action = $data['allocations'] === [] ? 'reverse' : 'allocate';
             $this->audit->record($actor, (int) $receipt->getAttribute('company_id'), 'receipt', $id, $action, ['revision' => $data['revision']], ['kind' => 'allocation_change', 'revision' => $receipt->getAttribute('revision'), 'reversed_ids' => $data['reverse_allocation_ids'], 'allocations' => $data['allocations']], (string) $data['reason']);
+
+            $this->accounting->change($actor, $receipt, $data, $hash, true);
 
             return $receipt;
         }, 3);
@@ -183,6 +197,8 @@ final class CustomerReceiptService
                     $this->fail('idempotency_key', 'Receipt already has a different reversal.');
                 }
 
+                $this->accounting->reverse($actor, $receipt, $existing, $data, $hash, null, false);
+
                 return $existing;
             }
             $this->guard->assertRevision($receipt, (int) $data['revision']);
@@ -193,7 +209,7 @@ final class CustomerReceiptService
             $this->apply($actor, $receipt, $state['active_ids'], [], 'rr:'.$id.':'.substr(hash('sha256', (string) $data['idempotency_key']), 0, 32), $hash, (string) $data['reason']);
             $date = now((string) $company->getAttribute('timezone'))->toDateString();
             $reversal = CustomerReceipt::query()->create([
-                ...$receipt->only(['company_id', 'customer_id', 'currency_code', 'customer_snapshot', 'billing_address_snapshot', 'shipping_address_snapshot', 'amount', 'payment_method', 'payment_reference']),
+                ...$receipt->only(['company_id', 'customer_id', 'currency_code', 'customer_snapshot', 'billing_address_snapshot', 'shipping_address_snapshot', 'amount', 'payment_method', 'payment_reference', 'cash_account_id']),
                 'terms_snapshot' => [...($receipt->getAttribute('terms_snapshot') ?? []), 'reversal_source' => ['id' => $id, 'number' => $receipt->getAttribute('number')]], 'notes' => null,
                 'number' => $this->numbers->next((int) $company->getKey(), 'receipt', $date), 'document_date' => $date, 'status' => 'posted', 'revision' => 1, 'created_by' => $actor->getKey(), 'updated_by' => $actor->getKey(), 'posted_by' => $actor->getKey(), 'posted_at' => now()->toDateTimeString(),
                 'reverses_receipt_id' => $id, 'reversal_reason' => $data['reason'], 'idempotency_key' => $data['idempotency_key'], 'payload_hash' => $hash,
@@ -203,6 +219,8 @@ final class CustomerReceiptService
             foreach ([$receipt, $reversal] as $document) {
                 $this->audit->record($actor, (int) $company->getKey(), 'receipt', (int) $document->getKey(), 'reverse', [], ['kind' => 'receipt_reversal', 'original_id' => $id, 'reversal_id' => $reversal->getKey(), 'reversal_number' => $reversal->getAttribute('number')], (string) $data['reason']);
             }
+
+            $this->accounting->reverse($actor, $receipt, $reversal, $data, $hash, $state['active_ids'], true);
 
             return $reversal;
         }, 3);

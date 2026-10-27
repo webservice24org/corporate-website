@@ -108,7 +108,8 @@ final class SupplierBillController extends Controller
         if ($payable !== null) {
             $payable->amount = bcadd((string) $payable->amount, '0', 2);
             $payable->paid_amount = bcadd((string) $payable->paid_amount, '0', 2);
-            $payable->outstanding = bcsub($payable->amount, $payable->paid_amount, 2);
+            $payable->credited_amount = bcadd((string) $payable->credited_amount, '0', 2);
+            $payable->outstanding = bcsub(bcsub($payable->amount, $payable->paid_amount, 2), $payable->credited_amount, 2);
         }
 
         return Inertia::render('ERP/Purchase/Bills/Show', ['bill' => $record->load(['company:id,name', 'supplier:id,name', 'goods_receipt:id,number', 'purchase_order:id,number']),
@@ -148,7 +149,7 @@ final class SupplierBillController extends Controller
             ->join('suppliers', 'suppliers.id', '=', 'supplier_payables.supplier_id')->join('companies', 'companies.id', '=', 'supplier_payables.company_id')
             ->whereIn('supplier_payables.company_id', (clone $companies)->select('id'))->where('supplier_bills.status', 'approved')
             ->whereColumn('supplier_bills.company_id', 'supplier_payables.company_id')->whereColumn('supplier_bills.supplier_id', 'supplier_payables.supplier_id')
-            ->whereColumn('suppliers.company_id', 'supplier_payables.company_id')->whereColumn('supplier_payables.amount', '>', 'supplier_payables.paid_amount');
+            ->whereColumn('suppliers.company_id', 'supplier_payables.company_id')->where('supplier_payables.paid_amount', '>=', 0)->where('supplier_payables.credited_amount', '>=', 0)->whereRaw('supplier_payables.amount > supplier_payables.paid_amount + supplier_payables.credited_amount');
         if (! empty($filters['company_id'])) {
             $query->where('supplier_payables.company_id', $filters['company_id']);
         }
@@ -163,7 +164,7 @@ final class SupplierBillController extends Controller
             $query->where('supplier_payables.due_date', '>=', $asOf);
         }
         $columns = ['supplier_payables.id', 'supplier_payables.company_id', 'supplier_payables.supplier_id', 'supplier_payables.supplier_bill_id', 'supplier_payables.currency_code',
-            'supplier_payables.amount', 'supplier_payables.paid_amount', 'supplier_payables.due_date', 'supplier_bills.number as bill_number', 'supplier_bills.supplier_invoice_number',
+            'supplier_payables.amount', 'supplier_payables.paid_amount', 'supplier_payables.credited_amount', 'supplier_payables.due_date', 'supplier_bills.number as bill_number', 'supplier_bills.supplier_invoice_number',
             'suppliers.name as supplier_name', 'companies.name as company_name'];
         $groups = [];
         foreach ((clone $query)->select($columns)->orderBy('supplier_payables.id')->cursor() as $row) {
@@ -172,7 +173,7 @@ final class SupplierBillController extends Controller
                 $groups[$key] = ['company_id' => (int) $row->company_id, 'supplier_id' => (int) $row->supplier_id, 'company_name' => $row->company_name,
                     'supplier_name' => $row->supplier_name, 'currency_code' => $row->currency_code, 'outstanding' => '0.00', 'overdue' => '0.00'];
             }
-            $amount = bcsub((string) $row->amount, (string) $row->paid_amount, 2);
+            $amount = bcsub(bcsub((string) $row->amount, (string) $row->paid_amount, 2), (string) $row->credited_amount, 2);
             $groups[$key]['outstanding'] = bcadd($groups[$key]['outstanding'], $amount, 2);
             if ($row->due_date !== null && $row->due_date < $asOf) {
                 $groups[$key]['overdue'] = bcadd($groups[$key]['overdue'], $amount, 2);
@@ -182,7 +183,8 @@ final class SupplierBillController extends Controller
         $payables->getCollection()->transform(function ($row) use ($asOf) {
             $row->amount = bcadd((string) $row->amount, '0', 2);
             $row->paid_amount = bcadd((string) $row->paid_amount, '0', 2);
-            $row->outstanding = bcsub($row->amount, $row->paid_amount, 2);
+            $row->credited_amount = bcadd((string) $row->credited_amount, '0', 2);
+            $row->outstanding = bcsub(bcsub($row->amount, $row->paid_amount, 2), $row->credited_amount, 2);
             $row->overdue = $row->due_date !== null && $row->due_date < $asOf;
 
             return $row;

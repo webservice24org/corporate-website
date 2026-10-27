@@ -1,0 +1,1357 @@
+{
+  "version": 1,
+  "scope": "Only the first ten completed empty 6.1C tables before accounting_audit_events failed",
+  "tables": [
+    {
+      "table": "fiscal_years",
+      "columns": [
+        "closed_at",
+        "closed_by",
+        "code",
+        "company_id",
+        "created_at",
+        "ends_on",
+        "id",
+        "name",
+        "revision",
+        "starts_on",
+        "state",
+        "updated_at"
+      ],
+      "owner_index": "af0_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "closed_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "code": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 30
+        },
+        "name": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 120
+        },
+        "starts_on": {
+          "type": "date",
+          "nullable": false
+        },
+        "ends_on": {
+          "type": "date",
+          "nullable": false
+        },
+        "state": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "closed_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "closed_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": true
+        },
+        "revision": {
+          "type": "int",
+          "unsigned": true,
+          "nullable": false
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "afy_code",
+          "columns": [
+            "company_id",
+            "code"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "accounting_periods",
+      "columns": [
+        "closed_at",
+        "closed_by",
+        "code",
+        "company_id",
+        "created_at",
+        "ends_on",
+        "fiscal_year_id",
+        "id",
+        "revision",
+        "starts_on",
+        "state",
+        "updated_at"
+      ],
+      "owner_index": "af1_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "closed_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "fiscal_year_id",
+            "company_id"
+          ],
+          "foreign_table": "fiscal_years",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "fiscal_year_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "code": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 30
+        },
+        "starts_on": {
+          "type": "date",
+          "nullable": false
+        },
+        "ends_on": {
+          "type": "date",
+          "nullable": false
+        },
+        "state": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "closed_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "closed_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": true
+        },
+        "revision": {
+          "type": "int",
+          "unsigned": true,
+          "nullable": false
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "ap_code",
+          "columns": [
+            "company_id",
+            "code"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "account_groups",
+      "columns": [
+        "category",
+        "code",
+        "company_id",
+        "created_at",
+        "id",
+        "name",
+        "normal_side",
+        "revision",
+        "updated_at"
+      ],
+      "owner_index": "af2_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "code": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 30
+        },
+        "name": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 120
+        },
+        "category": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "normal_side": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 10
+        },
+        "revision": {
+          "type": "int",
+          "unsigned": true,
+          "nullable": false
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "ag_code",
+          "columns": [
+            "company_id",
+            "code"
+          ],
+          "unique": true
+        },
+        {
+          "name": "ag_category",
+          "columns": [
+            "company_id",
+            "category"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "accounts",
+      "columns": [
+        "account_group_id",
+        "cash_flow_role",
+        "code",
+        "company_id",
+        "control_role",
+        "created_at",
+        "id",
+        "is_postable",
+        "name",
+        "normal_side",
+        "parent_id",
+        "revision",
+        "statement_role",
+        "status",
+        "updated_at"
+      ],
+      "owner_index": "af3_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "account_group_id",
+            "company_id"
+          ],
+          "foreign_table": "account_groups",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "parent_id",
+            "company_id"
+          ],
+          "foreign_table": "accounts",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "account_group_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "parent_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "code": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 40
+        },
+        "name": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 160
+        },
+        "normal_side": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 10
+        },
+        "is_postable": {
+          "type": "tinyint",
+          "nullable": false
+        },
+        "status": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "control_role": {
+          "type": "varchar",
+          "nullable": true,
+          "length": 40
+        },
+        "statement_role": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 40
+        },
+        "cash_flow_role": {
+          "type": "varchar",
+          "nullable": true,
+          "length": 40
+        },
+        "revision": {
+          "type": "int",
+          "unsigned": true,
+          "nullable": false
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "ac_code",
+          "columns": [
+            "company_id",
+            "code"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "accounting_mapping_versions",
+      "columns": [
+        "company_id",
+        "created_at",
+        "effective_from",
+        "id",
+        "payload_hash",
+        "published_at",
+        "published_by",
+        "revision",
+        "state",
+        "updated_at",
+        "version"
+      ],
+      "owner_index": "af4_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "published_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "version": {
+          "type": "int",
+          "nullable": false,
+          "unsigned": true
+        },
+        "state": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "effective_from": {
+          "type": "date",
+          "nullable": false
+        },
+        "payload_hash": {
+          "type": "char",
+          "nullable": true,
+          "length": 64
+        },
+        "published_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "published_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": true
+        },
+        "revision": {
+          "type": "int",
+          "unsigned": true,
+          "nullable": false
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "amv_version",
+          "columns": [
+            "company_id",
+            "version"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "accounting_account_mappings",
+      "columns": [
+        "account_id",
+        "company_id",
+        "created_at",
+        "id",
+        "mapping_version_id",
+        "role",
+        "updated_at"
+      ],
+      "owner_index": "af5_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "mapping_version_id",
+            "company_id"
+          ],
+          "foreign_table": "accounting_mapping_versions",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "account_id",
+            "company_id"
+          ],
+          "foreign_table": "accounts",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "mapping_version_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "role": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 40
+        },
+        "account_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "aam_role",
+          "columns": [
+            "mapping_version_id",
+            "role"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "journal_entries",
+      "columns": [
+        "accounting_date",
+        "accounting_period_id",
+        "approved_at",
+        "approved_by",
+        "company_id",
+        "contract_version",
+        "correction_of_journal_id",
+        "created_at",
+        "created_by",
+        "currency_code",
+        "description",
+        "document_date",
+        "entry_kind",
+        "id",
+        "mapping_version_id",
+        "number",
+        "payload_hash",
+        "posted_at",
+        "posted_by",
+        "reason",
+        "reverses_journal_id",
+        "revision",
+        "status",
+        "submitted_at",
+        "submitted_by",
+        "updated_at",
+        "updated_by"
+      ],
+      "owner_index": "af6_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "created_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "updated_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "submitted_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "approved_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "posted_by"
+          ],
+          "foreign_table": "users",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "accounting_period_id",
+            "company_id"
+          ],
+          "foreign_table": "accounting_periods",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "mapping_version_id",
+            "company_id"
+          ],
+          "foreign_table": "accounting_mapping_versions",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "reverses_journal_id",
+            "company_id"
+          ],
+          "foreign_table": "journal_entries",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "correction_of_journal_id",
+            "company_id"
+          ],
+          "foreign_table": "journal_entries",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "accounting_period_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "mapping_version_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "number": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 60
+        },
+        "entry_kind": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 30
+        },
+        "status": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "accounting_date": {
+          "type": "date",
+          "nullable": false
+        },
+        "document_date": {
+          "type": "date",
+          "nullable": true
+        },
+        "currency_code": {
+          "type": "char",
+          "nullable": false,
+          "length": 3
+        },
+        "description": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 500
+        },
+        "reverses_journal_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "correction_of_journal_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "reason": {
+          "type": "text",
+          "nullable": true
+        },
+        "payload_hash": {
+          "type": "char",
+          "nullable": true,
+          "length": 64
+        },
+        "contract_version": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "created_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "updated_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "revision": {
+          "type": "int",
+          "unsigned": true,
+          "nullable": false
+        },
+        "submitted_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": true
+        },
+        "submitted_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "approved_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": true
+        },
+        "approved_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "posted_by": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": true
+        },
+        "posted_at": {
+          "type": "timestamp",
+          "nullable": true
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "je_number",
+          "columns": [
+            "company_id",
+            "number"
+          ],
+          "unique": true
+        },
+        {
+          "name": "je_date",
+          "columns": [
+            "company_id",
+            "accounting_date",
+            "status"
+          ],
+          "unique": false
+        },
+        {
+          "name": "je_reversal",
+          "columns": [
+            "reverses_journal_id"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "journal_entry_lines",
+      "columns": [
+        "account_id",
+        "branch_id",
+        "cash_account_id",
+        "company_id",
+        "created_at",
+        "credit",
+        "debit",
+        "department_id",
+        "description",
+        "id",
+        "journal_entry_id",
+        "line_number",
+        "party_id",
+        "party_type",
+        "source_line_id",
+        "source_line_type",
+        "updated_at"
+      ],
+      "owner_index": "af7_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "journal_entry_id",
+            "company_id"
+          ],
+          "foreign_table": "journal_entries",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "account_id",
+            "company_id"
+          ],
+          "foreign_table": "accounts",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "branch_id"
+          ],
+          "foreign_table": "branches",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "department_id"
+          ],
+          "foreign_table": "departments",
+          "foreign_columns": [
+            "id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "journal_entry_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "line_number": {
+          "type": "int",
+          "nullable": false,
+          "unsigned": true
+        },
+        "account_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "debit": {
+          "type": "decimal",
+          "nullable": false,
+          "precision": 20,
+          "scale": 2
+        },
+        "credit": {
+          "type": "decimal",
+          "nullable": false,
+          "precision": 20,
+          "scale": 2
+        },
+        "party_type": {
+          "type": "varchar",
+          "nullable": true,
+          "length": 30
+        },
+        "party_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "source_line_type": {
+          "type": "varchar",
+          "nullable": true,
+          "length": 40
+        },
+        "source_line_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "cash_account_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "branch_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "department_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "description": {
+          "type": "varchar",
+          "nullable": true,
+          "length": 500
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "jel_line",
+          "columns": [
+            "journal_entry_id",
+            "line_number"
+          ],
+          "unique": true
+        },
+        {
+          "name": "jel_account",
+          "columns": [
+            "company_id",
+            "account_id"
+          ],
+          "unique": false
+        }
+      ]
+    },
+    {
+      "table": "accounting_source_effects",
+      "columns": [
+        "accounting_date",
+        "company_id",
+        "contract_version",
+        "created_at",
+        "effect_kind",
+        "event_kind",
+        "event_token",
+        "id",
+        "journal_entry_id",
+        "mapping_version_id",
+        "no_journal_reason",
+        "outcome",
+        "source_document_date",
+        "source_id",
+        "source_kind",
+        "source_payload_hash",
+        "source_snapshot",
+        "updated_at"
+      ],
+      "owner_index": "af8_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "mapping_version_id",
+            "company_id"
+          ],
+          "foreign_table": "accounting_mapping_versions",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        },
+        {
+          "columns": [
+            "journal_entry_id",
+            "company_id"
+          ],
+          "foreign_table": "journal_entries",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "source_kind": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 40
+        },
+        "source_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "event_kind": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 40
+        },
+        "event_token": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 64
+        },
+        "effect_kind": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 40
+        },
+        "source_payload_hash": {
+          "type": "char",
+          "nullable": false,
+          "length": 64
+        },
+        "contract_version": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 20
+        },
+        "mapping_version_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "journal_entry_id": {
+          "type": "bigint",
+          "nullable": true,
+          "unsigned": true
+        },
+        "outcome": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 30
+        },
+        "no_journal_reason": {
+          "type": "varchar",
+          "nullable": true,
+          "length": 60
+        },
+        "source_document_date": {
+          "type": "date",
+          "nullable": true
+        },
+        "accounting_date": {
+          "type": "date",
+          "nullable": false
+        },
+        "source_snapshot": {
+          "type": "json",
+          "nullable": false
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "ase_event",
+          "columns": [
+            "company_id",
+            "source_kind",
+            "source_id",
+            "event_kind",
+            "event_token",
+            "effect_kind"
+          ],
+          "unique": true
+        }
+      ]
+    },
+    {
+      "table": "accounting_document_sequences",
+      "columns": [
+        "company_id",
+        "created_at",
+        "document_kind",
+        "fiscal_year_id",
+        "id",
+        "last_number",
+        "updated_at"
+      ],
+      "owner_index": "af9_owner",
+      "foreign_keys": [
+        {
+          "columns": [
+            "company_id"
+          ],
+          "foreign_table": "companies",
+          "foreign_columns": [
+            "id"
+          ]
+        },
+        {
+          "columns": [
+            "fiscal_year_id",
+            "company_id"
+          ],
+          "foreign_table": "fiscal_years",
+          "foreign_columns": [
+            "id",
+            "company_id"
+          ]
+        }
+      ],
+      "column_types": {
+        "id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "company_id": {
+          "type": "bigint",
+          "unsigned": true,
+          "nullable": false
+        },
+        "created_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "updated_at": {
+          "type": "timestamp",
+          "nullable": true
+        },
+        "fiscal_year_id": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        },
+        "document_kind": {
+          "type": "varchar",
+          "nullable": false,
+          "length": 30
+        },
+        "last_number": {
+          "type": "bigint",
+          "nullable": false,
+          "unsigned": true
+        }
+      },
+      "required_indexes": [
+        {
+          "name": "ads_scope",
+          "columns": [
+            "company_id",
+            "fiscal_year_id",
+            "document_kind"
+          ],
+          "unique": true
+        }
+      ]
+    }
+  ],
+  "must_be_absent": [
+    "accounting_audit_events",
+    "accounting_cutovers",
+    "accounting_cutover_sources",
+    "accounting_company_settings"
+  ]
+}

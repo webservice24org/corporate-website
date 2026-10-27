@@ -1,3 +1,4 @@
+import { accountingLinks } from "@/lib/accounting-navigation";
 import { Link, usePage, router } from "@inertiajs/react";
 import { useState } from "react";
 import {
@@ -267,6 +268,8 @@ export default function ERPSidebar({
     const salesActive = url === "/erp/sales" || url.startsWith("/erp/sales/");
     const [salesExpanded, setSalesExpanded] = useState(false);
     const salesOpen = salesActive || salesExpanded;
+
+    const accountingEntry = accountingLinks(can)[0];
 
     // --- ERP Settings State & Checks ---
     const canViewGeographySub =
@@ -1267,9 +1270,12 @@ export default function ERPSidebar({
                     )}
                     <FutureSidebarItem label="Approvals" icon={ClipboardCheck} />
 
-                    {/* Finance */}
-                    <SidebarSectionLabel label="Finance" />
-                    <FutureSidebarItem label="Accounting" icon={Calculator} />
+                    {accountingEntry && (
+                        <div>
+                            <SidebarSectionLabel label="Finance" />
+                            <SidebarLink href={accountingEntry.href} label="Accounting" icon={Calculator} currentUrl={url} onClick={closeMobile} />
+                        </div>
+                    )}
 
                     {/* Intelligence */}
                     <SidebarSectionLabel label="Intelligence" />

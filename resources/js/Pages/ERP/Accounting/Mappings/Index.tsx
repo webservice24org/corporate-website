@@ -1,0 +1,11 @@
+import { Head, Link, usePage } from '@inertiajs/react';
+import ERPLayout from '@/Layouts/erp-layout';
+import CompanyFilter from '../CompanyFilter';
+import { button, companyUrl, panel } from '../types';
+import ProfileEditor from './ProfileEditor';
+import { base } from './types';
+import type { Props } from './types';
+export default function Index(props: Props) {
+    const flash = usePage().props.flash as { success?: string; error?: string } | undefined;
+    return <ERPLayout><Head title="Posting Profiles" /><div className="space-y-5"><header className="flex flex-wrap justify-between gap-3"><div><h1 className="text-2xl font-semibold">Posting Profiles</h1><p className="text-sm text-slate-600">Versioned company GL mappings. Financial posting remains controlled by the later activation workflow.</p></div>{props.canViewAccounts && <Link className={button} href={companyUrl('/erp/accounting/accounts', props.company?.id ?? null)}>Chart of Accounts</Link>}</header><CompanyFilter companies={props.companies} selectedId={props.company?.id ?? null} path={base} /><div role="status">{flash?.success && <p className="text-green-800">{flash.success}</p>}{flash?.error && <p className="text-red-700">{flash.error}</p>}{props.issues.map(issue => <p className="text-amber-800" key={issue}>{issue}</p>)}{props.issues.length > 0 && props.canViewSetup && <Link className="underline" href={companyUrl('/erp/accounting/settings', props.company?.id ?? null)}>Review Accounting Setup</Link>}</div>{props.company ? <><section className={panel}><h2 className="font-semibold">Profile history</h2><p className="text-sm text-slate-500">Latest 50 versions. A published version applies from its effective date until the next published version starts. Earlier versions remain available for historical dates.</p>{props.versions.length === 0 && <p>No posting profile has been published.</p>}{props.versions.map(version => <p className="mt-2" key={version.id}><Link className="underline" href={`${base}/${version.id}`}>Version {version.version}</Link> · {version.state} · From {version.effective_from}</p>)}</section><ProfileEditor key={`${props.company.id}:${props.versions[0]?.id ?? 'initial'}`} {...props} /></> : <p>Select a company to configure its posting profile.</p>}</div></ERPLayout>;
+}

@@ -11,6 +11,7 @@ use App\Models\Product;
 use App\Models\ProductVariant;
 use App\Models\StockMovement;
 use App\Models\Warehouse;
+use App\Services\ERP\Accounting\Source\Purchase\AccountingPurchasePosting;
 use App\Services\Inventory\InventoryService;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
@@ -788,6 +789,7 @@ class OpeningStockController extends Controller
         InventoryService $inventoryService
     ): RedirectResponse {
         DB::transaction(function () use ($openingStock, $inventoryService): void {
+            app(AccountingPurchasePosting::class)->before((int) $openingStock->company_id, true);
             $document = OpeningStock::query()
                 ->whereKey($openingStock->getKey())
                 ->lockForUpdate()
