@@ -25,7 +25,7 @@ final class AccountingYearEndScreenTest extends AccountingYearEndTestCase
             $u->givePermissionTo($permissions);
         }
 
-return $u;
+        return $u;
     }
 
     private function url(): string

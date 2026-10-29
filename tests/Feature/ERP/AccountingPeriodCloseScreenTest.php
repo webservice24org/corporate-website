@@ -24,7 +24,7 @@ final class AccountingPeriodCloseScreenTest extends AccountingPeriodCloseTestCas
             $u->givePermissionTo($permissions);
         }
 
-return $u;
+        return $u;
     }
 
     private function url(): string

@@ -35,6 +35,7 @@ use Database\Seeders\AccountingSupplierPaymentPermissionSeeder;
 use Database\Seeders\PurchasePermissionSeeder;
 use Database\Seeders\SalesPermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -221,7 +222,7 @@ final class AccountingBankStatementManagementTest extends TestCase
         try {
             $action();
             $this->fail('Expected rejected statement operation.');
-        } catch (ValidationException|AuthorizationException|\Illuminate\Database\Eloquent\ModelNotFoundException|\LogicException $e) {
+        } catch (ValidationException|AuthorizationException|ModelNotFoundException|\LogicException $e) {
             $this->assertNotSame('', $e->getMessage());
         }
         $this->assertSame($before, $this->digest());

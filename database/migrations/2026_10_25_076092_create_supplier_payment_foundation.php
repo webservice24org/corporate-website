@@ -7,7 +7,8 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     private const TABLES = ['supplier_payments', 'supplier_payment_targets', 'supplier_payment_allocations', 'supplier_payment_audit_logs', 'accounting_supplier_payment_operations'];
 
     private const OWNED_INDEXES = ['suppliers' => ['spay_supplier_company', ['id', 'company_id']], 'supplier_bills' => ['spay_bill_company', ['id', 'company_id']], 'supplier_payables' => ['spay_payable_bill_company', ['id', 'supplier_bill_id', 'company_id']]];
@@ -18,18 +19,18 @@ return new class extends Migration {
         $issues = [];
         foreach (self::TABLES as $table) {
             if (Schema::hasTable($table)) {
-                $issues[] = $table . ' already exists';
+                $issues[] = $table.' already exists';
             }
         }
         foreach (['users' => ['id'], 'companies' => ['id', 'currency_code'], 'suppliers' => ['id', 'company_id', 'currency_code'], 'supplier_bills' => ['id', 'company_id', 'supplier_id', 'currency_code'], 'supplier_payables' => ['id', 'company_id', 'supplier_bill_id', 'supplier_id', 'currency_code', 'paid_amount', 'credited_amount'], 'accounting_cash_accounts' => ['id', 'company_id', 'currency_code', 'kind'], 'purchase_document_sequences' => ['company_id', 'document_type', 'year', 'last_number']] as $table => $columns) {
-            if (!Schema::hasTable($table)) {
-                $issues[] = $table . ' is missing';
+            if (! Schema::hasTable($table)) {
+                $issues[] = $table.' is missing';
 
                 continue;
             }
             foreach ($columns as $column) {
-                if (!Schema::hasColumn($table, $column)) {
-                    $issues[] = $table . '.' . $column . ' is missing';
+                if (! Schema::hasColumn($table, $column)) {
+                    $issues[] = $table.'.'.$column.' is missing';
                 }
             }
         }
@@ -37,16 +38,16 @@ return new class extends Migration {
             foreach (self::OWNED_INDEXES as $table => $spec) {
                 foreach (Schema::getIndexes($table) as $index) {
                     if (strtolower((string) $index['name']) === $spec[0]) {
-                        $issues[] = $table . '.' . $spec[0] . ' already exists';
+                        $issues[] = $table.'.'.$spec[0].' already exists';
                     }
                 }
             }
             $foreignNames = ['sp_supplier_owner', 'sp_cash_owner', 'sp_reversal_owner', 'spt_payment_owner', 'spt_bill_owner', 'spt_payable_owner', 'spa_payment_owner', 'spa_bill_owner', 'spa_payable_owner', 'spa_exact_original', 'spal_payment_owner', 'aspo_payment_owner'];
             foreach (self::TABLES as $table) {
-                $foreignNames[] = $table . '_company_id_foreign';
+                $foreignNames[] = $table.'_company_id_foreign';
             }
             foreach (['created_by', 'updated_by', 'last_edited_by', 'submitted_by', 'approved_by', 'posted_by', 'cancelled_by'] as $actor) {
-                $foreignNames[] = 'supplier_payments_' . $actor . '_foreign';
+                $foreignNames[] = 'supplier_payments_'.$actor.'_foreign';
             }
             $foreignNames = [...$foreignNames, 'supplier_payment_allocations_posted_by_foreign', 'supplier_payment_audit_logs_actor_id_foreign', 'accounting_supplier_payment_operations_created_by_foreign'];
             $tables = in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)
@@ -55,7 +56,7 @@ return new class extends Migration {
             foreach ($tables as $table) {
                 foreach (Schema::getForeignKeys($table) as $foreign) {
                     if (in_array(strtolower((string) ($foreign['name'] ?? '')), $foreignNames, true)) {
-                        $issues[] = 'reserved foreign-key name already exists on ' . $table;
+                        $issues[] = 'reserved foreign-key name already exists on '.$table;
                     }
                 }
             }
@@ -65,7 +66,7 @@ return new class extends Migration {
                     $cashKey = true;
                 }
             }
-            if (!$cashKey) {
+            if (! $cashKey) {
                 $issues[] = 'accounting_cash_accounts needs its existing unique id/company finance key';
             }
             if (DB::table('supplier_payables')->where('paid_amount', '<>', 0)->exists()) {
@@ -76,7 +77,7 @@ return new class extends Migration {
             }
         }
         if ($issues !== []) {
-            throw new RuntimeException('Supplier-payment foundation preflight: ' . implode('; ', $issues) . '. No DDL was attempted.');
+            throw new RuntimeException('Supplier-payment foundation preflight: '.implode('; ', $issues).'. No DDL was attempted.');
         }
         foreach (self::OWNED_INDEXES as $table => $spec) {
             Schema::table($table, static function (Blueprint $t) use ($spec): void {
@@ -111,8 +112,8 @@ return new class extends Migration {
                 $t->foreignId($actor)->constrained('users')->restrictOnDelete();
             }
             foreach (['submitted', 'approved', 'posted', 'cancelled'] as $action) {
-                $t->foreignId($action . '_by')->nullable()->constrained('users')->restrictOnDelete();
-                $t->dateTime($action . '_at')->nullable();
+                $t->foreignId($action.'_by')->nullable()->constrained('users')->restrictOnDelete();
+                $t->dateTime($action.'_at')->nullable();
             }
             $t->timestamps();
             $t->unique(['id', 'company_id'], 'sp_id_company');
@@ -188,9 +189,9 @@ return new class extends Migration {
 
     private function lineOwners(Blueprint $t, string $prefix): void
     {
-        $this->owned($t, ['supplier_payment_id', 'company_id'], 'supplier_payments', ['id', 'company_id'], $prefix . '_payment_owner');
-        $this->owned($t, ['supplier_bill_id', 'company_id'], 'supplier_bills', ['id', 'company_id'], $prefix . '_bill_owner');
-        $this->owned($t, ['supplier_payable_id', 'supplier_bill_id', 'company_id'], 'supplier_payables', ['id', 'supplier_bill_id', 'company_id'], $prefix . '_payable_owner');
+        $this->owned($t, ['supplier_payment_id', 'company_id'], 'supplier_payments', ['id', 'company_id'], $prefix.'_payment_owner');
+        $this->owned($t, ['supplier_bill_id', 'company_id'], 'supplier_bills', ['id', 'company_id'], $prefix.'_bill_owner');
+        $this->owned($t, ['supplier_payable_id', 'supplier_bill_id', 'company_id'], 'supplier_payables', ['id', 'supplier_bill_id', 'company_id'], $prefix.'_payable_owner');
     }
 
     /** @param list<string> $columns @param list<string> $references */

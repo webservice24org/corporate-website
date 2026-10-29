@@ -325,7 +325,7 @@ final class AccountingYearEndWorkflowTest extends AccountingYearEndTestCase
                 krsort($value, SORT_STRING);
             }
 
-return $value;
+            return $value;
         };
         DB::table('accounting_year_end_events')->where('id', $prep->getKey())->update(['payload' => json_encode($reorder($prep->getAttribute('payload')), JSON_THROW_ON_ERROR)]);
         $this->assertSame($original->getKey(), $this->postYear('close', null, $command)->getKey());

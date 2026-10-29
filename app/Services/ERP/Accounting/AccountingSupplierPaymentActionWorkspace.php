@@ -148,7 +148,7 @@ final class AccountingSupplierPaymentActionWorkspace
             $data[$field] = self::time($row->getAttribute($field));
         }
 
-return $data;
+        return $data;
     }
 
     /** @return array{payable_id: int, amount: string, paid: string, credited: string, outstanding: string} */

@@ -259,7 +259,7 @@ final class AccountingSupplierPaymentModelGuard
             $this->fail('Allocation amount must be positive.');
         }
 
-return $amount;
+        return $amount;
     }
 
     private function stamp(Model $row, string $action): void

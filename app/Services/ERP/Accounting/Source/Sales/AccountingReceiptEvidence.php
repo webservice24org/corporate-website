@@ -141,7 +141,7 @@ final class AccountingReceiptEvidence
             $this->fail('Receipt admission evidence is damaged.');
         }
 
-return $payload;
+        return $payload;
     }
 
     /** Safe, immutable financial fields, excluding notes, references, personal snapshots and mutable allocation/reversal progress.
@@ -244,7 +244,7 @@ return $payload;
             $this->fail('Receipt effects must have positive exact amounts.');
         }
 
-return $amount;
+        return $amount;
     }
 
     private function date(mixed $value): string
@@ -253,7 +253,7 @@ return $amount;
             $this->fail('Source date is required.');
         }
 
-return $value->format('Y-m-d');
+        return $value->format('Y-m-d');
     }
 
     private function instant(mixed $value): string
@@ -262,7 +262,7 @@ return $value->format('Y-m-d');
             $this->fail('Source event timestamp is required.');
         }
 
-return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
+        return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
     }
 
     private function sameEvidence(mixed $left, mixed $right): bool

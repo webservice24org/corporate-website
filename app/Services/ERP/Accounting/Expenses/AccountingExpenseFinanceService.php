@@ -46,7 +46,7 @@ final class AccountingExpenseFinanceService
             throw new AuthorizationException('Expense reversal authority is required.');
         }
 
-return $row;
+        return $row;
     }
 
     /** @param array<string, mixed> $input */

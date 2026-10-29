@@ -67,7 +67,9 @@ try {
         foreach (app(AccountingStarterTemplate::class)->definitions() as $definition) {
             if ($definition['role'] !== null) {
                 $account = $accounts->get($definition['code']);
-                if ($account === null) { throw new RuntimeException('Starter account is missing.'); }
+                if ($account === null) {
+                    throw new RuntimeException('Starter account is missing.');
+                }
                 $mapping[$definition['role']] = (int) $account->getKey();
             }
         }
@@ -79,8 +81,11 @@ try {
             'company_id' => $company, 'cutover_date' => '2026-10-01', 'strategy' => 'snapshot',
             'reason' => 'DEMO ONLY: rehearsal cutover',
         ]);
-        $cash = $accounts->get('1010'); $capital = $accounts->get('3200');
-        if ($cash === null || $capital === null) { throw new RuntimeException('Rehearsal cash or capital account missing.'); }
+        $cash = $accounts->get('1010');
+        $capital = $accounts->get('3200');
+        if ($cash === null || $capital === null) {
+            throw new RuntimeException('Rehearsal cash or capital account missing.');
+        }
         $opening = app(AccountingOpeningService::class)->save($actor, (int) $plan->getKey(), [
             'cutover_revision' => (int) $plan->getAttribute('revision'),
             'description' => 'DEMO ONLY: illustrative opening',
@@ -96,6 +101,7 @@ try {
             'opening_revision' => (int) $opening->getAttribute('revision'),
             'reason' => 'DEMO ONLY: capture preparation observations',
         ]);
+
         return [
             'company_id' => $company, 'actor_id' => 1, 'cutover_id' => (int) $plan->getKey(),
             'cutover_date' => '2026-10-01', 'mapping_version_id' => (int) $version->getKey(),
@@ -106,9 +112,9 @@ try {
     });
     echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), PHP_EOL;
 } catch (ValidationException $e) {
-    fwrite(STDERR, "No changes saved. Validation issues: ".json_encode($e->errors(), JSON_UNESCAPED_SLASHES)."\n");
+    fwrite(STDERR, 'No changes saved. Validation issues: '.json_encode($e->errors(), JSON_UNESCAPED_SLASHES)."\n");
     exit(1);
 } catch (Throwable $e) {
-    fwrite(STDERR, "No changes saved. ".$e->getMessage()."\n");
+    fwrite(STDERR, 'No changes saved. '.$e->getMessage()."\n");
     exit(1);
 }

@@ -219,7 +219,7 @@ final class AccountingSupplierPaymentChangeContract
             $this->fail('Operation amounts must be positive exact decimals.');
         }
 
-return $amount;
+        return $amount;
     }
 
     private function id(mixed $value): void

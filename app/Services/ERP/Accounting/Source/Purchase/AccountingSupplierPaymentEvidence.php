@@ -153,7 +153,7 @@ final class AccountingSupplierPaymentEvidence
                 $p[$time] = $this->instant($row->getAttribute($time));
             }
 
-return $p;
+            return $p;
         }
         if ($kind !== 'supplier_payment_allocation') {
             $this->fail('Unsupported supplier settlement source.');
@@ -223,7 +223,7 @@ return $p;
             $this->fail('Supplier payment admission is damaged.');
         }
 
-return $p;
+        return $p;
     }
 
     /** Same closed source.v1 envelope used by the orchestrator, independently recomputed for read-only verification.
@@ -252,7 +252,7 @@ return $p;
             $this->fail('Missing native date.');
         }
 
-return $value->format('Y-m-d');
+        return $value->format('Y-m-d');
     }
 
     private function instant(mixed $value): string
@@ -261,7 +261,7 @@ return $value->format('Y-m-d');
             $this->fail('Missing native event instant.');
         }
 
-return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
+        return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
     }
 
     private function fail(string $message): never

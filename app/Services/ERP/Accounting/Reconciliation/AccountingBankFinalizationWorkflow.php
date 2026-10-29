@@ -217,7 +217,7 @@ final class AccountingBankFinalizationWorkflow
             $this->fail('Complete verified statement, opening, adjustment and book coverage is required.');
         }
 
-return $capture;
+        return $capture;
     }
 
     /** @param array<int, array<string, mixed>> $states @return list<array{id: int, approval_id: int, approval_hash: string}> */

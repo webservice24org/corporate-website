@@ -42,7 +42,7 @@ try {
                 try {
                     app(AccountingCutoverManifest::class)->verify($plan, $workspace, $opening);
                     $manifest = 'prepared_integrity_verified_not_recognized';
-                } catch (\Throwable $e) {
+                } catch (Throwable $e) {
                     $manifest = 'invalid_or_unverifiable';
                 }
             }
@@ -52,8 +52,10 @@ try {
         try {
             $rows = app(AccountingManifestSources::class)->collect($companyId, $date);
             $candidates = ['sales_invoice' => 0, 'supplier_bill' => 0, 'inventory_balance' => 0];
-            foreach ($rows as $row) { $candidates[$row['source_kind']]++; }
-        } catch (\Throwable $e) {
+            foreach ($rows as $row) {
+                $candidates[$row['source_kind']]++;
+            }
+        } catch (Throwable $e) {
             $scan = 'failed_or_exceeded_limit';
         }
         $mapping = DB::table('accounting_mapping_versions')->where('company_id', $companyId)
@@ -89,7 +91,7 @@ try {
         ];
     });
     echo json_encode($report, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR), PHP_EOL;
-} catch (\Throwable $e) {
+} catch (Throwable $e) {
     fwrite(STDERR, "Preflight could not inspect the requested company and cutover. Check IDs, migrations, configuration and application logs. No readiness conclusion was produced.\n");
     exit(1);
 }

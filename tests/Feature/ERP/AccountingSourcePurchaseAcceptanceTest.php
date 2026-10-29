@@ -263,7 +263,7 @@ final class AccountingSourcePurchaseAcceptanceTest extends TestCase
             $parts[$table] = DB::table($table)->orderBy('id')->get()->toArray();
         }
 
-return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
     private function failsAtomically(callable $action): void
@@ -290,7 +290,7 @@ return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
             $parts[$table] = DB::table($table)->where($bound[0], '<=', $bound[1])->orderBy('id')->get()->toArray();
         }
 
-return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
     /** @param array{journal: int, effect: int, movement: int, digest: string} $trace */

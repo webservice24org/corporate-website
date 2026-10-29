@@ -29,7 +29,7 @@ final class AccountingYearEndJournalEvidence
             $lines[] = $line;
         }
 
-return $lines;
+        return $lines;
     }
 
     /** @param list<array<string, mixed>> $lines @return array<string, mixed> */

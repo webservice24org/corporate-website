@@ -85,7 +85,7 @@ final class AccountingOpeningWorkspaceTest extends TestCase
             $user->givePermissionTo($permissions);
         }
 
-return $user;
+        return $user;
     }
 
     /** @param array<string, mixed> $overrides @return array<string, mixed> */

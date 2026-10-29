@@ -302,7 +302,7 @@ final class AccountingCashBookScreenTest extends TestCase
             $parts[$table] = DB::table($table)->orderBy('id')->get()->toArray();
         }
 
-return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
     private function failsAtomically(callable $action): void
@@ -415,7 +415,7 @@ return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
             $state[$table] = DB::table($table)->orderBy('id')->get()->toArray();
         }
 
-return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));
     }
 
     /** @param array<string, mixed> $filters @return array<string, mixed> */

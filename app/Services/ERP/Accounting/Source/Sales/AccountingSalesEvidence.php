@@ -278,7 +278,7 @@ final class AccountingSalesEvidence
                 $this->fail('Nonstock completion cannot own inventory value or a movement.');
             }
 
-return null;
+            return null;
         }
         if ($row['fulfillment'] !== 'physical' || $row['warehouse'] === null || $row['reservation'] === null) {
             $this->fail('Physical delivery requires its warehouse and reservation trace.');
@@ -471,7 +471,7 @@ return null;
             $this->fail('Persisted document date is required.');
         }
 
-return $value->format('Y-m-d');
+        return $value->format('Y-m-d');
     }
 
     private function instant(mixed $value): string
@@ -480,7 +480,7 @@ return $value->format('Y-m-d');
             $this->fail('Persisted source event timestamp is required.');
         }
 
-return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
+        return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
     }
 
     private function sameEvidence(mixed $left, mixed $right): bool

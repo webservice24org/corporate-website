@@ -47,6 +47,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\AccountingPermissionSeeder;
 use Database\Seeders\AccountingPurchasePermissionSeeder;
 use Database\Seeders\PurchasePermissionSeeder;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -412,7 +413,7 @@ final class AccountingPurchasePostingTest extends TestCase
         try {
             $this->receive($r, $actor);
             $this->fail('Expected scoped rejection.');
-        } catch (ModelNotFoundException|\Illuminate\Auth\Access\AuthorizationException) {
+        } catch (ModelNotFoundException|AuthorizationException) {
             $this->assertDatabaseCount('stock_movements', 0);
         }
     }

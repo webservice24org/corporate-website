@@ -86,7 +86,7 @@ final class AccountingSupplierStatementContract
             }
         }
 
-return $total;
+        return $total;
     }
 
     /** @param array<array-key, array<string, mixed>> $events

@@ -29,7 +29,7 @@ final class AccountingTaxScreenTest extends AccountingExpenseWorkspaceTestCase
             $user->givePermissionTo($permissions);
         }
 
-return $user;
+        return $user;
     }
 
     private function url(?string $format = null): string

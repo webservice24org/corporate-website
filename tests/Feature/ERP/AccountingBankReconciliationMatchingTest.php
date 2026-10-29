@@ -52,6 +52,7 @@ use Database\Seeders\AccountingSupplierPaymentPermissionSeeder;
 use Database\Seeders\PurchasePermissionSeeder;
 use Database\Seeders\SalesPermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -228,7 +229,7 @@ final class AccountingBankReconciliationMatchingTest extends TestCase
         try {
             $action();
             $this->fail('Expected rejected reversal operation.');
-        } catch (ValidationException|AuthorizationException|\Illuminate\Database\Eloquent\ModelNotFoundException|\LogicException $exception) {
+        } catch (ValidationException|AuthorizationException|ModelNotFoundException|\LogicException $exception) {
             $this->assertNotSame('', $exception->getMessage());
         }
         $this->assertSame($before, $this->nativeDigest());
@@ -348,7 +349,7 @@ final class AccountingBankReconciliationMatchingTest extends TestCase
         try {
             $action();
             $this->fail('Expected rejected matching operation.');
-        } catch (ValidationException|AuthorizationException|\Illuminate\Database\Eloquent\ModelNotFoundException|\LogicException $e) {
+        } catch (ValidationException|AuthorizationException|ModelNotFoundException|\LogicException $e) {
             $this->assertNotSame('', $e->getMessage());
         }
         $this->assertSame($before, $this->digest());

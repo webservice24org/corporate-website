@@ -37,7 +37,7 @@ final class AccountingSupplierPaymentService
             $query->whereIn('company_id', $actor->employee()->select('company_id'));
         }
 
-return $query->findOrFail($id);
+        return $query->findOrFail($id);
     }
 
     /** @param array<string, mixed> $input */
@@ -239,7 +239,7 @@ return $query->findOrFail($id);
             } $balances[$target['supplier_bill_id']] = $balance;
         }
 
-return $balances;
+        return $balances;
     }
 
     /** @return array{company: Company, setting: AccountingSetting|null, payment: SupplierPayment} */
@@ -261,7 +261,7 @@ return $balances;
             $this->fail('An active company is required.');
         }
 
-return $row;
+        return $row;
     }
 
     private function setting(Company $company): ?AccountingSetting

@@ -224,7 +224,7 @@ final class AccountingSupplierCreditService
             $this->fail('A financial supplier credit requires a positive amount.');
         }
 
-return $amount;
+        return $amount;
     }
 
     private function available(int $company, SupplierBill $bill, string $amount): void

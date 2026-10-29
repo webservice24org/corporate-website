@@ -50,6 +50,7 @@ class DatabaseSeeder extends Seeder
             AccountingAgingWorkspacePermissionSeeder::class,
             AccountingPeriodClosePermissionSeeder::class,
             AccountingYearEndPermissionSeeder::class,
+            BusinessNotificationDefaultsSeeder::class,
         ]);
     }
 }

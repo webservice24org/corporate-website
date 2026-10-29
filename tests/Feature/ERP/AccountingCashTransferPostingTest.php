@@ -41,6 +41,7 @@ use Database\Seeders\AccountingSupplierPaymentPermissionSeeder;
 use Database\Seeders\PurchasePermissionSeeder;
 use Database\Seeders\SalesPermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -210,7 +211,7 @@ final class AccountingCashTransferPostingTest extends TestCase
         try {
             $action();
             $this->fail('Expected rejected transfer posting.');
-        } catch (ValidationException|AuthorizationException|\Illuminate\Database\Eloquent\ModelNotFoundException|\LogicException $exception) {
+        } catch (ValidationException|AuthorizationException|ModelNotFoundException|\LogicException $exception) {
             $this->assertNotSame('', $exception->getMessage());
         }
         $this->assertSame($before, $this->stateDigest());

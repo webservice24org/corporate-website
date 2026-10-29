@@ -100,7 +100,7 @@ final class AccountingBankAdjustmentWorkflow
                     $this->evidence->family($companyId, (int) $existing->getKey());
                 }
 
-return $existing;
+                return $existing;
             }
             $this->configuration->lockForSetup($company);
             $source = $this->proof->source($companyId, (int) $data['statement_line_id']);

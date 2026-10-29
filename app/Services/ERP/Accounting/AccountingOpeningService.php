@@ -197,7 +197,7 @@ final class AccountingOpeningService
             throw new \LogicException('Opening workspace is missing.');
         }
 
-return $workspace;
+        return $workspace;
     }
 
     private function fail(string $field, string $message): never

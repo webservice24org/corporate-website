@@ -107,8 +107,8 @@ export default function UpazilaForm({
 
                 return districts.filter(
                     (district) =>
-                        district.division_id ===
-                        data.division_id
+                        Number(district.division_id) ===
+                        Number(data.division_id)
                 );
             },
             [
@@ -129,14 +129,14 @@ export default function UpazilaForm({
             const selectedDistrict =
                 districts.find(
                     (district) =>
-                        district.id ===
-                        data.district_id
+                        Number(district.id) ===
+                        Number(data.district_id)
                 );
 
             if (
                 !selectedDistrict ||
-                selectedDistrict.division_id !==
-                    data.division_id
+                Number(selectedDistrict.division_id) !==
+                    Number(data.division_id)
             ) {
                 setData(
                     "district_id",

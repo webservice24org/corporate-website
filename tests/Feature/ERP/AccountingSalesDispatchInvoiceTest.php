@@ -45,6 +45,7 @@ use Carbon\CarbonImmutable;
 use Database\Seeders\AccountingPermissionSeeder;
 use Database\Seeders\SalesPermissionSeeder;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
@@ -612,7 +613,7 @@ final class AccountingSalesDispatchInvoiceTest extends TestCase
         try {
             app(SalesDeliveryService::class)->post($u, (int) $d->getKey(), 1, (string) Str::uuid());
             $this->fail('Expected scoped rejection.');
-        } catch (AuthorizationException|\Illuminate\Database\Eloquent\ModelNotFoundException) {
+        } catch (AuthorizationException|ModelNotFoundException) {
             $this->assertDatabaseCount('stock_movements', 0);
         }
     }

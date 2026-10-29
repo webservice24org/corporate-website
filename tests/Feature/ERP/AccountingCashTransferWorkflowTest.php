@@ -302,7 +302,7 @@ final class AccountingCashTransferWorkflowTest extends TestCase
             $parts[$table] = DB::table($table)->orderBy('id')->get()->toArray();
         }
 
-return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
     private function failsAtomically(callable $action): void
@@ -415,7 +415,7 @@ return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
             $state[$table] = DB::table($table)->orderBy('id')->get()->toArray();
         }
 
-return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));
     }
 
     private function transfers(): AccountingCashTransferWorkflow
@@ -458,7 +458,7 @@ return hash('sha256', json_encode($state, JSON_THROW_ON_ERROR));
             $parts[$table] = DB::table($table)->orderBy('id')->get()->toArray();
         }
 
-return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
+        return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
     }
 
     private function rejectTransfer(callable $action): void
@@ -467,7 +467,7 @@ return hash('sha256', json_encode($parts, JSON_THROW_ON_ERROR));
         try {
             $action();
             $this->fail('Expected rejected transfer request.');
-        } catch (ValidationException|AuthorizationException|\Illuminate\Database\Eloquent\ModelNotFoundException|\LogicException $exception) {
+        } catch (ValidationException|AuthorizationException|ModelNotFoundException|\LogicException $exception) {
             $this->assertNotSame('', $exception->getMessage());
         } $this->assertSame($before, $this->transferDigest());
     }

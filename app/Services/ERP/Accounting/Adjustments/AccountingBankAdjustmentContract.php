@@ -28,7 +28,7 @@ final class AccountingBankAdjustmentContract
             $this->fail('Use a stable opaque request key of 16 to 64 letters, digits, underscores or hyphens.');
         }
 
-return hash('sha256', $key);
+        return hash('sha256', $key);
     }
 
     public function reason(string $reason): string
@@ -38,7 +38,7 @@ return hash('sha256', $key);
             $this->fail('Provide a plain-text adjustment reason of up to 2,000 characters.');
         }
 
-return $reason;
+        return $reason;
     }
 
     /** @return array<string, mixed> */

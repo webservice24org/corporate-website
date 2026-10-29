@@ -405,7 +405,7 @@ final class AccountingSalesCorrectionEvidence
             $this->fail('Source date is required.');
         }
 
-return $value->format('Y-m-d');
+        return $value->format('Y-m-d');
     }
 
     private function instant(mixed $value): string
@@ -414,7 +414,7 @@ return $value->format('Y-m-d');
             $this->fail('Source timestamp is required.');
         }
 
-return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
+        return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
     }
 
     private function fail(string $message): never

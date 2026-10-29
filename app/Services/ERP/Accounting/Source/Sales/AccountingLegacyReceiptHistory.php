@@ -188,7 +188,7 @@ final class AccountingLegacyReceiptHistory
             ksort($value);
         }
 
-return array_map(fn (mixed $item): mixed => $this->nativeCanonical($item), $value);
+        return array_map(fn (mixed $item): mixed => $this->nativeCanonical($item), $value);
     }
 
     private function date(mixed $value): string
@@ -197,7 +197,7 @@ return array_map(fn (mixed $item): mixed => $this->nativeCanonical($item), $valu
             $this->fail('Persisted legacy dates are required.');
         }
 
-return $value->format('Y-m-d');
+        return $value->format('Y-m-d');
     }
 
     private function instant(mixed $value): string
@@ -206,7 +206,7 @@ return $value->format('Y-m-d');
             $this->fail('Persisted legacy instants are required.');
         }
 
-return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
+        return CarbonImmutable::instance($value)->utc()->format('Y-m-d\TH:i:sP');
     }
 
     private function fail(string $message): never

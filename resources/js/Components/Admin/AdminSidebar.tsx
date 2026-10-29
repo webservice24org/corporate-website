@@ -72,6 +72,11 @@ export default function AdminSidebar({
     const settingsActive =
         canSeeSettings &&
         (
+            url.startsWith("/admin/business-notifications") ||
+            url.startsWith("/admin/notification-history") ||
+            url.startsWith("/admin/sms-bd-settings") ||
+            url.startsWith("/admin/custom-sms") ||
+            url.startsWith("/admin/custom-mail") ||
             url.startsWith(
                 "/admin/mail-settings",
             ) ||
@@ -389,6 +394,14 @@ export default function AdminSidebar({
                                                 }
                                             />
                                         )}
+
+                                        {can("mail-settings.view") && <>
+                                            <SidebarSubLink href="/admin/business-notifications" label="Business Notifications" icon={Mail} currentUrl={url} onClick={closeMobile} />
+                                            <SidebarSubLink href="/admin/notification-history" label="Delivery History" icon={Mailbox} currentUrl={url} onClick={closeMobile} />
+                                            <SidebarSubLink href="/admin/sms-bd-settings" label="SMS.BD Settings" icon={MessageSquareText} currentUrl={url} onClick={closeMobile} />
+                                            <SidebarSubLink href="/admin/custom-sms" label="Custom SMS" icon={MessageSquareText} currentUrl={url} onClick={closeMobile} />
+                                            <SidebarSubLink href="/admin/custom-mail" label="Custom Email" icon={Mail} currentUrl={url} onClick={closeMobile} />
+                                        </>}
 
                                         {/* Header */}
                                         {can(

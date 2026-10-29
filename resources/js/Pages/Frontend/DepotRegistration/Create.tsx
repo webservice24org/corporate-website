@@ -183,8 +183,7 @@ export default function Create({
 
                 return districts.filter(
                     (district) =>
-                        district.division_id ===
-                        data.division_id
+                        Number(district.division_id) === Number(data.division_id),
                 );
             },
             [
@@ -235,20 +234,12 @@ export default function Create({
             ]
         );
 
-    const changeDivision = (
-        value: string
-    ) => {
-        setData(
-            "division_id",
-            value
-                ? Number(value)
-                : ""
-        );
-
-        setData(
-            "district_id",
-            ""
-        );
+    const changeDivision = (value: string) => {
+        setData((current) => ({
+            ...current,
+            division_id: value ? Number(value) : "",
+            district_id: "",
+        }));
     };
 
     const fileHandler =

@@ -36,7 +36,7 @@ final class AccountingFinanceDashboardTest extends AccountingExpenseWorkspaceTes
             $user->givePermissionTo($permissions);
         }
 
-return $user;
+        return $user;
     }
 
     private function url(): string

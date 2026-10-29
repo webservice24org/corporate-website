@@ -325,7 +325,7 @@ final class AccountingBankStatementService
             $raw[] = array_intersect_key($line, array_flip(AccountingBankStatementContract::COLUMNS));
         }
 
-return $raw;
+        return $raw;
     }
 
     /** @param array<int|string, array<string, mixed>> $lines @return list<array<string, mixed>> */
@@ -336,7 +336,7 @@ return $raw;
             $safe[] = array_diff_key($line, ['fingerprint' => true, 'transaction_hash' => true]);
         }
 
-return $safe;
+        return $safe;
     }
 
     private function requestHash(int $actor, string $mode, string $payload, string $source): string

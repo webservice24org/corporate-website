@@ -24,7 +24,7 @@ final class AccountingExpenseWorkspaceScreenTest extends AccountingExpenseWorksp
             $user->givePermissionTo($permissions);
         }
 
-return $user;
+        return $user;
     }
 
     private function draft(): AccountingExpense

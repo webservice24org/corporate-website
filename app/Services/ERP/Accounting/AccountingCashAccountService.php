@@ -55,7 +55,7 @@ final class AccountingCashAccountService
                         $this->fail('A cash role was remapped. A verified account transition is required; existing binding identity cannot be overwritten.');
                     }
 
-continue;
+                    continue;
                 }
                 if (AccountingCashAccount::query()->where('company_id', $companyId)->where('account_id', $accountId)->exists()) {
                     $this->fail('This GL account already has a different cash-role identity. A verified transition is required instead of renaming its binding.');
@@ -98,7 +98,7 @@ continue;
                 $this->fail('Select the finance cash/bank account receiving this money.');
             }
 
-return null;
+            return null;
         }
         $row = AccountingCashAccount::query()->where('company_id', $company->getKey())->where('status', 'active')->find((int) $id);
         if ($row === null || $row->getAttribute('currency_code') !== $company->getAttribute('currency_code') || $row->getAttribute('kind') !== ($method === 'cash' ? 'cash' : 'bank')) {
@@ -118,7 +118,7 @@ return null;
                 throw ValidationException::withMessages([$field => 'Only mapped cash/bank lines may carry a finance cash-account ID.']);
             }
 
-return null;
+            return null;
         }
         $allowInactiveBinding = $source !== null && app(AccountingSupplierPaymentReversalMapping::class)->cashBinding($company, $source['kind'], $source['id']);
         $allowInactiveBinding = $allowInactiveBinding || ($source !== null && app(AccountingCashTransferReversalMapping::class)->line($company, $source['kind'], $source['id'], $account, (int) $id, $source['debit'] ?? '', $source['credit'] ?? '', $role));

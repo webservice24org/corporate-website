@@ -295,7 +295,7 @@ final class AccountingCashTransferReversalWorkflow
             $this->fail('Provide a reason of up to 2,000 characters.');
         }
 
-return $value;
+        return $value;
     }
 
     /** @return array<string, mixed> */

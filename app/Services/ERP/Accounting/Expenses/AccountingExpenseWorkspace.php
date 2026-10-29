@@ -38,7 +38,7 @@ final class AccountingExpenseWorkspace
             $out[$permission] = $actor->can($permission);
         }
 
-return $out;
+        return $out;
     }
 
     /** @return array<string, mixed> */
@@ -91,7 +91,7 @@ return $out;
                         $query['status'] = $filters['status'];
                     }
 
-return $this->read->listing($actor, $query, $module === 'categories');
+                    return $this->read->listing($actor, $query, $module === 'categories');
                 }
                 if ($filters['status'] !== '' && ! in_array($filters['status'], ['submitted', 'approved', 'posted', 'cancelled'], true)) {
                     throw ValidationException::withMessages(['status' => 'Choose a finance instruction status.']);

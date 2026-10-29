@@ -95,7 +95,7 @@ final class AccountingSupplierPaymentReversalOperations
                     $this->fail('Reversal cash must be the last exact member.');
                 }
 
-continue;
+                continue;
             }
             if ($member['source_kind'] !== 'supplier_payment_allocation' || $member['event_kind'] !== 'reversed' || isset($seen[$member['source_id']])) {
                 $this->fail('Full reversal may contain only distinct compensations before cash.');
@@ -171,7 +171,7 @@ continue;
             throw ValidationException::withMessages(['supplier_payment_reversal' => 'Native reversal event time is missing.']);
         }
 
-return $value->format('Y-m-d\TH:i:sP');
+        return $value->format('Y-m-d\TH:i:sP');
     }
 
     private function fail(string $message): never

@@ -730,7 +730,7 @@ final class AccountingCustomerReceiptPostingTest extends TestCase
                 krsort($value, SORT_STRING);
             }
 
-return $value;
+            return $value;
         };
         foreach (AccountingSourceEffect::query()->get() as $effect) {
             DB::table('accounting_source_effects')->where('id', $effect->getKey())->update(['source_snapshot' => json_encode($reorder($effect->getAttribute('source_snapshot')), JSON_THROW_ON_ERROR)]);

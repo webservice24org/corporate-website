@@ -302,7 +302,7 @@ final class AccountingPurchaseEvidence
                 $this->fail('A nonstock or unaccepted line cannot own a movement.');
             }
 
-return null;
+            return null;
         }
         $m = StockMovement::query()->where('company_id', $company)->findOrFail((int) $id);
         if ($m->getAttribute('reference_type') !== $reference || (int) $m->getAttribute('reference_id') !== $source || (int) $m->getAttribute('warehouse_id') !== $warehouse || (int) $m->getAttribute('product_id') !== $product || (int) $m->getAttribute('product_variant_id') !== (int) $variant || $m->getAttribute('movement_type') !== $type || $m->getAttribute('direction') !== $direction || $this->decimal->source((string) $m->getAttribute('quantity')) !== $quantity || ! DB::table('products')->where('company_id', $company)->where('id', $product)->exists() || ! DB::table('warehouses')->where('company_id', $company)->where('id', $warehouse)->exists()) {

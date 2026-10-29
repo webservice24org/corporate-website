@@ -209,7 +209,7 @@ final class AccountingLegacyReceivableCoverage
             $this->fail('Persisted coverage dates are required.');
         }
 
-return $date->format('Y-m-d');
+        return $date->format('Y-m-d');
     }
 
     private function fail(string $message): never

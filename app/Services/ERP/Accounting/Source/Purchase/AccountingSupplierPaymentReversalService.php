@@ -205,7 +205,7 @@ final class AccountingSupplierPaymentReversalService
             $q->whereIn('company_id', $actor->employee()->select('company_id'));
         }
 
-return $q->findOrFail($id);
+        return $q->findOrFail($id);
     }
 
     /** @return array<int, array{payable_id: int, amount: string, paid: string, credited: string, outstanding: string}> */
@@ -218,7 +218,7 @@ return $q->findOrFail($id);
             $rows[$id] = $this->ledger->bill((int) $root->getAttribute('company_id'), (int) $root->getAttribute('supplier_id'), (string) $root->getAttribute('currency_code'), $id, true);
         }
 
-return $rows;
+        return $rows;
     }
 
     private function current(Company $company, SupplierPayment $root, SupplierPaymentReversalRequest $row): void
@@ -259,7 +259,7 @@ return $rows;
             $this->fail('Provide a reversal reason of up to two thousand characters.');
         }
 
-return $value;
+        return $value;
     }
 
     private function state(SupplierPaymentReversalRequest $row, int $revision, string $state): void

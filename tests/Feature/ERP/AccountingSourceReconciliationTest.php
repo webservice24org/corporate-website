@@ -423,7 +423,7 @@ final class AccountingSourceReconciliationTest extends TestCase
             $out[$table] = DB::table($table)->count();
         }
 
-return $out;
+        return $out;
     }
 
     public function test_page_requires_authentication(): void

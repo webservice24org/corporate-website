@@ -681,6 +681,12 @@ require __DIR__.'/accounting-openings.php';
 require __DIR__.'/accounting-cutover.php';
 require __DIR__.'/accounting-manifest.php';
 
+require __DIR__.'/business-notification-settings.php';
+require __DIR__.'/custom-sms.php';
+require __DIR__.'/custom-mail.php';
+require __DIR__.'/sms-bd-settings.php';
+
+require __DIR__.'/business-notification-history.php';
 /*
 |--------------------------------------------------------------------------
 | Dynamic Frontend Pages
